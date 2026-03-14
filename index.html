@@ -19,9 +19,9 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .sess-lbl{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
 .score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap;min-height:24px}
 .sc-red{font-weight:bold;color:#c00}.sc-blue{font-weight:bold;color:#00c}.sc-lbl{color:#555}
-.sheets-container{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
-.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;display:none;width:100%}
-.sheet-wrap.active{display:flex;flex-direction:column}
+.sheets-container{flex:1;overflow:hidden;position:relative}
+.sheet-wrap{position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;display:none}
+.sheet-wrap.active{display:block}
 .tab-bar{background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;overflow-x:auto;flex-shrink:0;height:32px;padding:0 4px}
 .tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
 .tab{padding:6px 12px;font-size:11px;font-weight:500;color:#3c4043;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;white-space:nowrap;height:30px;display:flex;align-items:center;background:#f8f9fa;margin-right:2px;user-select:none}
@@ -54,7 +54,7 @@ tr.teamhdr td{background:#BDC0BF;font-weight:bold;font-size:11px;text-align:left
 tr.teamhdr td input{border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;outline:none;width:200px;color:#000}
 tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;padding:2px 5px;border-top:3px solid #888;color:#333;letter-spacing:1px}
 tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
-.stats-wrap{padding:12px;overflow:auto;flex:1}
+.stats-wrap{padding:12px;overflow:auto}
 .stats-wrap h2{font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px}
 .stats-wrap h3{font-size:12px;font-weight:bold;color:#333;margin:14px 0 4px;background:#f0f0f0;padding:4px 6px;border-left:3px solid #6a1b9a}
 .stats-tbl{border-collapse:collapse;margin-bottom:4px}
@@ -208,19 +208,22 @@ function listenFirebase(){
   if(!db){document.getElementById("sst").textContent="No DB";return;}
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
+    let hasData=Object.keys(d).length>0;
     TABS.forEach(t=>{
       if(t.id==="stats")return;
-      if(d[t.id])data[t.id]=d[t.id];
-      else initTab(t.id);
+      if(d[t.id]) data[t.id]=d[t.id];
+      else if(!data[t.id]) initTab(t.id); // only init if not already set
     });
-    // Refresh active tab
+    // Always rebuild active tab with latest data
     if(activeTab==="stats"){
-      // Rebuild stats with fresh data
       const sw=document.getElementById("sheet-stats");
       if(sw){sw.innerHTML="";buildStats(sw);}
     } else {
       if(builtTabs.has(activeTab)){
         refreshSheet(activeTab);
+      } else {
+        buildSheet(activeTab);
+        builtTabs.add(activeTab);
       }
     }
     updateScoreBar();
@@ -692,6 +695,19 @@ function makeStatsTbl(bkData){
 }
 
 // ── START ─────────────────────────────────────
+// Ensure sheets-container has explicit pixel height for Safari absolute positioning
+function fixHeight(){
+  const toolbar=document.querySelector('.gs-toolbar');
+  const scorebar=document.getElementById('scorebar');
+  const tabbar=document.getElementById('tabbar');
+  const errbanner=document.getElementById('err-banner');
+  const container=document.getElementById('sheets-container');
+  const usedH=(toolbar?toolbar.offsetHeight:0)+(scorebar?scorebar.offsetHeight:0)+(tabbar?tabbar.offsetHeight:0)+(errbanner&&errbanner.style.display!='none'?errbanner.offsetHeight:0);
+  container.style.height=(window.innerHeight-usedH)+'px';
+}
+window.addEventListener('resize',fixHeight);
+setTimeout(fixHeight,100);
+
 listenFirebase();
 showTab("stats");
 </script>
