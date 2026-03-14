@@ -166,8 +166,15 @@ catch(e){alert('Firebase: '+e.message);}
 
 buildTabs();
 createPanels();
+
+// TEST: pre-load dummy data for first tab to verify rendering works
+const testTab='fri-set1';
+initTab(testTab);
+data[testTab].m1.t1name='Test Team Red';
+data[testTab].m1.t2name='Test Team Blue';
+panelBuilt[testTab]=false;
+
 listenFirebase();
-// Small delay so panels are in DOM before showing
 requestAnimationFrame(()=>showTab('stats'));
 
 // ── TABS ─────────────────────────────────────
