@@ -19,9 +19,9 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .sess-lbl{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
 .score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap;min-height:24px}
 .sc-red{font-weight:bold;color:#c00}.sc-blue{font-weight:bold;color:#00c}.sc-lbl{color:#555}
-.sheets-container{flex:1;overflow:hidden;position:relative}
-.sheet-wrap{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;display:none}
-.sheet-wrap.active{display:block}
+.sheets-container{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;display:none;width:100%}
+.sheet-wrap.active{display:flex;flex-direction:column}
 .tab-bar{background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;overflow-x:auto;flex-shrink:0;height:32px;padding:0 4px}
 .tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
 .tab{padding:6px 12px;font-size:11px;font-weight:500;color:#3c4043;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;white-space:nowrap;height:30px;display:flex;align-items:center;background:#f8f9fa;margin-right:2px;user-select:none}
@@ -54,7 +54,7 @@ tr.teamhdr td{background:#BDC0BF;font-weight:bold;font-size:11px;text-align:left
 tr.teamhdr td input{border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;outline:none;width:200px;color:#000}
 tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;padding:2px 5px;border-top:3px solid #888;color:#333;letter-spacing:1px}
 tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
-.stats-wrap{padding:12px;height:100%;overflow:auto}
+.stats-wrap{padding:12px;overflow:auto;flex:1}
 .stats-wrap h2{font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px}
 .stats-wrap h3{font-size:12px;font-weight:bold;color:#333;margin:14px 0 4px;background:#f0f0f0;padding:4px 6px;border-left:3px solid #6a1b9a}
 .stats-tbl{border-collapse:collapse;margin-bottom:4px}
@@ -99,6 +99,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
     <div class="sess-lbl" id="sesslbl">Loading...</div>
     <div class="gs-sync"><span class="sdot"></span><span id="sst">Connecting...</span></div>
   </div>
+  <div id="err-banner" style="display:none;background:#fce4ec;color:#c62828;padding:6px 10px;font-size:11px;border-bottom:1px solid #ef9a9a;flex-shrink:0"></div>
   <div class="score-bar" id="scorebar"></div>
   <div class="sheets-container" id="sheets-container"></div>
   <div class="tab-bar" id="tabbar"></div>
@@ -149,7 +150,16 @@ let builtTabs=new Set(); // track which tabs have been built
 let popCell=null,popMoves=[];
 let saveTimers={}; // debounce timers per tabId
 
-try{const app=initializeApp(FB);db=getDatabase(app);}catch(e){alert("Firebase: "+e.message);}
+try{
+  const app=initializeApp(FB);
+  db=getDatabase(app);
+}catch(e){
+  document.getElementById("sst").textContent="Offline";
+  const banner=document.getElementById("err-banner");
+  banner.style.display="block";
+  banner.textContent="Firebase connection failed: "+e.message+". Check that Realtime Database is enabled in your Firebase project.";
+  console.error("Firebase:",e);
+}
 
 // ── BUILD ALL TAB SHELLS + TAB BAR ────────────
 const container=document.getElementById("sheets-container");
@@ -195,6 +205,7 @@ function showTab(id){
 
 // ── FIREBASE ──────────────────────────────────
 function listenFirebase(){
+  if(!db){document.getElementById("sst").textContent="No DB";return;}
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
     TABS.forEach(t=>{
@@ -202,13 +213,15 @@ function listenFirebase(){
       if(d[t.id])data[t.id]=d[t.id];
       else initTab(t.id);
     });
-    // Only refresh the active tab
-    if(activeTab!=="stats"){
+    // Refresh active tab
+    if(activeTab==="stats"){
+      // Rebuild stats with fresh data
+      const sw=document.getElementById("sheet-stats");
+      if(sw){sw.innerHTML="";buildStats(sw);}
+    } else {
       if(builtTabs.has(activeTab)){
         refreshSheet(activeTab);
       }
-    } else {
-      if(builtTabs.has("stats")) buildSheet("stats");
     }
     updateScoreBar();
     document.getElementById("sst").textContent="Live \u2014 Synced";
@@ -370,7 +383,7 @@ function buildRow(tabId,mk,tk,idx){
   // Bunkers
   BKS.forEach(b=>{
     const td=document.createElement("td");td.className="cbk";
-    td.id=`bk-${tabId}-${mk}-${tk}-${idx}-${b.replace(/[^a-z0-9]/gi,"_")}`;
+    td.id=`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`;
     renderBkCell(td,pt[b]||[]);
     td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b);
     row.appendChild(td);
@@ -413,7 +426,7 @@ function refreshSheet(tabId){
         if(scEl)scEl.textContent=calcScore(tabId,mk,tk,idx)||"";
         // Bunkers
         BKS.forEach(b=>{
-          const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${b.replace(/[^a-z0-9]/gi,"_")}`);
+          const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`);
           if(bkEl)renderBkCell(bkEl,pt[b]||[]);
         });
       });
@@ -569,7 +582,7 @@ function showSymPicker(cont,order,bk){
   sec.appendChild(penRow);
 
   const confirmBtn=document.createElement("button");confirmBtn.className="confirm-btn";
-  confirmBtn.textContent=order==="primary"?"\u2713 Set Primary Move":"\u2713 Add This Move";
+  confirmBtn.textContent=order==="primary"?"\u2713 Confirm Primary":"\u2713 Add This Move";
   confirmBtn.onclick=()=>{
     if(!selSym){alert("Pick a symbol first.");return;}
     popMoves.push({bk,sym:selSym,order,pen:selPen});
@@ -583,6 +596,10 @@ window.closeMove=()=>{document.getElementById("moveo").classList.remove("open");
 
 window.applyMove=()=>{
   if(!popCell)return;
+  if(popMoves.length===0){
+    // Nothing confirmed yet - just close
+    closeMove();return;
+  }
   const{tabId,mk,tk,idx,bk}=popCell;
   // Clear primary bunker
   data[tabId][mk][tk][idx][bk]=[];
@@ -596,7 +613,7 @@ window.applyMove=()=>{
   saveTab(tabId);
   // Update only affected cells
   [bk,...popMoves.map(m=>m.bk)].forEach(b=>{
-    const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${b.replace(/[^a-z0-9]/gi,"_")}`);
+    const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`);
     if(bkEl)renderBkCell(bkEl,data[tabId][mk][tk][idx][b]||[]);
   });
   closeMove();
@@ -634,7 +651,9 @@ function buildStats(wrap){
   });
 
   const div=document.createElement("div");div.className="stats-wrap";
-  const h2=document.createElement("h2");h2.textContent="Event Stats \u2014 All Matches";div.appendChild(h2);
+  const h2=document.createElement("h2");h2.textContent="Event Stats — All Matches";div.appendChild(h2);
+  const note=document.createElement("p");note.style.cssText="font-size:11px;color:#888;margin-bottom:10px";
+  note.textContent="Stats update automatically as match data is entered.";div.appendChild(note);
   div.appendChild(makeStatsTbl(bkAll));
 
   const h2b=document.createElement("h2");h2b.style.marginTop="20px";h2b.textContent="Team Stats";div.appendChild(h2b);
