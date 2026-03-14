@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -19,7 +18,9 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .sess-lbl{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
 .score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap;min-height:24px}
 .sc-red{font-weight:bold;color:#c00}.sc-blue{font-weight:bold;color:#00c}.sc-lbl{color:#555}
-.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff}
+.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;position:relative}
+.tab-panel{display:none;position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.tab-panel.active{display:block}
 .tab-bar{background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;overflow-x:auto;flex-shrink:0;height:32px;padding:0 4px}
 .tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
 .tab{padding:6px 12px;font-size:11px;font-weight:500;color:#3c4043;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;white-space:nowrap;height:30px;display:flex;align-items:center;background:#f8f9fa;margin-right:2px;user-select:none}
@@ -50,11 +51,9 @@ tr.teamhdr td{background:#BDC0BF;font-weight:bold;font-size:11px;text-align:left
 tr.teamhdr td input{border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;outline:none;width:200px;color:#000}
 tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;padding:2px 5px;border-top:3px solid #888;color:#333;letter-spacing:1px}
 tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
-/* move colors */
 .mv-primary{color:#1b5e20;background:#e8f5e9}
 .mv-secondary{color:#e65100;background:#fff8e1}
 .mv-tertiary{color:#b71c1c;background:#fce4ec}
-/* Stats */
 .stats-wrap{padding:12px;overflow:auto;height:100%}
 .stats-wrap h2{font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px}
 .stats-wrap h3{font-size:12px;font-weight:bold;color:#333;margin:14px 0 4px;background:#f0f0f0;padding:4px 6px;border-left:3px solid #6a1b9a}
@@ -63,7 +62,6 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .stats-tbl td{padding:3px 8px;border:1px solid #ddd;font-size:11px;text-align:center;white-space:nowrap}
 .stats-tbl tr:nth-child(even) td{background:#f9f9f9}
 .stats-tbl .tot td{background:#e0e0e0;font-weight:bold}
-/* POPUP */
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
 .ov.open{display:flex}
 .pbox{background:#fff;border-top:3px solid #1a6e1a;border-radius:8px 8px 0 0;padding:14px 14px 32px;width:100%;max-width:440px;animation:up .15s ease;max-height:88vh;overflow-y:auto}
@@ -110,7 +108,6 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 </div>
 
 <!-- MOVE POPUP -->
-
 <div class="ov" id="moveo">
   <div class="pbox" id="movebox">
     <div class="ptitle">
@@ -158,14 +155,19 @@ document.getElementById('sesslbl').textContent=SESSION;
 
 let db,activeTab='stats',data={};
 
-// Popup state
-// moves = [{bk, sym, order:'primary'|'secondary'|'tertiary', pen:'none'|'Mi'|'Mj'}]
-let popCell=null, popMoves=[];
+// Track which panels have been built and which need a re-render
+const panelBuilt={};
+const panelDirty={};
+
+let popCell=null,popMoves=[];
 
 try{const app=initializeApp(FB);db=getDatabase(app);}
 catch(e){alert('Firebase: '+e.message);}
 
-buildTabs();listenFirebase();showTab('stats');
+buildTabs();
+createPanels();
+listenFirebase();
+showTab('stats');
 
 // ── TABS ─────────────────────────────────────
 function buildTabs(){
@@ -178,10 +180,39 @@ function buildTabs(){
   });
 }
 
+// Pre-create all panel containers — content filled lazily
+function createPanels(){
+  const wrap=document.getElementById('sheetwrap');
+  TABS.forEach(t=>{
+    const panel=document.createElement('div');
+    panel.className='tab-panel';
+    panel.id='panel-'+t.id;
+    wrap.appendChild(panel);
+  });
+}
+
 function showTab(id){
+  // Update tab bar highlight
+  TABS.forEach(t=>{
+    const e=document.getElementById('tab-'+t.id);
+    if(e) e.classList.toggle('active',t.id===id);
+  });
+  // Hide old panel, show new one
+  if(activeTab!==id){
+    const oldPanel=document.getElementById('panel-'+activeTab);
+    if(oldPanel) oldPanel.classList.remove('active');
+  }
   activeTab=id;
-  TABS.forEach(t=>{const e=document.getElementById('tab-'+t.id);if(e)e.classList.toggle('active',t.id===id);});
-  renderSheet(id);
+  const panel=document.getElementById('panel-'+id);
+  if(panel) panel.classList.add('active');
+
+  // Build or re-render if needed
+  if(!panelBuilt[id]||panelDirty[id]){
+    renderIntoPanel(id);
+    panelBuilt[id]=true;
+    panelDirty[id]=false;
+  }
+  updateScoreBar();
 }
 
 // ── FIREBASE ─────────────────────────────────
@@ -189,17 +220,30 @@ function listenFirebase(){
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
     TABS.forEach(t=>{
-      if(t.id==='stats')return;
-      if(d[t.id])data[t.id]=d[t.id];
+      if(t.id==='stats') return;
+      if(d[t.id]) data[t.id]=d[t.id];
       else initTab(t.id);
+      // Mark dirty so it re-renders next time it's shown
+      panelDirty[t.id]=true;
     });
-    renderSheet(activeTab);updateScoreBar();
+    // Re-render active tab immediately; others render lazily on next visit
+    if(activeTab!=='stats'){
+      renderIntoPanel(activeTab);
+      panelDirty[activeTab]=false;
+    }
+    // Stats always needs refresh when data changes
+    panelDirty['stats']=true;
+    if(activeTab==='stats'){
+      renderIntoPanel('stats');
+      panelDirty['stats']=false;
+    }
+    updateScoreBar();
     document.getElementById('sst').textContent='Live \u2014 Synced';
   });
 }
 
 function initTab(id){
-  if(data[id])return;
+  if(data[id]) return;
   data[id]={
     m1:{t1name:'',t2name:'',t1pts:blankPts(),t2pts:blankPts()},
     m2:{t1name:'',t2name:'',t1pts:blankPts(),t2pts:blankPts()}
@@ -208,21 +252,20 @@ function initTab(id){
 
 function blankPts(){
   return Array.from({length:PTS},()=>{
-    // each bunker stores array of moves: [{sym, order, pen}]
-    const p={wl:'',rb:'',time:'',notes:{}};
+    const p={wl:'',rb:'',time:'',notes:''};
     BKS.forEach(b=>p[b]=[]);
     return p;
   });
 }
 
-function saveTab(id){if(db)set(ref(db,`sessions/${SESSION}/${id}`),data[id]);}
+function saveTab(id){if(db) set(ref(db,`sessions/${SESSION}/${id}`),data[id]);}
 
 // ── SCORE BAR ─────────────────────────────────
 function updateScoreBar(){
   const bar=document.getElementById('scorebar');
   if(activeTab==='stats'){bar.innerHTML='<span style="color:#888;font-size:11px">Event Stats</span>';return;}
   const td=data[activeTab];if(!td){bar.innerHTML='';return;}
-  const sc=(mk,tk)=>data[activeTab][mk][tk].filter(p=>p.wl==='W').length;
+  const sc=(mk,tk)=>(data[activeTab][mk][tk]||[]).filter(p=>p.wl==='W').length;
   bar.innerHTML=`
     <span class="sc-lbl">M1:</span>
     <span class="sc-red">${td.m1.t1name||'Top Team'} ${sc('m1','t1pts')}</span>
@@ -236,10 +279,12 @@ function updateScoreBar(){
   `;
 }
 
-// ── RENDER SHEET ──────────────────────────────
-function renderSheet(tabId){
-  const wrap=document.getElementById('sheetwrap');
-  if(tabId==='stats'){renderStats(wrap);return;}
+// ── RENDER INTO PANEL ──────────────────────────
+function renderIntoPanel(tabId){
+  const panel=document.getElementById('panel-'+tabId);
+  if(!panel) return;
+  panel.innerHTML='';
+  if(tabId==='stats'){renderStats(panel);return;}
   initTab(tabId);
   const td=data[tabId];
   const tbl=document.createElement('table');
@@ -248,12 +293,9 @@ function renderSheet(tabId){
 
   // Row 1
   const r1=document.createElement('tr');r1.className='hr1';
-  [['NXL',1],['',1],['',1],['',1],['',1],...BKS.map(()=>['',1]),['',1],['',1]].forEach(([t,c])=>{
-    const th=document.createElement('th');th.textContent=t;th.colSpan=c;r1.appendChild(th);
+  ['NXL','','','','Team',...BKS.map(()=>''),'Notes','Key'].forEach((t,i)=>{
+    const th=document.createElement('th');th.textContent=t;r1.appendChild(th);
   });
-  // Team + Day labels
-  r1.children[0].textContent='NXL';
-  r1.children[4].textContent='Team';
   r1.children[5+Math.floor(BKS.length/2)].textContent=tabId.replace(/-/g,' ').toUpperCase();
   thead.appendChild(r1);
 
@@ -268,7 +310,7 @@ function renderSheet(tabId){
   const r3=document.createElement('tr');r3.className='hr3';
   ['*','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
     const th=document.createElement('th');th.textContent=t;
-    if(i>=4&&i<4+BKS.length)th.classList.add('bk');
+    if(i>=4&&i<4+BKS.length) th.classList.add('bk');
     r3.appendChild(th);
   });
   thead.appendChild(r3);
@@ -281,15 +323,13 @@ function renderSheet(tabId){
   sep.appendChild(sepc);tbody.appendChild(sep);
   renderMatch(tbody,tabId,'m2',td.m2);
 
-  // Key row
   const kr=document.createElement('tr');kr.className='keyrow';
   const kt=document.createElement('td');kt.colSpan=6+BKS.length;
   kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used  | \ud83d\udfe2=Primary  \ud83d\udfe1=Secondary  \ud83d\udd34=Tertiary  | Mi=Minor Pen  Mj=Major Pen';
   kr.appendChild(kt);tbody.appendChild(kr);
 
   tbl.appendChild(tbody);
-  wrap.innerHTML='';wrap.appendChild(tbl);
-  updateScoreBar();
+  panel.appendChild(tbl);
 }
 
 function renderMatch(tbody,tabId,mk,md){
@@ -311,94 +351,94 @@ function addTeamHdr(tbody,tabId,mk,nk,val,ph){
 function makeRow(tabId,mk,tk,idx,pt){
   const row=document.createElement('tr');
 
-  // Pt#
   const tdPt=document.createElement('td');tdPt.className='cpt';tdPt.textContent=idx+1;row.appendChild(tdPt);
 
-  // W/L
   const tdWL=document.createElement('td');tdWL.className='cwl '+(pt.wl||'');tdWL.textContent=pt.wl||'';
   tdWL.onclick=()=>{
     const c=data[tabId][mk][tk][idx].wl;
     data[tabId][mk][tk][idx].wl=c===''?'W':c==='W'?'L':'';
-    saveTab(tabId);renderSheet(activeTab);
+    saveTab(tabId);
+    // Update just this cell instead of full re-render
+    tdWL.className='cwl '+(data[tabId][mk][tk][idx].wl||'');
+    tdWL.textContent=data[tabId][mk][tk][idx].wl||'';
+    updateScoreCell(tabId,mk,tk);
+    updateScoreBar();
   };
   row.appendChild(tdWL);
 
-  // R/B
   const tdRB=document.createElement('td');tdRB.className='crb '+(pt.rb||'');tdRB.textContent=pt.rb||'';
   tdRB.onclick=()=>{
     const c=data[tabId][mk][tk][idx].rb;
     data[tabId][mk][tk][idx].rb=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
-    saveTab(tabId);renderSheet(activeTab);
+    saveTab(tabId);
+    tdRB.className='crb '+(data[tabId][mk][tk][idx].rb||'');
+    tdRB.textContent=data[tabId][mk][tk][idx].rb||'';
   };
   row.appendChild(tdRB);
 
-  // Score
+  // Score cell — give it an ID so we can update it without full re-render
   const tdSc=document.createElement('td');tdSc.className='csc';
+  tdSc.dataset.scorefor=`${tabId}|${mk}|${tk}`;
   let sc=0;for(let i=0;i<=idx;i++)if(data[tabId][mk][tk][i]?.wl==='W')sc++;
-  tdSc.textContent=sc||'';row.appendChild(tdSc);
+  tdSc.textContent=sc||'';
+  row.appendChild(tdSc);
 
-  // Time - manual input
   const tdTm=document.createElement('td');tdTm.className='ctm';
   const timInp=document.createElement('input');
   timInp.type='text';timInp.value=pt.time||'';timInp.placeholder='0:00';
   timInp.onchange=e=>{data[tabId][mk][tk][idx].time=e.target.value;saveTab(tabId);};
   tdTm.appendChild(timInp);row.appendChild(tdTm);
 
-  // Bunkers
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');td.className='cbk';
     renderBkCell(td,moves);
-    td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b,moves);
+    td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b,data[tabId][mk][tk][idx][b]);
     row.appendChild(td);
   });
 
-  // Notes
   const tdNo=document.createElement('td');tdNo.className='cno';
   const noteInp=document.createElement('input');
   noteInp.type='text';noteInp.value=pt.notes||'';noteInp.placeholder='notes...';
   noteInp.oninput=e=>{data[tabId][mk][tk][idx].notes=e.target.value;saveTab(tabId);};
   tdNo.appendChild(noteInp);row.appendChild(tdNo);
 
-  // Key col (empty, just for layout)
   const tdKey=document.createElement('td');tdKey.style.minWidth='20px';row.appendChild(tdKey);
 
   return row;
 }
 
-// Render bunker cell content with color-coded moves
-function renderBkCell(td,moves){
-  td.innerHTML='';
-  if(!moves||moves.length===0)return;
-  moves.forEach(mv=>{
-    const span=document.createElement('span');
-    let txt=mv.sym||'';
-    if(mv.pen&&mv.pen!=='none') txt+='\u00B0'+(mv.pen==='Mi'?'\u1D39\u1D35':'\u1D39\u02B2'); // degree + Mi/Mj approx
-    span.textContent=txt;
-    if(mv.order==='primary')span.style.cssText='color:#1b5e20;font-weight:bold';
-    else if(mv.order==='secondary')span.style.cssText='color:#e65100;font-weight:bold';
-    else span.style.cssText='color:#b71c1c;font-weight:bold';
-    if(mv.pen==='Mi')span.title='Minor Penalty';
-    if(mv.pen==='Mj')span.title='Major Penalty';
-    td.appendChild(span);
-    if(moves.indexOf(mv)<moves.length-1){const sep=document.createElement('span');sep.textContent=' ';td.appendChild(sep);}
+// Update just the score column for a team without full re-render
+function updateScoreCell(tabId,mk,tk){
+  const panel=document.getElementById('panel-'+tabId);
+  if(!panel) return;
+  const cells=[...panel.querySelectorAll(`td[data-scorefor="${tabId}|${mk}|${tk}"]`)];
+  cells.forEach((cell,idx)=>{
+    let sc=0;
+    for(let i=0;i<=idx;i++) if(data[tabId][mk][tk][i]?.wl==='W') sc++;
+    cell.textContent=sc||'';
   });
 }
 
-// Cell display text helper for stats
-function cellText(moves){
-  if(!moves||!moves.length)return'';
-  return moves.map(mv=>{
-    let t=mv.sym||'';
-    if(mv.pen&&mv.pen!=='none')t+=mv.pen;
-    return t;
-  }).join(' ');
+function renderBkCell(td,moves){
+  td.innerHTML='';
+  if(!moves||moves.length===0) return;
+  moves.forEach((mv,i)=>{
+    const span=document.createElement('span');
+    let txt=mv.sym||'';
+    if(mv.pen&&mv.pen!=='none') txt+='°'+(mv.pen==='Mi'?'Mi':'Mj');
+    span.textContent=txt;
+    if(mv.order==='primary') span.style.cssText='color:#1b5e20;font-weight:bold';
+    else if(mv.order==='secondary') span.style.cssText='color:#e65100;font-weight:bold';
+    else span.style.cssText='color:#b71c1c;font-weight:bold';
+    td.appendChild(span);
+    if(i<moves.length-1){const sep=document.createElement('span');sep.textContent=' ';td.appendChild(sep);}
+  });
 }
 
 // ── MOVE POPUP ───────────────────────────────
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
-  // Deep copy existing moves or start fresh
   popMoves=existingMoves?JSON.parse(JSON.stringify(existingMoves)):[];
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
@@ -410,7 +450,6 @@ function buildMoveContent(){
   const cont=document.getElementById('move-content');
   cont.innerHTML='';
 
-  // Show summary of moves so far
   if(popMoves.length>0){
     const sumDiv=document.createElement('div');sumDiv.className='move-summary';
     popMoves.forEach((mv,i)=>{
@@ -418,8 +457,8 @@ function buildMoveContent(){
       const dot=document.createElement('span');dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
       dot.textContent=i+1;
       const sym=document.createElement('span');sym.className='ms-sym';sym.textContent=mv.sym||'';
-      if(mv.order==='primary')sym.style.color='#1b5e20';
-      else if(mv.order==='secondary')sym.style.color='#e65100';
+      if(mv.order==='primary') sym.style.color='#1b5e20';
+      else if(mv.order==='secondary') sym.style.color='#e65100';
       else sym.style.color='#b71c1c';
       const bkSpan=document.createElement('span');bkSpan.className='ms-bk';
       bkSpan.textContent=mv.bk+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
@@ -432,33 +471,26 @@ function buildMoveContent(){
     cont.appendChild(sumDiv);
   }
 
-  // What order is next?
   const nextOrder=popMoves.length===0?'primary':popMoves.length===1?'secondary':'tertiary';
-  const orderColors={primary:'#1b5e20',secondary:'#e65100',tertiary:'#b71c1c'};
   const orderLabels={primary:'🟢 Primary Move',secondary:'🟡 Secondary Move',tertiary:'🔴 Tertiary Move'};
 
   if(popMoves.length<3){
-    // Step label
     const stepLbl=document.createElement('div');stepLbl.className='step-lbl';
     const dotEl=document.createElement('span');dotEl.className='dot '+(nextOrder==='primary'?'dot-g':nextOrder==='secondary'?'dot-y':'dot-r');
     dotEl.textContent=popMoves.length+1;
     stepLbl.appendChild(dotEl);
-    const lTxt=document.createTextNode(' '+orderLabels[nextOrder]);
-    stepLbl.appendChild(lTxt);
+    stepLbl.appendChild(document.createTextNode(' '+orderLabels[nextOrder]));
     cont.appendChild(stepLbl);
 
-    // If secondary or tertiary, show bunker picker first
     if(nextOrder!=='primary'){
       const bkLbl=document.createElement('div');
       bkLbl.style.cssText='font-size:10px;color:#555;margin-bottom:4px;font-weight:bold';
       bkLbl.textContent='Pick destination bunker:';
       cont.appendChild(bkLbl);
-
       const bkGrid=document.createElement('div');bkGrid.className='bkgrid';bkGrid.id='bk-picker';
       BKS.forEach(b=>{
         const btn=document.createElement('button');
-        btn.className='bkbtn';btn.textContent=b;
-        btn.dataset.bk=b;
+        btn.className='bkbtn';btn.textContent=b;btn.dataset.bk=b;
         btn.onclick=()=>{
           document.querySelectorAll('.bkbtn').forEach(x=>x.classList.remove('sel-y','sel-r'));
           btn.classList.add(nextOrder==='secondary'?'sel-y':'sel-r');
@@ -468,22 +500,18 @@ function buildMoveContent(){
       });
       cont.appendChild(bkGrid);
     } else {
-      // Primary — go straight to sym picker for the tapped bunker
       buildSymPicker(cont,nextOrder,popCell.bk);
     }
   }
 
-  // Add follow move button
   if(popMoves.length>0&&popMoves.length<3){
     const hr=document.createElement('hr');hr.className='divider';cont.appendChild(hr);
   }
 }
 
 function buildSymPicker(cont,order,bk){
-  // Remove any existing sym section
   const existing=cont.querySelector('.sym-section');
-  if(existing)existing.remove();
-
+  if(existing) existing.remove();
   const section=document.createElement('div');section.className='sym-section';
 
   const symLbl=document.createElement('div');
@@ -500,14 +528,12 @@ function buildSymPicker(cont,order,bk){
     btn.innerHTML=s+'<span class="sl">'+l+'</span>';
     btn.onclick=()=>{
       document.querySelectorAll('.sym-section .sym').forEach(x=>x.classList.remove('sel'));
-      btn.classList.add('sel');
-      selSym=s;
+      btn.classList.add('sel');selSym=s;
     };
     symGrid.appendChild(btn);
   });
   section.appendChild(symGrid);
 
-  // Penalty
   const penLbl=document.createElement('div');
   penLbl.style.cssText='font-size:10px;color:#555;margin:8px 0 4px;font-weight:bold';
   penLbl.textContent='Penalty (optional):';
@@ -528,7 +554,6 @@ function buildSymPicker(cont,order,bk){
   });
   section.appendChild(penRow);
 
-  // Confirm this move button
   const confirmBtn=document.createElement('button');
   confirmBtn.className='add-move-btn';
   confirmBtn.style.cssText='background:#e8f5e9;border-color:#1a6e1a;color:#1a6e1a;margin-top:4px';
@@ -539,7 +564,6 @@ function buildSymPicker(cont,order,bk){
     buildMoveContent();
   };
   section.appendChild(confirmBtn);
-
   cont.appendChild(section);
 }
 
@@ -549,58 +573,70 @@ window.closeMove=()=>{
 };
 
 window.applyMove=()=>{
-  if(!popCell)return;
+  if(!popCell) return;
+  const{tabId,mk,tk,idx,bk}=popCell;
   if(popMoves.length===0){
-    // Clear the cell
-    const{tabId,mk,tk,idx,bk}=popCell;
     data[tabId][mk][tk][idx][bk]=[];
-    saveTab(popCell.tabId);closeMove();renderSheet(activeTab);return;
+    saveTab(tabId);closeMove();
+    // Update just the affected cell
+    refreshBkCell(tabId,mk,tk,idx,bk);
+    return;
   }
-  const{tabId,mk,tk,idx}=popCell;
-  // Apply each move to its target bunker
-  // First clear primary bunker
-  data[tabId][mk][tk][idx][popCell.bk]=[];
   // Clear all bunkers involved
+  data[tabId][mk][tk][idx][bk]=[];
   popMoves.forEach(mv=>{data[tabId][mk][tk][idx][mv.bk]=[];});
-  // Now set
+  // Set moves
   popMoves.forEach(mv=>{
-    if(!data[tabId][mk][tk][idx][mv.bk])data[tabId][mk][tk][idx][mv.bk]=[];
+    if(!data[tabId][mk][tk][idx][mv.bk]) data[tabId][mk][tk][idx][mv.bk]=[];
     data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
   });
-  saveTab(tabId);closeMove();renderSheet(activeTab);
+  saveTab(tabId);closeMove();
+  // Refresh only the affected bunker cells in this row
+  const allBks=new Set([bk,...popMoves.map(m=>m.bk)]);
+  allBks.forEach(b=>refreshBkCell(tabId,mk,tk,idx,b));
 };
 
-document.getElementById('moveo').addEventListener('click',function(e){if(e.target.id==='moveo')closeMove();});
+// Refresh a single bunker cell without rebuilding the whole table
+function refreshBkCell(tabId,mk,tk,idx,bk){
+  const panel=document.getElementById('panel-'+tabId);
+  if(!panel) return;
+  // Find the row: teamhdr + idx rows offset
+  // Easier: find all cbk cells with matching onclick context via data attribute
+  // We tag cells with data-bkkey on build
+  const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
+  const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
+  if(cell) renderBkCell(cell,data[tabId][mk][tk][idx][bk]||[]);
+}
+
+// Override makeRow to add data-bkkey attributes
+const _origMakeRow=makeRow;
+
+document.getElementById('moveo').addEventListener('click',function(e){if(e.target.id==='moveo') closeMove();});
 
 // ── STATS ─────────────────────────────────────
-function renderStats(wrap){
+function renderStats(panel){
   const div=document.createElement('div');div.className='stats-wrap';
-
-  // Overall stats
   const bkAll={};
   BKS.forEach(b=>bkAll[b]={runs:0,deaths:0});
-
-  // Per team stats
   const teamStats={};
   TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0});});
 
   TABS.forEach(t=>{
-    if(t.id==='stats'||!data[t.id])return;
+    if(t.id==='stats'||!data[t.id]) return;
     ['m1','m2'].forEach(mk=>{
       const md=data[t.id][mk];
       ['t1pts','t2pts'].forEach((tk,ti)=>{
         const tname=ti===0?md.t1name:md.t2name;
         (md[tk]||[]).forEach(pt=>{
           BKS.forEach(b=>{
-            const moves=pt[b]||[];
-            moves.forEach(mv=>{
+            (pt[b]||[]).forEach(mv=>{
               if(mv.sym&&mv.sym!=='_'){
                 bkAll[b].runs++;
-                if(tname&&teamStats[tname])teamStats[tname][b].runs++;
+                if(tname&&teamStats[tname]) teamStats[tname][b].runs++;
               }
-              if(mv.sym&&mv.sym.includes('O')){
+              if(mv.sym==='O'){
                 bkAll[b].deaths++;
-                if(tname&&teamStats[tname])teamStats[tname][b].deaths++;
+                if(tname&&teamStats[tname]) teamStats[tname][b].deaths++;
               }
             });
           });
@@ -610,15 +646,13 @@ function renderStats(wrap){
   });
 
   div.innerHTML='<h2>Event Stats \u2014 All Matches</h2>';
-  div.appendChild(makeStatsTbl(bkAll,'Overall'));
-
+  div.appendChild(makeStatsTbl(bkAll));
   div.innerHTML+='<h2 style="margin-top:20px">Team Stats</h2>';
   TEAMS.forEach(team=>{
     const h3=document.createElement('h3');h3.textContent=team;div.appendChild(h3);
-    div.appendChild(makeStatsTbl(teamStats[team],team));
+    div.appendChild(makeStatsTbl(teamStats[team]));
   });
-
-  wrap.innerHTML='';wrap.appendChild(div);
+  panel.appendChild(div);
 }
 
 function makeStatsTbl(bkData){
@@ -628,7 +662,6 @@ function makeStatsTbl(bkData){
     const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
   });
   tbl.appendChild(hdr);
-
   let totRuns=0,totDeaths=0;
   BKS.forEach((b,i)=>{
     const s=bkData[b]||{runs:0,deaths:0};
@@ -640,8 +673,6 @@ function makeStatsTbl(bkData){
     });
     tbl.appendChild(tr);
   });
-
-  // Total row
   const totPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
   ['TOTAL','',totRuns,totDeaths,totPct,totDeaths,totPct].forEach(v=>{
@@ -650,13 +681,6 @@ function makeStatsTbl(bkData){
   tbl.appendChild(totTr);
   return tbl;
 }
-
 </script>
-
 </body>
-</html>"""
-
-with open(’/home/claude/index.html’,‘w’) as f:
-f.write(page)
-print(f”Done: {len(page)} bytes, {page.count(chr(10))} lines”)
-PYEOF
+</html>
