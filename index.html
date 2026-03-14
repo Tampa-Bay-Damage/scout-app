@@ -167,7 +167,8 @@ catch(e){alert('Firebase: '+e.message);}
 buildTabs();
 createPanels();
 listenFirebase();
-showTab('stats');
+// Small delay so panels are in DOM before showing
+requestAnimationFrame(()=>showTab('stats'));
 
 // ── TABS ─────────────────────────────────────
 function buildTabs(){
@@ -303,6 +304,10 @@ function renderIntoPanel(tabId){
   panel.innerHTML='';
   if(tabId==='stats'){renderStats(panel);return;}
   initTab(tabId);
+  if(!data[tabId]||!data[tabId].m1||!data[tabId].m1.t1pts){
+    panel.innerHTML='<div style="padding:20px;color:#999">Loading...</div>';
+    return;
+  }
   const td=data[tabId];
   const tbl=document.createElement('table');
   const thead=document.createElement('thead');
