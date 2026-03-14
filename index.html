@@ -11,31 +11,46 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* TOOLBAR */
 .gs-toolbar{background:#f1f3f4;border-bottom:1px solid #e0e0e0;padding:4px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .gs-title{font-size:14px;font-weight:bold;color:#202124;flex:1}
 .gs-sync{font-size:11px;color:#5f6368;display:flex;align-items:center;gap:4px}
 .sdot{width:7px;height:7px;border-radius:50%;background:#1e8e3e;display:inline-block;animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-.sess-lbl{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
-.score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap;min-height:24px}
-.sc-red{font-weight:bold;color:#c00}.sc-blue{font-weight:bold;color:#00c}.sc-lbl{color:#555}
-.sheets-container{flex:1;overflow:hidden;position:relative}
-.sheet-wrap{position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;display:none}
-.sheet-wrap.active{display:block}
+.sess-label{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
+
+/* SCORE BAR */
+.score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap}
+.sc-red{font-weight:bold;color:#c00}
+.sc-blue{font-weight:bold;color:#00c}
+.sc-lbl{color:#555}
+
+/* SHEET */
+.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff}
+
+/* TAB BAR */
 .tab-bar{background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;overflow-x:auto;flex-shrink:0;height:32px;padding:0 4px}
-.tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
+.tab-bar::-webkit-scrollbar{height:3px}
+.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
 .tab{padding:6px 12px;font-size:11px;font-weight:500;color:#3c4043;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;white-space:nowrap;height:30px;display:flex;align-items:center;background:#f8f9fa;margin-right:2px;user-select:none}
 .tab.active{background:#fff;border-color:#e0e0e0;border-bottom-color:#fff;font-weight:700;position:relative;top:1px}
 .tab.fri{color:#c0392b}.tab.fri.active{color:#c0392b}
 .tab.sat{color:#1565c0}.tab.sat.active{color:#1565c0}
 .tab.sun{color:#2e7d32}.tab.sun.active{color:#2e7d32}
 .tab.stats-tab{color:#6a1b9a}.tab.stats-tab.active{color:#6a1b9a}
+
+/* TABLE */
 table{border-collapse:collapse;width:max-content}
 th,td{border:1px solid #d0d0d0;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
+
+/* HEADER ROWS - exact Excel colors */
 .hr1 th{background:#BDC0BF;font-size:11px;font-weight:bold;position:sticky;top:0;z-index:10;height:20px}
 .hr2 th{background:#D5D5D5;font-size:10px;position:sticky;top:20px;z-index:10;height:20px}
 .hr3 th{background:#DBDBDB;font-size:11px;font-weight:bold;position:sticky;top:40px;z-index:10;height:20px}
 .hr3 th.bk{background:#EAEAEA}
+
+/* DATA CELLS */
 td.cpt{min-width:22px;background:#f5f5f5;color:#555;font-size:10px;font-weight:bold}
 td.cwl{min-width:28px;cursor:pointer;font-weight:bold;font-size:12px}
 td.cwl.W{background:#d4edda;color:#155724}
@@ -44,77 +59,120 @@ td.crb{min-width:36px;cursor:pointer;font-weight:bold;font-size:11px}
 td.crb.Red{background:#ffe0e0;color:#c00}
 td.crb.Blue{background:#e0e0ff;color:#00c}
 td.csc{min-width:28px;font-weight:bold;font-size:11px}
-td.ctm{min-width:44px;padding:0}
-td.ctm input{width:100%;height:20px;border:none;padding:0 3px;font-family:Arial,sans-serif;font-size:10px;background:transparent;outline:none;text-align:center}
-td.cbk{min-width:46px;cursor:pointer;font-size:11px;font-weight:bold;padding:1px 2px}
-td.cbk:active{opacity:.7}
-td.cno{min-width:90px;padding:0}
-td.cno input{width:100%;height:20px;border:none;padding:0 3px;font-family:Arial,sans-serif;font-size:10px;background:transparent;outline:none}
+td.ctm{min-width:40px;cursor:pointer;font-size:10px;color:#333}
+td.cbk{min-width:38px;cursor:pointer;font-size:11px;font-weight:bold}
+td.cbk:active{background:#fffde7}
+td.cbk.hasO{background:#fce4ec;color:#c62828}
+td.cbk.hasS{background:#e8f5e9;color:#1b5e20}
+td.cbk.hasX{background:#fff8e1;color:#f57f17}
+td.cno{min-width:90px}
+td.cno input{width:100%;height:100%;border:none;padding:1px 3px;font-family:Arial,sans-serif;font-size:10px;background:transparent;outline:none}
+
+/* TEAM HEADER */
 tr.teamhdr td{background:#BDC0BF;font-weight:bold;font-size:11px;text-align:left;padding:1px 6px;border-top:2px solid #999}
 tr.teamhdr td input{border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;outline:none;width:200px;color:#000}
+
+/* MATCH SEPARATOR */
 tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;padding:2px 5px;border-top:3px solid #888;color:#333;letter-spacing:1px}
+
+/* KEY ROW */
 tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
-.stats-wrap{padding:12px;overflow:auto}
+
+/* STATS */
+.stats-wrap{padding:12px}
 .stats-wrap h2{font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px}
-.stats-wrap h3{font-size:12px;font-weight:bold;color:#333;margin:14px 0 4px;background:#f0f0f0;padding:4px 6px;border-left:3px solid #6a1b9a}
-.stats-tbl{border-collapse:collapse;margin-bottom:4px}
-.stats-tbl th{background:#D5D5D5;font-weight:bold;font-size:11px;padding:3px 8px;border:1px solid #bbb;text-align:center;white-space:nowrap}
-.stats-tbl td{padding:3px 8px;border:1px solid #ddd;font-size:11px;text-align:center;white-space:nowrap}
+.stats-tbl{border-collapse:collapse;width:100%;max-width:500px}
+.stats-tbl th{background:#D5D5D5;font-weight:bold;font-size:11px;padding:3px 8px;border:1px solid #bbb;text-align:center}
+.stats-tbl td{padding:3px 8px;border:1px solid #ddd;font-size:11px;text-align:center}
 .stats-tbl tr:nth-child(even) td{background:#f9f9f9}
-.stats-tbl .tot td{background:#e0e0e0;font-weight:bold}
-.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+
+/* POPUP */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
 .ov.open{display:flex}
-.pbox{background:#fff;border-top:3px solid #1a6e1a;border-radius:8px 8px 0 0;padding:14px 14px 32px;width:100%;max-width:440px;animation:up .15s ease;max-height:88vh;overflow-y:auto}
+.pbox{background:#fff;border-top:3px solid #1a6e1a;border-radius:8px 8px 0 0;padding:14px 14px 30px;width:100%;max-width:420px;animation:up .15s ease}
 @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.ptitle{font-weight:bold;font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-.pcls{background:#f0f0f0;border:1px solid #ccc;border-radius:50%;width:26px;height:26px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.dot{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
-.dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#b71c1c}
-.step-lbl{font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;display:flex;align-items:center;gap:6px}
-.symgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
-.sym{padding:9px 4px;border:2px solid #ccc;background:#fff;font-size:14px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px}
+.ptitle{font-weight:bold;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.pcls{background:#f0f0f0;border:1px solid #ccc;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.symgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.sym{padding:10px 4px;border:2px solid #ccc;background:#fff;font-size:15px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif}
 .sym .sl{display:block;font-size:9px;font-weight:normal;color:#666;margin-top:1px}
-.sym.sel{border-color:#1a6e1a;background:#e8f5e9}
-.bkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px}
-.bkbtn{padding:7px 4px;border:2px solid #ccc;background:#fff;font-size:11px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px}
-.bkbtn.sel-y{border-color:#e65100;background:#fff8e1}
-.bkbtn.sel-r{border-color:#b71c1c;background:#fce4ec}
-.pen-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
-.pen-btn{padding:8px;border:2px solid #ccc;background:#fff;font-size:12px;font-weight:bold;cursor:pointer;text-align:center;border-radius:3px;font-family:Arial,sans-serif}
-.pen-btn.sel{border-color:#333;background:#f0f0f0}
-.move-summary{background:#f5f5f5;border:1px solid #e0e0e0;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:11px}
-.ms-row{display:flex;align-items:center;gap:6px;margin-bottom:2px}
-.confirm-btn{width:100%;padding:9px;border:1px solid #1a6e1a;background:#e8f5e9;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px;color:#1a6e1a;font-family:Arial,sans-serif;margin-top:4px}
-.pbtns{display:grid;grid-template-columns:1fr 2fr;gap:6px;margin-top:8px}
-.bcan{padding:10px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px}
-.bapp{padding:10px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px}
-.divider{border:none;border-top:1px solid #e0e0e0;margin:8px 0}
-.field-lbl{font-size:10px;color:#555;margin:8px 0 4px;font-weight:bold}
+.sym.sel{border-color:#333;background:#f0f0f0}
+.prev{background:#f5f5f5;border:1px solid #ccc;padding:6px 8px;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.prev strong{font-size:16px;font-weight:bold;flex:1}
+.prev span{font-size:10px;color:#888;cursor:pointer;text-decoration:underline}
+.pbtns{display:grid;grid-template-columns:1fr 2fr;gap:6px}
+.bcan{padding:9px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer}
+.bapp{padding:9px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer}
+
+/* TIMER */
+.tdisp{font-size:50px;font-weight:bold;text-align:center;margin:8px 0;font-family:‘Courier New’,monospace;color:#333}
+.tpre{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.tpre button{padding:7px;border:1px solid #ccc;background:#f5f5f5;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;cursor:pointer}
+.tctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.tctrl button{padding:9px;border:1px solid #ccc;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer}
+.tgo{background:#d4edda;border-color:#28a745!important;color:#155724}
+.tst{background:#f8d7da;border-color:#dc3545!important;color:#721c24}
+.tre{background:#f5f5f5}
 </style>
+
 </head>
 <body>
-<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+<div id="app" style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
   <div class="gs-toolbar">
     <div class="gs-title">NXL Scout 2026</div>
-    <div class="sess-lbl" id="sesslbl">Loading...</div>
+    <div class="sess-label" id="sesslbl">Loading...</div>
     <div class="gs-sync"><span class="sdot"></span><span id="sst">Connecting...</span></div>
   </div>
-  <div id="err-banner" style="display:none;background:#fce4ec;color:#c62828;padding:6px 10px;font-size:11px;border-bottom:1px solid #ef9a9a;flex-shrink:0"></div>
   <div class="score-bar" id="scorebar"></div>
-  <div class="sheets-container" id="sheets-container"></div>
+  <div class="sheet-wrap" id="sheetwrap"></div>
   <div class="tab-bar" id="tabbar"></div>
 </div>
 
-<div class="ov" id="moveo">
+<!-- SYMBOL POPUP -->
+
+<div class="ov" id="symo">
   <div class="pbox">
     <div class="ptitle">
-      <span>Pt <span id="pop-pt"></span> &mdash; <span id="pop-bk" style="color:#1a6e1a"></span></span>
-      <button class="pcls" onclick="closeMove()">&#x2715;</button>
+      <span>Pt <span id="ppt"></span> &mdash; <span id="pbk"></span></span>
+      <button class="pcls" onclick="closeSym()">&#x2715;</button>
     </div>
-    <div id="move-content"></div>
+    <div class="symgrid" id="symgrid"></div>
+    <div class="prev">
+      <span style="color:#555;font-size:11px">Entry:</span>
+      <strong id="pval">&mdash;</strong>
+      <span onclick="clrSym()">Clear</span>
+    </div>
     <div class="pbtns">
-      <button class="bcan" onclick="closeMove()">Cancel</button>
-      <button class="bapp" onclick="applyMove()">APPLY</button>
+      <button class="bcan" onclick="closeSym()">Cancel</button>
+      <button class="bapp" onclick="applySym()">APPLY</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER POPUP -->
+
+<div class="ov" id="timo">
+  <div class="pbox">
+    <div class="ptitle">
+      <span>Point Timer</span>
+      <button class="pcls" onclick="closeTim()">&#x2715;</button>
+    </div>
+    <div class="tdisp" id="tdisp">3:00</div>
+    <div class="tpre">
+      <button onclick="setTim(180)">3:00</button>
+      <button onclick="setTim(150)">2:30</button>
+      <button onclick="setTim(120)">2:00</button>
+      <button onclick="setTim(90)">1:30</button>
+    </div>
+    <div class="tctrl">
+      <button class="tgo" onclick="startTim()">&#9654; START</button>
+      <button class="tst" onclick="stopTim()">&#9632; STOP</button>
+      <button class="tre" onclick="resetTim()">&#8634; RESET</button>
+    </div>
+    <div class="pbtns">
+      <button class="bcan" onclick="closeTim()">Cancel</button>
+      <button class="bapp" onclick="saveTim()">SAVE TIME</button>
     </div>
   </div>
 </div>
@@ -123,593 +181,368 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getDatabase,ref,set,onValue}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-const FB={
-  apiKey:"AIzaSyD-qvduCnJV7sQ2Nvhjvpj6yKKTQtkn0HU",
-  authDomain:"nxl-scouting-sheet.firebaseapp.com",
-  databaseURL:"https://nxl-scouting-sheet-default-rtdb.firebaseio.com",
-  projectId:"nxl-scouting-sheet",
-  storageBucket:"nxl-scouting-sheet.firebasestorage.app",
-  messagingSenderId:"554139863559",
-  appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
+// ── YOUR FIREBASE CONFIG ──────────────────────
+const FB_CONFIG = {
+  apiKey: "AIzaSyD-qvduCnJV7sQ2Nvhjvpj6yKKTQtkn0HU",
+  authDomain: "nxl-scouting-sheet.firebaseapp.com",
+  databaseURL: "https://nxl-scouting-sheet-default-rtdb.firebaseio.com",
+  projectId: "nxl-scouting-sheet",
+  storageBucket: "nxl-scouting-sheet.firebasestorage.app",
+  messagingSenderId: "554139863559",
+  appId: "1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Baby","Beast","100","200","300"];
-const SHAPES=["SB","","S","C","GB","GW","C","","MT","MT","","MT","GW","GB","Br","T","SD"];
-const SYMS=[{s:"_",l:"Not Used"},{s:"O",l:"Dead"},{s:"S",l:"Snake"},{s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"},{s:"S\u2206",l:"Sn+Dor"},{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
-const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
-const DAYS=["Fri","Sat","Sun"];
-const PTS=15;
-const TABS=[{id:"stats",label:"Stats",day:"stats"}];
-DAYS.forEach(d=>{for(let s=1;s<=10;s++)TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
-
-const SESSION=new URLSearchParams(window.location.search).get("session")||"nxl-2026-event1";
-document.getElementById("sesslbl").textContent=SESSION;
-
-let db,activeTab="stats",data={};
-let builtTabs=new Set(); // track which tabs have been built
-let popCell=null,popMoves=[];
-let saveTimers={}; // debounce timers per tabId
-
-try{
-  const app=initializeApp(FB);
-  db=getDatabase(app);
-}catch(e){
-  document.getElementById("sst").textContent="Offline";
-  const banner=document.getElementById("err-banner");
-  banner.style.display="block";
-  banner.textContent="Firebase connection failed: "+e.message+". Check that Realtime Database is enabled in your Firebase project.";
-  console.error("Firebase:",e);
-}
-
-// ── BUILD ALL TAB SHELLS + TAB BAR ────────────
-const container=document.getElementById("sheets-container");
-const tabbar=document.getElementById("tabbar");
-
-TABS.forEach(t=>{
-  // Create sheet container (empty for now — lazy fill)
-  const wrap=document.createElement("div");
-  wrap.className="sheet-wrap";
-  wrap.id="sheet-"+t.id;
-  container.appendChild(wrap);
-
-  // Tab button
-  const tab=document.createElement("div");
-  tab.className=`tab ${t.day} ${t.id==="stats"?"stats-tab":""}`;
-  tab.textContent=t.label;
-  tab.id="tab-"+t.id;
-  tab.onclick=()=>showTab(t.id);
-  tabbar.appendChild(tab);
+// ── CONSTANTS ────────────────────────────────
+const BKS  = ["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Baby","Beast","100","200","300"];
+const SYMS = [
+  {s:"_",l:"Not Used"},{s:"O",l:"Dead"},{s:"S",l:"Snake"},
+  {s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"},{s:"S\u2206",l:"Sn+Dor"},
+  {s:"^",l:"Shallow"},{s:"v",l:"Deep"}
+];
+const DAYS = ["Fri","Sat","Sun"];
+const PTS  = 15;
+const TABS = [{id:"stats",label:"Stats",day:"stats"}];
+DAYS.forEach(d=>{
+  for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});
 });
 
-// ── SHOW TAB — instant show/hide ──────────────
-function showTab(id){
-  // Hide current
-  const cur=document.querySelector(".sheet-wrap.active");
-  if(cur)cur.classList.remove("active");
-  const curTab=document.querySelector(".tab.active");
-  if(curTab)curTab.classList.remove("active");
+// ── SESSION FROM URL ─────────────────────────
+function getSession(){
+  const p = new URLSearchParams(window.location.search);
+  return p.get('session') || 'nxl-2026-event1';
+}
+const SESSION = getSession();
+document.getElementById('sesslbl').textContent = SESSION;
 
-  // Show new
-  document.getElementById("sheet-"+id).classList.add("active");
-  document.getElementById("tab-"+id).classList.add("active");
-  activeTab=id;
+// ── STATE ────────────────────────────────────
+let db, activeTab='stats', data={};
+let aCell=null, selS=[];
+let tsecs=180, trun=false, tint=null, atCell=null;
 
-  // Lazy build if not yet built
-  if(!builtTabs.has(id)){
-    buildSheet(id);
-    builtTabs.add(id);
-  }
+// ── INIT FIREBASE ────────────────────────────
+try{
+  const app = initializeApp(FB_CONFIG);
+  db = getDatabase(app);
+}catch(e){ alert('Firebase error: '+e.message); }
 
-  updateScoreBar();
+buildTabs();
+listenFirebase();
+showTab('stats');
+
+// ── TABS ─────────────────────────────────────
+function buildTabs(){
+  const bar=document.getElementById('tabbar');
+  bar.innerHTML='';
+  TABS.forEach(t=>{
+    const el=document.createElement('div');
+    el.className=`tab ${t.day} ${t.id==='stats'?'stats-tab':''}`;
+    el.textContent=t.label;
+    el.id='tab-'+t.id;
+    el.onclick=()=>showTab(t.id);
+    bar.appendChild(el);
+  });
 }
 
-// ── FIREBASE ──────────────────────────────────
+function showTab(id){
+  activeTab=id;
+  TABS.forEach(t=>{
+    const el=document.getElementById('tab-'+t.id);
+    if(el) el.classList.toggle('active',t.id===id);
+  });
+  renderSheet(id);
+}
+
+// ── FIREBASE ─────────────────────────────────
 function listenFirebase(){
-  if(!db){document.getElementById("sst").textContent="No DB";return;}
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
-    let hasData=Object.keys(d).length>0;
     TABS.forEach(t=>{
-      if(t.id==="stats")return;
+      if(t.id==='stats') return;
       if(d[t.id]) data[t.id]=d[t.id];
-      else if(!data[t.id]) initTab(t.id); // only init if not already set
+      else initTab(t.id);
     });
-    // Always rebuild active tab with latest data
-    if(activeTab==="stats"){
-      const sw=document.getElementById("sheet-stats");
-      if(sw){sw.innerHTML="";buildStats(sw);}
-    } else {
-      if(builtTabs.has(activeTab)){
-        refreshSheet(activeTab);
-      } else {
-        buildSheet(activeTab);
-        builtTabs.add(activeTab);
-      }
-    }
+    renderSheet(activeTab);
     updateScoreBar();
-    document.getElementById("sst").textContent="Live \u2014 Synced";
+    document.getElementById('sst').textContent='Live \u2014 Synced';
   });
 }
 
 function initTab(id){
-  if(data[id])return;
+  if(data[id]) return;
   data[id]={
-    m1:{t1name:"",t2name:"",t1pts:blankPts(),t2pts:blankPts()},
-    m2:{t1name:"",t2name:"",t1pts:blankPts(),t2pts:blankPts()}
+    m1:{t1name:'',t2name:'',t1pts:blankPts(),t2pts:blankPts()},
+    m2:{t1name:'',t2name:'',t1pts:blankPts(),t2pts:blankPts()}
   };
 }
 
 function blankPts(){
   return Array.from({length:PTS},()=>{
-    const p={wl:"",rb:"",time:"",notes:""};
-    BKS.forEach(b=>p[b]=[]);
+    const p={wl:'',rb:'',time:'',notes:''};
+    BKS.forEach(b=>p[b]='');
     return p;
   });
 }
 
-function saveTab(id){
-  if(!db)return;
-  clearTimeout(saveTimers[id]);
-  saveTimers[id]=setTimeout(()=>{
-    set(ref(db,`sessions/${SESSION}/${id}`),data[id]);
-  },400); // debounce 400ms
-}
+function saveTab(id){ if(db) set(ref(db,`sessions/${SESSION}/${id}`),data[id]); }
 
-// ── SCORE BAR ─────────────────────────────────
+// ── SCORE BAR ────────────────────────────────
 function updateScoreBar(){
-  const bar=document.getElementById("scorebar");
-  if(activeTab==="stats"){bar.innerHTML="<span style='color:#888;font-size:11px'>Event Stats</span>";return;}
+  const bar=document.getElementById('scorebar');
+  if(activeTab==='stats'){bar.innerHTML='<span style="color:#888;font-size:11px">Event Stats</span>';return;}
   const td=data[activeTab];
-  if(!td){bar.innerHTML="";return;}
-  const sc=(mk,tk)=>(data[activeTab][mk][tk]||[]).filter(p=>p.wl==="W").length;
+  if(!td){bar.innerHTML='';return;}
+  const s=([mk,tk])=>data[activeTab][mk][tk].filter(p=>p.wl==='W').length;
   bar.innerHTML=`
     <span class="sc-lbl">M1:</span>
-    <span class="sc-red">${td.m1.t1name||"Top Team"} ${sc("m1","t1pts")}</span>
+    <span class="sc-red">${td.m1.t1name||'Top Team'} ${s(['m1','t1pts'])}</span>
     <span class="sc-lbl">vs</span>
-    <span class="sc-blue">${td.m1.t2name||"Bot Team"} ${sc("m1","t2pts")}</span>
+    <span class="sc-blue">${td.m1.t2name||'Bot Team'} ${s(['m1','t2pts'])}</span>
     &nbsp;
     <span class="sc-lbl">M2:</span>
-    <span class="sc-red">${td.m2.t1name||"Top Team"} ${sc("m2","t1pts")}</span>
+    <span class="sc-red">${td.m2.t1name||'Top Team'} ${s(['m2','t1pts'])}</span>
     <span class="sc-lbl">vs</span>
-    <span class="sc-blue">${td.m2.t2name||"Bot Team"} ${sc("m2","t2pts")}</span>
+    <span class="sc-blue">${td.m2.t2name||'Bot Team'} ${s(['m2','t2pts'])}</span>
   `;
 }
 
-// ── BUILD SHEET (first time) ──────────────────
-function buildSheet(tabId){
-  const wrap=document.getElementById("sheet-"+tabId);
-  wrap.innerHTML="";
-  if(tabId==="stats"){buildStats(wrap);return;}
+// ── RENDER ───────────────────────────────────
+function renderSheet(tabId){
+  const wrap=document.getElementById('sheetwrap');
+  if(tabId==='stats'){renderStats(wrap);return;}
   initTab(tabId);
   const td=data[tabId];
 
-  const tbl=document.createElement("table");
-  const thead=document.createElement("thead");
-  const tbody=document.createElement("tbody");
+  const tbl=document.createElement('table');
+  const thead=document.createElement('thead');
+  const tbody=document.createElement('tbody');
 
-  // Row 1
-  const r1=document.createElement("tr");r1.className="hr1";
-  const h1cols=["NXL","","","","Team",...BKS.map((_,i)=>i===8?"":("")),tabId.replace(/-/g," ").toUpperCase(),"",""];
-  ["NXL","","","","Team",...BKS.map(()=>""),"",""].forEach((t,i)=>{
-    const th=document.createElement("th");th.textContent=i===0?"NXL":i===4?"Team":i===4+Math.floor(BKS.length/2)?tabId.toUpperCase():"";
-    r1.appendChild(th);
+  // Row 1 - NXL header
+  const r1=document.createElement('tr');r1.className='hr1';
+  [['NXL',1],['Team',1],['',3],...BKS.map(()=>['',1]),[tabId,1]].forEach(([t,c])=>{
+    const th=document.createElement('th');th.textContent=t;th.colSpan=c;r1.appendChild(th);
   });
   thead.appendChild(r1);
 
-  // Row 2 shapes
-  const r2=document.createElement("tr");r2.className="hr2";
-  ["","Shapes","","","",...SHAPES,"Notes",""].forEach(t=>{
-    const th=document.createElement("th");th.textContent=t;r2.appendChild(th);
+  // Row 2 - shapes
+  const r2=document.createElement('tr');r2.className='hr2';
+  const shapes=["","Shapes","","","","SB","Br","T","C","GB","GW","C","","MT","MT","","MT","GW","GB","Br","T","SD","Notes"];
+  ['','Shapes','','','', ...BKS.map((_,i)=>shapes[i+5]||''), 'Notes'].forEach(t=>{
+    const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
   });
   thead.appendChild(r2);
 
-  // Row 3 bunker names
-  const r3=document.createElement("tr");r3.className="hr3";
-  ["*","R/B","Score","Time",...BKS,"Notes",""].forEach((t,i)=>{
-    const th=document.createElement("th");th.textContent=t;
-    if(i>=4&&i<4+BKS.length)th.classList.add("bk");
+  // Row 3 - bunker names
+  const r3=document.createElement('tr');r3.className='hr3';
+  ['*','R/B','Score','Time',...BKS,'Notes'].forEach((t,i)=>{
+    const th=document.createElement('th');th.textContent=t;
+    if(i>=4&&i<4+BKS.length) th.classList.add('bk');
     r3.appendChild(th);
   });
   thead.appendChild(r3);
   tbl.appendChild(thead);
 
-  buildMatchRows(tbody,tabId,"m1",td.m1);
+  // Match 1
+  renderMatch(tbody,tabId,'m1',td.m1);
 
-  const sep=document.createElement("tr");sep.className="msep";
-  const sepc=document.createElement("td");sepc.colSpan=6+BKS.length;
-  sepc.textContent="\u2500\u2500\u2500\u2500  MATCH 2  \u2500\u2500\u2500\u2500";
+  // Match separator
+  const sep=document.createElement('tr');sep.className='msep';
+  const sepc=document.createElement('td');sepc.colSpan=5+BKS.length+1;
+  sepc.textContent='\u2500\u2500\u2500\u2500\u2500  MATCH 2  \u2500\u2500\u2500\u2500\u2500';
   sep.appendChild(sepc);tbody.appendChild(sep);
 
-  buildMatchRows(tbody,tabId,"m2",td.m2);
+  // Match 2
+  renderMatch(tbody,tabId,'m2',td.m2);
 
-  const kr=document.createElement("tr");kr.className="keyrow";
-  const kt=document.createElement("td");kt.colSpan=6+BKS.length;
-  kt.textContent="Key: O=Dead S=Snake \u2206=Dorito X=Dived S\u2206=Sn+Dor ^=Shallow v=Deep _=Not Used | \uD83D\uDFE2Primary \uD83D\uDFE1Secondary \uD83D\uDD34Tertiary | Mi=Minor Mj=Major";
+  // Key row
+  const kr=document.createElement('tr');kr.className='keyrow';
+  const kt=document.createElement('td');kt.colSpan=5+BKS.length+1;
+  kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used';
   kr.appendChild(kt);tbody.appendChild(kr);
 
   tbl.appendChild(tbody);
+  wrap.innerHTML='';
   wrap.appendChild(tbl);
+  updateScoreBar();
 }
 
-function buildMatchRows(tbody,tabId,mk,md){
-  addTeamHdr(tbody,tabId,mk,"t1name",md.t1name,"Top Team");
-  md.t1pts.forEach((_,i)=>tbody.appendChild(buildRow(tabId,mk,"t1pts",i)));
-  addTeamHdr(tbody,tabId,mk,"t2name",md.t2name,"Bottom Team");
-  md.t2pts.forEach((_,i)=>tbody.appendChild(buildRow(tabId,mk,"t2pts",i)));
+function renderMatch(tbody,tabId,mk,md){
+  // Top team header
+  addTeamHdr(tbody,tabId,mk,'t1name',md.t1name,'Top Team');
+  md.t1pts.forEach((pt,i)=>tbody.appendChild(makeRow(tabId,mk,'t1pts',i,pt)));
+
+  // Bottom team header
+  addTeamHdr(tbody,tabId,mk,'t2name',md.t2name,'Bottom Team');
+  md.t2pts.forEach((pt,i)=>tbody.appendChild(makeRow(tabId,mk,'t2pts',i,pt)));
 }
 
-function addTeamHdr(tbody,tabId,mk,nk,val,ph){
-  const tr=document.createElement("tr");tr.className="teamhdr";
-  const td=document.createElement("td");td.colSpan=6+BKS.length;
-  const inp=document.createElement("input");
-  inp.value=val||"";inp.placeholder=ph;
-  inp.id=`tn-${tabId}-${mk}-${nk}`;
-  inp.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTab(tabId);};
+function addTeamHdr(tbody,tabId,mk,nameKey,val,placeholder){
+  const tr=document.createElement('tr');tr.className='teamhdr';
+  const td=document.createElement('td');td.colSpan=5+BKS.length+1;
+  const inp=document.createElement('input');
+  inp.value=val||'';inp.placeholder=placeholder;
+  inp.onchange=e=>{data[tabId][mk][nameKey]=e.target.value;saveTab(tabId);};
   td.appendChild(inp);tr.appendChild(td);tbody.appendChild(tr);
 }
 
-function buildRow(tabId,mk,tk,idx){
-  const pt=data[tabId][mk][tk][idx];
-  const row=document.createElement("tr");
-  row.id=`row-${tabId}-${mk}-${tk}-${idx}`;
+function makeRow(tabId,mk,tk,idx,pt){
+  const row=document.createElement('tr');
 
   // Pt#
-  const tdPt=document.createElement("td");tdPt.className="cpt";tdPt.textContent=idx+1;row.appendChild(tdPt);
+  const tdPt=document.createElement('td');tdPt.className='cpt';tdPt.textContent=idx+1;row.appendChild(tdPt);
 
   // W/L
-  const tdWL=document.createElement("td");
-  tdWL.className=`cwl ${pt.wl||""}`;tdWL.textContent=pt.wl||"";
-  tdWL.id=`wl-${tabId}-${mk}-${tk}-${idx}`;
-  tdWL.onclick=()=>cycleWL(tabId,mk,tk,idx);
+  const tdWL=document.createElement('td');tdWL.className='cwl '+(pt.wl||'');tdWL.textContent=pt.wl||'';
+  tdWL.onclick=()=>{
+    const c=data[tabId][mk][tk][idx].wl;
+    data[tabId][mk][tk][idx].wl=c===''?'W':c==='W'?'L':'';
+    saveTab(tabId);renderSheet(activeTab);
+  };
   row.appendChild(tdWL);
 
   // R/B
-  const tdRB=document.createElement("td");
-  tdRB.className=`crb ${pt.rb||""}`;tdRB.textContent=pt.rb||"";
-  tdRB.id=`rb-${tabId}-${mk}-${tk}-${idx}`;
-  tdRB.onclick=()=>cycleRB(tabId,mk,tk,idx);
+  const tdRB=document.createElement('td');tdRB.className='crb '+(pt.rb||'');tdRB.textContent=pt.rb||'';
+  tdRB.onclick=()=>{
+    const c=data[tabId][mk][tk][idx].rb;
+    data[tabId][mk][tk][idx].rb=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
+    saveTab(tabId);renderSheet(activeTab);
+  };
   row.appendChild(tdRB);
 
   // Score
-  const tdSc=document.createElement("td");tdSc.className="csc";
-  tdSc.id=`sc-${tabId}-${mk}-${tk}-${idx}`;
-  tdSc.textContent=calcScore(tabId,mk,tk,idx)||"";
+  const tdSc=document.createElement('td');tdSc.className='csc';
+  let sc=0;for(let i=0;i<=idx;i++) if(data[tabId][mk][tk][i]?.wl==='W') sc++;
+  tdSc.textContent=sc||'';
   row.appendChild(tdSc);
 
-  // Time - manual input
-  const tdTm=document.createElement("td");tdTm.className="ctm";
-  const timInp=document.createElement("input");
-  timInp.type="text";timInp.value=pt.time||"";timInp.placeholder="0:00";
-  timInp.onchange=e=>{data[tabId][mk][tk][idx].time=e.target.value;saveTab(tabId);};
-  tdTm.appendChild(timInp);row.appendChild(tdTm);
+  // Time
+  const tdTm=document.createElement('td');tdTm.className='ctm';tdTm.textContent=pt.time||'\u2014';
+  tdTm.onclick=()=>openTim(tabId,mk,tk,idx);
+  row.appendChild(tdTm);
 
   // Bunkers
   BKS.forEach(b=>{
-    const td=document.createElement("td");td.className="cbk";
-    td.id=`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`;
-    renderBkCell(td,pt[b]||[]);
-    td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b);
+    const v=pt[b]||'';
+    const td=document.createElement('td');
+    td.className='cbk '+(v.includes('O')?'hasO':v.includes('S')?'hasS':v.includes('X')?'hasX':'');
+    td.textContent=v;
+    td.onclick=()=>openSym(tabId,mk,tk,idx,b,v);
     row.appendChild(td);
   });
 
   // Notes
-  const tdNo=document.createElement("td");tdNo.className="cno";
-  const noteInp=document.createElement("input");
-  noteInp.type="text";noteInp.value=pt.notes||"";noteInp.placeholder="notes...";
-  noteInp.oninput=e=>{data[tabId][mk][tk][idx].notes=e.target.value;saveTab(tabId);};
-  tdNo.appendChild(noteInp);row.appendChild(tdNo);
-
-  // Key col
-  const tdK=document.createElement("td");row.appendChild(tdK);
+  const tdNo=document.createElement('td');tdNo.className='cno';
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=pt.notes||'';inp.placeholder='notes...';
+  inp.oninput=e=>{data[tabId][mk][tk][idx].notes=e.target.value;saveTab(tabId);};
+  tdNo.appendChild(inp);row.appendChild(tdNo);
 
   return row;
 }
 
-// ── REFRESH SHEET (on firebase update — only update changed cells) ───
-function refreshSheet(tabId){
-  if(!builtTabs.has(tabId))return;
-  initTab(tabId);
-  const td=data[tabId];
-  ["m1","m2"].forEach(mk=>{
-    ["t1pts","t2pts"].forEach(tk=>{
-      // Update team name inputs
-      const nk=tk==="t1pts"?"t1name":"t2name";
-      const tnInp=document.getElementById(`tn-${tabId}-${mk}-${nk}`);
-      if(tnInp&&document.activeElement!==tnInp)tnInp.value=td[mk][nk]||"";
-
-      (td[mk][tk]||[]).forEach((pt,idx)=>{
-        // W/L
-        const wlEl=document.getElementById(`wl-${tabId}-${mk}-${tk}-${idx}`);
-        if(wlEl){wlEl.className=`cwl ${pt.wl||""}`;wlEl.textContent=pt.wl||"";}
-        // R/B
-        const rbEl=document.getElementById(`rb-${tabId}-${mk}-${tk}-${idx}`);
-        if(rbEl){rbEl.className=`crb ${pt.rb||""}`;rbEl.textContent=pt.rb||"";}
-        // Score
-        const scEl=document.getElementById(`sc-${tabId}-${mk}-${tk}-${idx}`);
-        if(scEl)scEl.textContent=calcScore(tabId,mk,tk,idx)||"";
-        // Bunkers
-        BKS.forEach(b=>{
-          const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`);
-          if(bkEl)renderBkCell(bkEl,pt[b]||[]);
-        });
-      });
-    });
-  });
-  updateScoreBar();
-}
-
-function calcScore(tabId,mk,tk,idx){
-  let s=0;
-  for(let i=0;i<=idx;i++)if(data[tabId][mk][tk][i]?.wl==="W")s++;
-  return s;
-}
-
-function renderBkCell(td,moves){
-  td.innerHTML="";
-  if(!moves||!moves.length)return;
-  moves.forEach((mv,i)=>{
-    const span=document.createElement("span");
-    let txt=mv.sym||"";
-    if(mv.pen&&mv.pen!=="none")txt+="\u1D39"+(mv.pen==="Mi"?"\u1D35":"\u02B2");
-    span.textContent=txt;
-    if(mv.order==="primary")span.style.cssText="color:#1b5e20;font-weight:bold";
-    else if(mv.order==="secondary")span.style.cssText="color:#e65100;font-weight:bold";
-    else span.style.cssText="color:#b71c1c;font-weight:bold";
-    td.appendChild(span);
-    if(i<moves.length-1){const sp=document.createElement("span");sp.textContent=" ";td.appendChild(sp);}
-  });
-}
-
-// ── W/L and R/B cycles (update single cell) ──
-function cycleWL(tabId,mk,tk,idx){
-  const c=data[tabId][mk][tk][idx].wl;
-  data[tabId][mk][tk][idx].wl=c===""?"W":c==="W"?"L":"";
-  saveTab(tabId);
-  const el=document.getElementById(`wl-${tabId}-${mk}-${tk}-${idx}`);
-  const v=data[tabId][mk][tk][idx].wl;
-  if(el){el.className=`cwl ${v}`;el.textContent=v;}
-  // Update all score cells in this team column
-  for(let i=0;i<PTS;i++){
-    const scEl=document.getElementById(`sc-${tabId}-${mk}-${tk}-${i}`);
-    if(scEl)scEl.textContent=calcScore(tabId,mk,tk,i)||"";
-  }
-  updateScoreBar();
-}
-
-function cycleRB(tabId,mk,tk,idx){
-  const c=data[tabId][mk][tk][idx].rb;
-  data[tabId][mk][tk][idx].rb=c==="Red"?"Blue":c==="Blue"?"":c===""?"Red":"Red";
-  saveTab(tabId);
-  const el=document.getElementById(`rb-${tabId}-${mk}-${tk}-${idx}`);
-  const v=data[tabId][mk][tk][idx].rb;
-  if(el){el.className=`crb ${v}`;el.textContent=v;}
-}
-
-// ── MOVE POPUP ────────────────────────────────
-function openMovePopup(tabId,mk,tk,idx,bk){
-  popCell={tabId,mk,tk,idx,bk};
-  const existing=data[tabId][mk][tk][idx][bk]||[];
-  popMoves=JSON.parse(JSON.stringify(existing));
-  document.getElementById("pop-pt").textContent=idx+1;
-  document.getElementById("pop-bk").textContent=bk;
-  buildMoveContent();
-  document.getElementById("moveo").classList.add("open");
-}
-
-function buildMoveContent(){
-  const cont=document.getElementById("move-content");
-  cont.innerHTML="";
-
-  // Summary of moves already added
-  if(popMoves.length>0){
-    const sumDiv=document.createElement("div");sumDiv.className="move-summary";
-    popMoves.forEach((mv,i)=>{
-      const row=document.createElement("div");row.className="ms-row";
-      const dot=document.createElement("span");
-      dot.className="dot "+(mv.order==="primary"?"dot-g":mv.order==="secondary"?"dot-y":"dot-r");
-      dot.textContent=i+1;
-      const sym=document.createElement("span");
-      sym.style.fontWeight="bold";sym.style.fontSize="13px";
-      sym.style.color=mv.order==="primary"?"#1b5e20":mv.order==="secondary"?"#e65100":"#b71c1c";
-      sym.textContent=mv.sym||"";
-      const bkSpan=document.createElement("span");bkSpan.style.color="#555";
-      bkSpan.textContent=mv.bk+(mv.pen&&mv.pen!=="none"?" ("+mv.pen+")":"");
-      const del=document.createElement("span");
-      del.textContent="\u2715";del.style.cssText="color:#aaa;cursor:pointer;margin-left:auto;font-size:12px";
-      del.onclick=()=>{popMoves.splice(i,1);buildMoveContent();};
-      row.appendChild(dot);row.appendChild(sym);row.appendChild(bkSpan);row.appendChild(del);
-      sumDiv.appendChild(row);
-    });
-    cont.appendChild(sumDiv);
-  }
-
-  const nextOrder=popMoves.length===0?"primary":popMoves.length===1?"secondary":"tertiary";
-  if(popMoves.length<3){
-    const stepLbl=document.createElement("div");stepLbl.className="step-lbl";
-    const dotEl=document.createElement("span");
-    dotEl.className="dot "+(nextOrder==="primary"?"dot-g":nextOrder==="secondary"?"dot-y":"dot-r");
-    dotEl.textContent=popMoves.length+1;
-    stepLbl.appendChild(dotEl);
-    const orderName={primary:"\uD83D\uDFE2 Primary Move",secondary:"\uD83D\uDFE1 Secondary Move",tertiary:"\uD83D\uDD34 Tertiary Move"};
-    stepLbl.appendChild(document.createTextNode(" "+orderName[nextOrder]));
-    cont.appendChild(stepLbl);
-
-    if(nextOrder!=="primary"){
-      const bkLbl=document.createElement("div");bkLbl.className="field-lbl";
-      bkLbl.textContent="Destination bunker:";cont.appendChild(bkLbl);
-      const bkGrid=document.createElement("div");bkGrid.className="bkgrid";
-      BKS.forEach(b=>{
-        const btn=document.createElement("button");btn.className="bkbtn";btn.textContent=b;
-        btn.onclick=()=>{
-          document.querySelectorAll(".bkbtn").forEach(x=>{x.classList.remove("sel-y","sel-r");});
-          btn.classList.add(nextOrder==="secondary"?"sel-y":"sel-r");
-          showSymPicker(cont,nextOrder,b);
-        };
-        bkGrid.appendChild(btn);
-      });
-      cont.appendChild(bkGrid);
-    } else {
-      showSymPicker(cont,nextOrder,popCell.bk);
-    }
-  }
-}
-
-function showSymPicker(cont,order,bk){
-  document.querySelector(".sym-section")?.remove();
-  const sec=document.createElement("div");sec.className="sym-section";
-
-  const symLbl=document.createElement("div");symLbl.className="field-lbl";symLbl.textContent="Symbol:";sec.appendChild(symLbl);
-  const symGrid=document.createElement("div");symGrid.className="symgrid";
-  let selSym="";
-
-  SYMS.forEach(({s,l})=>{
-    const btn=document.createElement("button");btn.className="sym";
-    btn.innerHTML=s+"<span class='sl'>"+l+"</span>";
-    btn.onclick=()=>{document.querySelectorAll(".sym-section .sym").forEach(x=>x.classList.remove("sel"));btn.classList.add("sel");selSym=s;};
-    symGrid.appendChild(btn);
-  });
-  sec.appendChild(symGrid);
-
-  const penLbl=document.createElement("div");penLbl.className="field-lbl";penLbl.textContent="Penalty (optional):";sec.appendChild(penLbl);
-  const penRow=document.createElement("div");penRow.className="pen-row";
-  let selPen="none";
-  ["Minor (Mi)","Major (Mj)"].forEach((lbl,i)=>{
-    const btn=document.createElement("button");btn.className="pen-btn";btn.textContent=lbl;
-    btn.onclick=()=>{
-      const code=i===0?"Mi":"Mj";
-      if(selPen===code){selPen="none";btn.classList.remove("sel");}
-      else{document.querySelectorAll(".pen-btn").forEach(x=>x.classList.remove("sel"));btn.classList.add("sel");selPen=code;}
-    };
-    penRow.appendChild(btn);
-  });
-  sec.appendChild(penRow);
-
-  const confirmBtn=document.createElement("button");confirmBtn.className="confirm-btn";
-  confirmBtn.textContent=order==="primary"?"\u2713 Confirm Primary":"\u2713 Add This Move";
-  confirmBtn.onclick=()=>{
-    if(!selSym){alert("Pick a symbol first.");return;}
-    popMoves.push({bk,sym:selSym,order,pen:selPen});
-    buildMoveContent();
-  };
-  sec.appendChild(confirmBtn);
-  cont.appendChild(sec);
-}
-
-window.closeMove=()=>{document.getElementById("moveo").classList.remove("open");popCell=null;popMoves=[];};
-
-window.applyMove=()=>{
-  if(!popCell)return;
-  if(popMoves.length===0){
-    // Nothing confirmed yet - just close
-    closeMove();return;
-  }
-  const{tabId,mk,tk,idx,bk}=popCell;
-  // Clear primary bunker
-  data[tabId][mk][tk][idx][bk]=[];
-  // Clear all secondary/tertiary bunkers involved
-  popMoves.forEach(mv=>{data[tabId][mk][tk][idx][mv.bk]=[];});
-  // Set moves
-  popMoves.forEach(mv=>{
-    if(!Array.isArray(data[tabId][mk][tk][idx][mv.bk]))data[tabId][mk][tk][idx][mv.bk]=[];
-    data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
-  });
-  saveTab(tabId);
-  // Update only affected cells
-  [bk,...popMoves.map(m=>m.bk)].forEach(b=>{
-    const bkEl=document.getElementById(`bk-${tabId}-${mk}-${tk}-${idx}-${BKS.indexOf(b)}`);
-    if(bkEl)renderBkCell(bkEl,data[tabId][mk][tk][idx][b]||[]);
-  });
-  closeMove();
-};
-
-document.getElementById("moveo").addEventListener("click",function(e){if(e.target.id==="moveo")closeMove();});
-
-// ── STATS ─────────────────────────────────────
-function buildStats(wrap){
-  const bkAll={};BKS.forEach(b=>bkAll[b]={runs:0,deaths:0});
-  const teamStats={};TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0});});
-
+// ── STATS ────────────────────────────────────
+function renderStats(wrap){
+  const bk={};
+  BKS.forEach(b=>{bk[b]={runs:0,deaths:0};});
   TABS.forEach(t=>{
-    if(t.id==="stats"||!data[t.id])return;
-    ["m1","m2"].forEach(mk=>{
+    if(t.id==='stats'||!data[t.id]) return;
+    ['m1','m2'].forEach(mk=>{
       const md=data[t.id][mk];
-      ["t1pts","t2pts"].forEach((tk,ti)=>{
-        const tname=ti===0?md.t1name:md.t2name;
+      ['t1pts','t2pts'].forEach(tk=>{
         (md[tk]||[]).forEach(pt=>{
           BKS.forEach(b=>{
-            (pt[b]||[]).forEach(mv=>{
-              if(mv.sym&&mv.sym!=="_"){
-                bkAll[b].runs++;
-                if(tname&&teamStats[tname])teamStats[tname][b].runs++;
-              }
-              if(mv.sym&&mv.sym.includes("O")){
-                bkAll[b].deaths++;
-                if(tname&&teamStats[tname])teamStats[tname][b].deaths++;
-              }
-            });
+            const v=pt[b]||'';
+            if(v&&v!=='_') bk[b].runs++;
+            if(v.includes('O')) bk[b].deaths++;
           });
         });
       });
     });
   });
 
-  const div=document.createElement("div");div.className="stats-wrap";
-  const h2=document.createElement("h2");h2.textContent="Event Stats — All Matches";div.appendChild(h2);
-  const note=document.createElement("p");note.style.cssText="font-size:11px;color:#888;margin-bottom:10px";
-  note.textContent="Stats update automatically as match data is entered.";div.appendChild(note);
-  div.appendChild(makeStatsTbl(bkAll));
-
-  const h2b=document.createElement("h2");h2b.style.marginTop="20px";h2b.textContent="Team Stats";div.appendChild(h2b);
-  TEAMS.forEach(team=>{
-    const h3=document.createElement("h3");h3.textContent=team;div.appendChild(h3);
-    div.appendChild(makeStatsTbl(teamStats[team]));
-  });
-  wrap.appendChild(div);
-}
-
-function makeStatsTbl(bkData){
-  const tbl=document.createElement("table");tbl.className="stats-tbl";
-  const hdr=document.createElement("tr");
-  ["Bunker","Shape","Bunkers Off Break","Deaths Off Break","Death %","Kills Off Break","Kill %"].forEach(h=>{
-    const th=document.createElement("th");th.textContent=h;hdr.appendChild(th);
+  const div=document.createElement('div');div.className='stats-wrap';
+  div.innerHTML='<h2>Event Stats \u2014 All Matches</h2>';
+  const tbl=document.createElement('table');tbl.className='stats-tbl';
+  const hdr=document.createElement('tr');
+  ['Bunker','Runs','Deaths','Death %'].forEach(h=>{
+    const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
   });
   tbl.appendChild(hdr);
-  let totR=0,totD=0;
-  BKS.forEach((b,i)=>{
-    const s=bkData[b]||{runs:0,deaths:0};
-    totR+=s.runs;totD+=s.deaths;
-    const pct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+"%":"\u2014";
-    const tr=document.createElement("tr");
-    [b,SHAPES[i]||"",s.runs,s.deaths,pct,s.deaths,pct].forEach(v=>{
-      const td=document.createElement("td");td.textContent=v;tr.appendChild(td);
+  BKS.forEach(b=>{
+    const s=bk[b];
+    const pct=s.runs>0?Math.round((s.deaths/s.runs)*100)+'%':'\u2014';
+    const tr=document.createElement('tr');
+    [b,s.runs,s.deaths,pct].forEach(v=>{
+      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
     });
     tbl.appendChild(tr);
   });
-  const totPct=totR>0?(totD/totR*100).toFixed(0)+"%":"\u2014";
-  const totTr=document.createElement("tr");totTr.className="tot";
-  ["TOTAL","",totR,totD,totPct,totD,totPct].forEach(v=>{
-    const td=document.createElement("td");td.textContent=v;totTr.appendChild(td);
+  div.appendChild(tbl);
+  wrap.innerHTML='';wrap.appendChild(div);
+}
+
+// ── SYMBOL POPUP ─────────────────────────────
+function openSym(tabId,mk,tk,idx,bk,cur){
+  aCell={tabId,mk,tk,idx,bk};
+  selS=cur&&cur!==''?(cur==='S\u2206'?['S\u2206']:cur.split('')):[];
+  document.getElementById('ppt').textContent=idx+1;
+  document.getElementById('pbk').textContent=bk;
+  buildSymGrid();updPrev();
+  document.getElementById('symo').classList.add('open');
+}
+function buildSymGrid(){
+  const g=document.getElementById('symgrid');g.innerHTML='';
+  SYMS.forEach(({s,l})=>{
+    const b=document.createElement('button');
+    b.className='sym '+(selS.includes(s)?'sel':'');
+    b.innerHTML=s+'<span class="sl">'+l+'</span>';
+    b.onclick=()=>togSym(s);g.appendChild(b);
   });
-  tbl.appendChild(totTr);
-  return tbl;
+}
+function togSym(s){
+  if(s==='_'){selS=['_'];buildSymGrid();updPrev();return;}
+  selS=selS.filter(x=>x!=='_');
+  const i=selS.indexOf(s);
+  if(i>=0)selS.splice(i,1);else selS.push(s);
+  buildSymGrid();updPrev();
+}
+function updPrev(){document.getElementById('pval').textContent=selS.join('')||'\u2014';}
+window.clrSym=()=>{selS=[];buildSymGrid();updPrev();};
+window.closeSym=()=>{document.getElementById('symo').classList.remove('open');aCell=null;selS=[];};
+window.applySym=()=>{
+  if(!aCell)return;
+  const{tabId,mk,tk,idx,bk}=aCell;
+  data[tabId][mk][tk][idx][bk]=selS.join('');
+  saveTab(tabId);closeSym();renderSheet(activeTab);
+};
+
+// ── TIMER ────────────────────────────────────
+function openTim(tabId,mk,tk,idx){
+  atCell={tabId,mk,tk,idx};tsecs=180;trun=false;clearInterval(tint);updTim();
+  document.getElementById('timo').classList.add('open');
+}
+window.closeTim=()=>{stopTim();document.getElementById('timo').classList.remove('open');atCell=null;};
+window.setTim=s=>{stopTim();tsecs=s;updTim();};
+window.startTim=()=>{if(trun)return;trun=true;tint=setInterval(()=>{if(tsecs>0){tsecs--;updTim();}else stopTim();},1000);};
+window.stopTim=()=>{trun=false;clearInterval(tint);};
+window.resetTim=()=>{stopTim();tsecs=180;updTim();};
+window.saveTim=()=>{
+  if(!atCell)return;
+  const{tabId,mk,tk,idx}=atCell;
+  const m=Math.floor(tsecs/60),s=String(tsecs%60).padStart(2,'0');
+  data[tabId][mk][tk][idx].time=`${m}:${s}`;
+  saveTab(tabId);closeTim();renderSheet(activeTab);
+};
+function updTim(){
+  const m=Math.floor(tsecs/60),s=String(tsecs%60).padStart(2,'0');
+  document.getElementById('tdisp').textContent=`${m}:${s}`;
 }
 
-// ── START ─────────────────────────────────────
-// Ensure sheets-container has explicit pixel height for Safari absolute positioning
-function fixHeight(){
-  const toolbar=document.querySelector('.gs-toolbar');
-  const scorebar=document.getElementById('scorebar');
-  const tabbar=document.getElementById('tabbar');
-  const errbanner=document.getElementById('err-banner');
-  const container=document.getElementById('sheets-container');
-  const usedH=(toolbar?toolbar.offsetHeight:0)+(scorebar?scorebar.offsetHeight:0)+(tabbar?tabbar.offsetHeight:0)+(errbanner&&errbanner.style.display!='none'?errbanner.offsetHeight:0);
-  container.style.height=(window.innerHeight-usedH)+'px';
-}
-window.addEventListener('resize',fixHeight);
-setTimeout(fixHeight,100);
-
-listenFirebase();
-showTab("stats");
+// Close popups on overlay tap
+['symo','timo'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){
+    if(e.target.id===id){id==='symo'?closeSym():closeTim();}
+  });
+});
 </script>
 
 </body>
