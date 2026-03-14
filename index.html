@@ -206,10 +206,14 @@ function showTab(id){
   const panel=document.getElementById('panel-'+id);
   if(panel) panel.classList.add('active');
 
-  // Build or re-render if needed
-  if(!panelBuilt[id]||panelDirty[id]){
+  // Always build if never built; re-render if data changed
+  if(!panelBuilt[id]){
+    initTab(id);
     renderIntoPanel(id);
     panelBuilt[id]=true;
+    panelDirty[id]=false;
+  } else if(panelDirty[id]){
+    renderIntoPanel(id);
     panelDirty[id]=false;
   }
   updateScoreBar();
