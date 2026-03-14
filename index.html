@@ -133,7 +133,7 @@ const FB={
   projectId:"nxl-scouting-sheet",
   storageBucket:"nxl-scouting-sheet.firebasestorage.app",
   messagingSenderId:"554139863559",
-  appId:"1:554129863559:web:d7de30408e90bf29ceb8a2"
+  appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
 const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Baby","Beast","100","200","300"];
@@ -166,14 +166,6 @@ catch(e){alert('Firebase: '+e.message);}
 
 buildTabs();
 createPanels();
-
-// TEST: pre-load dummy data for first tab to verify rendering works
-const testTab='fri-set1';
-initTab(testTab);
-data[testTab].m1.t1name='Test Team Red';
-data[testTab].m1.t2name='Test Team Blue';
-panelBuilt[testTab]=false;
-
 listenFirebase();
 requestAnimationFrame(()=>showTab('stats'));
 
