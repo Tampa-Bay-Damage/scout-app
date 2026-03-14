@@ -219,21 +219,34 @@ function showTab(id){
 function listenFirebase(){
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
+    let anyChanged=false;
     TABS.forEach(t=>{
       if(t.id==='stats') return;
-      if(d[t.id]) data[t.id]=d[t.id];
+      const incoming=d[t.id]||null;
+      const incomingStr=JSON.stringify(incoming);
+      const existingStr=JSON.stringify(data[t.id]||null);
+      if(incomingStr===existingStr) return; // nothing changed, skip
+      anyChanged=true;
+      if(incoming) data[t.id]=incoming;
       else initTab(t.id);
-      // Mark dirty so it re-renders next time it's shown
+      // Only mark dirty — don't force re-render yet
       panelDirty[t.id]=true;
     });
-    // Re-render active tab immediately; others render lazily on next visit
-    if(activeTab!=='stats'){
-      renderIntoPanel(activeTab);
-      panelDirty[activeTab]=false;
+
+    if(!anyChanged){
+      document.getElementById('sst').textContent='Live \u2014 Synced';
+      return;
     }
-    // Stats always needs refresh when data changes
-    panelDirty['stats']=true;
-    if(activeTab==='stats'){
+
+    // Re-render active tab if it changed; others render lazily on next visit
+    if(panelDirty[activeTab]){
+      if(activeTab==='stats'||panelBuilt[activeTab]){
+        renderIntoPanel(activeTab);
+        panelDirty[activeTab]=false;
+        panelBuilt[activeTab]=true;
+      }
+    }
+    if(activeTab==='stats'&&anyChanged){
       renderIntoPanel('stats');
       panelDirty['stats']=false;
     }
