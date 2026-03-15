@@ -423,11 +423,20 @@ function makeRow(tabId,mk,tk,idx,pt){
   }
   applyWLStyle();
   wlSel.onchange=()=>{
-    data[tabId][mk][tk][idx].wl=wlSel.value;
+    const v=wlSel.value;
+    data[tabId][mk][tk][idx].wl=v;
     applyWLStyle();
+    // Auto-update opposite team
+    const oppTk=tk==='t1pts'?'t2pts':'t1pts';
+    const oppWL=v==='W'?'L':v==='L'?'W':v; // W→L, L→W, NP→NP, blank→blank
+    data[tabId][mk][oppTk][idx].wl=oppWL;
     saveTab(tabId);
     updateScoreCell(tabId,mk,tk);
+    updateScoreCell(tabId,mk,oppTk);
     updateScoreBar();
+    // Re-render to reflect opp team change
+    panelBuilt[tabId]=false;
+    showTab(tabId);
   };
   tdWL.appendChild(wlSel);
   row.appendChild(tdWL);
@@ -435,10 +444,14 @@ function makeRow(tabId,mk,tk,idx,pt){
   const tdRB=document.createElement('td');tdRB.className='crb '+(pt.rb||'');tdRB.textContent=pt.rb||'';
   tdRB.onclick=()=>{
     const c=data[tabId][mk][tk][idx].rb;
-    data[tabId][mk][tk][idx].rb=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
+    const newRB=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
+    data[tabId][mk][tk][idx].rb=newRB;
+    // Auto-set opposite team to opposite color
+    const oppTk=tk==='t1pts'?'t2pts':'t1pts';
+    data[tabId][mk][oppTk][idx].rb=newRB==='Red'?'Blue':newRB==='Blue'?'Red':'';
     saveTab(tabId);
-    tdRB.className='crb '+(data[tabId][mk][tk][idx].rb||'');
-    tdRB.textContent=data[tabId][mk][tk][idx].rb||'';
+    panelBuilt[tabId]=false;
+    showTab(tabId);
   };
   row.appendChild(tdRB);
 
@@ -462,7 +475,14 @@ function makeRow(tabId,mk,tk,idx,pt){
   const tdTm=document.createElement('td');tdTm.className='ctm';
   const timInp=document.createElement('input');
   timInp.type='text';timInp.value=pt.time||'';timInp.placeholder='0:00';
-  timInp.onchange=e=>{data[tabId][mk][tk][idx].time=e.target.value;saveTab(tabId);};
+  timInp.onchange=e=>{
+    const t=e.target.value;
+    data[tabId][mk][tk][idx].time=t;
+    // Sync time to opposite team
+    const oppTk=tk==='t1pts'?'t2pts':'t1pts';
+    data[tabId][mk][oppTk][idx].time=t;
+    saveTab(tabId);
+  };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
 
   BKS.forEach(b=>{
