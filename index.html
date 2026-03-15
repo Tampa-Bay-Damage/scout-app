@@ -846,32 +846,34 @@ function renderStats(panel){
   });
 
   div.innerHTML='<h2>Event Stats \u2014 All Matches</h2>';
-  div.appendChild(makeStatsTbl(bkAll));
+  div.appendChild(makeStatsTbl(bkAll, true));
   div.innerHTML+='<h2 style="margin-top:20px">Team Stats</h2>';
   TEAMS.forEach(team=>{
     const h3=document.createElement('h3');h3.textContent=team;div.appendChild(h3);
-    div.appendChild(makeStatsTbl(teamStats[team]));
+    div.appendChild(makeStatsTbl(teamStats[team], false));
   });
   panel.appendChild(div);
 }
 
-function makeStatsTbl(bkData){
+function makeStatsTbl(bkData, killsOnly){
   const tbl=document.createElement('table');tbl.className='stats-tbl';
   const hdr=document.createElement('tr');
-  ['Bunker','Shape','Bunkers Off Break','Deaths Off Break','Death %','Kills Off Break','Kill %'].forEach(h=>{
-    const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
-  });
+  const headers=killsOnly
+    ?['Bunker','Shape','Bunkers Off Break','Kills Off Break','Kill %']
+    :['Bunker','Shape','Bunkers Off Break','Deaths Off Break','Death %','Kills Off Break','Kill %'];
+  headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);});
   tbl.appendChild(hdr);
   let totRuns=0,totDeaths=0,totKills=0;
   BKS.forEach((b,i)=>{
-    const s=bkData[b]||{runs:0,deaths:0,kills:0};
+    const s=bkData[b]||{runs:0,deaths:0,kills:0,oppRuns:0};
     totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
     const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
     const killPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'\u2014';
     const tr=document.createElement('tr');
-    [b,SHAPES[i]||'',s.runs,s.deaths,deathPct,s.kills,killPct].forEach(v=>{
-      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
-    });
+    const vals=killsOnly
+      ?[b,SHAPES[i]||'',s.runs,s.kills,killPct]
+      :[b,SHAPES[i]||'',s.runs,s.deaths,deathPct,s.kills,killPct];
+    vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     tbl.appendChild(tr);
   });
   let totOppRuns=0;
@@ -879,9 +881,10 @@ function makeStatsTbl(bkData){
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
-  ['TOTAL','',totRuns,totDeaths,totDeathPct,totKills,totKillPct].forEach(v=>{
-    const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);
-  });
+  const totVals=killsOnly
+    ?['TOTAL','',totRuns,totKills,totKillPct]
+    :['TOTAL','',totRuns,totDeaths,totDeathPct,totKills,totKillPct];
+  totVals.forEach(v=>{const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);});
   tbl.appendChild(totTr);
   return tbl;
 }
