@@ -528,7 +528,7 @@ function renderBkCell(td,moves){
   td.style.padding='0';
   td.style.display='';
   if(!moves||moves.length===0) return;
-  const realMoves=moves.filter(mv=>mv.sym&&mv.sym!=='_');
+  const realMoves=moves.filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_'));
   if(realMoves.length===0) return;
 
   const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#bbdefb'};
@@ -609,7 +609,8 @@ function buildMoveContent(){
         dot.textContent=i+1;
         // Sym + seq
         const symSpan=document.createElement('span');symSpan.className='ms-sym';
-        symSpan.textContent=mv.sym+(mv.seqNum?'¹²³'[mv.seqNum-1]||mv.seqNum:'')+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
+        const dispSym=mv.isDead?'Death':(mv.sym||'');
+        symSpan.textContent=dispSym+(mv.seqNum?'¹²³'[mv.seqNum-1]||mv.seqNum:'')+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
         if(mv.order==='primary')symSpan.style.color='#1b5e20';
         else if(mv.order==='secondary')symSpan.style.color='#e65100';
         else symSpan.style.color='#b71c1c';
@@ -767,7 +768,7 @@ window.closeMove=()=>{
 window.applyMove=()=>{
   if(!popCell) return;
   const{tabId,mk,tk,idx,bk}=popCell;
-  if(!window._selSym){alert('Please pick a symbol.');return;}
+  if(!window._selSym&&!window._selDeath){alert('Please pick a symbol or select Death.');return;}
 
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
 
