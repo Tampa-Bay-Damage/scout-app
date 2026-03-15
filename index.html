@@ -276,6 +276,8 @@ function normalizeTab(tabData){
   });
   return tabData;
 }
+
+function blankPts(){
   return Array.from({length:PTS},()=>{
     const p={wl:'',rb:'',time:'',notes:''};
     BKS.forEach(b=>p[b]=[]);
