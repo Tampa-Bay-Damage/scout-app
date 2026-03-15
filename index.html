@@ -103,6 +103,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
   <div class="gs-toolbar">
     <div class="gs-title">NXL Scout 2026</div>
     <div class="sess-lbl" id="sesslbl">Loading...</div>
+    <button id="clean-btn" style="font-size:10px;padding:2px 8px;border:1px solid #f57c00;background:#fff3e0;color:#e65100;border-radius:3px;cursor:pointer;font-family:Arial,sans-serif;flex-shrink:0">Clean Data</button>
     <div class="gs-sync"><span class="sdot"></span><span id="sst">Connecting...</span></div>
   </div>
   <div class="score-bar" id="scorebar"></div>
@@ -259,17 +260,27 @@ function initTab(id){
   };
 }
 
+// Migrate legacy move format to current format
+function migrateMv(mv){
+  if(!mv) return mv;
+  // Legacy: sym 'O' or starting with 'O' = death
+  if(mv.sym&&mv.sym.startsWith('O')&&!mv.isDead){
+    return {...mv, isDead:true, sym:mv.sym.replace(/^O/,'')};
+  }
+  return mv;
+}
+
 // Normalize a point object to ensure all bunkers are arrays
 function normalizePt(pt){
   const out={wl:pt.wl||'',rb:pt.rb||'',time:pt.time||'',notes:pt.notes||''};
   BKS.forEach(b=>{
     const val=pt[b];
     if(!val||val==='') out[b]=[];
-    else if(typeof val==='string') out[b]=[{sym:val,order:'primary',pen:'none'}]; // legacy string format
-    else if(Array.isArray(val)) out[b]=val;
+    else if(typeof val==='string') out[b]=[migrateMv({sym:val,order:'primary',pen:'none'})]; // legacy string format
+    else if(Array.isArray(val)) out[b]=val.map(mv=>migrateMv(mv));
     else if(typeof val==='object'){
       // Firebase converts arrays to objects with numeric keys {0:{...},1:{...}}
-      out[b]=Object.values(val);
+      out[b]=Object.values(val).map(mv=>migrateMv(mv));
     }
     else out[b]=[];
   });
@@ -816,6 +827,53 @@ document.getElementById('btn-cls').onclick=()=>closeMove();
 document.getElementById('btn-can').onclick=()=>closeMove();
 document.getElementById('btn-app').onclick=()=>applyMove();
 document.getElementById('moveo').addEventListener('click',function(e){if(e.target.id==='moveo') closeMove();});
+
+document.getElementById('clean-btn').onclick=()=>{
+  if(!confirm('This will migrate all old death data (O symbol) to the new red cell format and save to Firebase. Continue?')) return;
+  document.getElementById('clean-btn').textContent='Cleaning...';
+  document.getElementById('clean-btn').disabled=true;
+  let saveCount=0;
+  const tabIds=TABS.filter(t=>t.id!=='stats'&&t.id!=='rosters').map(t=>t.id);
+  tabIds.forEach(tabId=>{
+    if(!data[tabId]) return;
+    // Deep clone, normalize+migrate every point
+    const cleaned=JSON.parse(JSON.stringify(data[tabId]));
+    ['m1','m2'].forEach(mk=>{
+      ['t1pts','t2pts'].forEach(tk=>{
+        (cleaned[mk][tk]||[]).forEach((pt,ptIdx)=>{
+          BKS.forEach(b=>{
+            let moves=pt[b];
+            if(!moves) {cleaned[mk][tk][ptIdx][b]=[];return;}
+            // Handle string format
+            if(typeof moves==='string') moves=[{sym:moves,order:'primary',pen:'none'}];
+            // Handle Firebase object format
+            if(!Array.isArray(moves)) moves=Object.values(moves);
+            // Migrate each move
+            cleaned[mk][tk][ptIdx][b]=moves.map(mv=>{
+              if(!mv) return null;
+              if(mv.sym&&mv.sym.startsWith('O')&&!mv.isDead){
+                return {...mv,isDead:true,sym:mv.sym.replace(/^O/,'')};
+              }
+              return mv;
+            }).filter(Boolean);
+          });
+        });
+      });
+    });
+    // Write cleaned data back to Firebase and local
+    data[tabId]=cleaned;
+    db.ref(`sessions/${SESSION}/${tabId}`).set(cleaned);
+    saveCount++;
+  });
+  // Re-render current tab
+  panelBuilt[activeTab]=false;
+  showTab(activeTab);
+  setTimeout(()=>{
+    document.getElementById('clean-btn').textContent='Clean Data';
+    document.getElementById('clean-btn').disabled=false;
+    alert(`Done! Cleaned ${saveCount} tabs.`);
+  },1000);
+};
 
 // ── ROSTERS ─────────────────────────────────
 function renderRosters(panel){
