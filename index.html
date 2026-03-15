@@ -328,9 +328,9 @@ function renderIntoPanel(tabId){
 
   // Row 3 - bunker names
   const r3=document.createElement('tr');r3.className='hr3';
-  ['*','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
+  ['*','W/L','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
     const th=document.createElement('th');th.textContent=t;
-    if(i>=4&&i<4+BKS.length) th.classList.add('bk');
+    if(i>=5&&i<5+BKS.length) th.classList.add('bk');
     r3.appendChild(th);
   });
   thead.appendChild(r3);
@@ -338,13 +338,13 @@ function renderIntoPanel(tabId){
 
   renderMatch(tbody,tabId,'m1',td.m1);
   const sep=document.createElement('tr');sep.className='msep';
-  const sepc=document.createElement('td');sepc.colSpan=6+BKS.length;
+  const sepc=document.createElement('td');sepc.colSpan=7+BKS.length;
   sepc.textContent='\u2500\u2500\u2500\u2500\u2500  MATCH 2  \u2500\u2500\u2500\u2500\u2500';
   sep.appendChild(sepc);tbody.appendChild(sep);
   renderMatch(tbody,tabId,'m2',td.m2);
 
   const kr=document.createElement('tr');kr.className='keyrow';
-  const kt=document.createElement('td');kt.colSpan=6+BKS.length;
+  const kt=document.createElement('td');kt.colSpan=7+BKS.length;
   kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used  | \ud83d\udfe2=Primary  \ud83d\udfe1=Secondary  \ud83d\udd34=Tertiary  | Mi=Minor Pen  Mj=Major Pen';
   kr.appendChild(kt);tbody.appendChild(kr);
 
@@ -361,7 +361,7 @@ function renderMatch(tbody,tabId,mk,md){
 
 function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   const tr=document.createElement('tr');tr.className='teamhdr';
-  const td=document.createElement('td');td.colSpan=6+BKS.length;
+  const td=document.createElement('td');td.colSpan=7+BKS.length;
   const inp=document.createElement('input');
   inp.value=val||'';inp.placeholder=ph;
   inp.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTab(tabId);};
@@ -568,11 +568,11 @@ function buildMoveContent(){
   seqLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;white-space:nowrap';
   seqLbl.textContent='Sequence # (optional):';
   const seqInp=document.createElement('input');
-  seqInp.type='number';seqInp.min='1';seqInp.max='9';
+  seqInp.type='text';
   seqInp.value=window._selSeq||'';
   seqInp.placeholder='—';
   seqInp.style.cssText='width:50px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;font-size:12px;text-align:center';
-  seqInp.oninput=()=>{window._selSeq=seqInp.value?parseInt(seqInp.value):null;};
+  seqInp.oninput=()=>{window._selSeq=seqInp.value||null;};
   seqRow.appendChild(seqLbl);seqRow.appendChild(seqInp);
   cont.appendChild(seqRow);
 
