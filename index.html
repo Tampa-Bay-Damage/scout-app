@@ -140,9 +140,9 @@ const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206",
 const SHAPES=["SB","","S","C","GB","GW","C","","MT","MT","","MT","GW","GB","Br","T","SD"];
 const SYMS=[
   {s:"_",l:"Not Used"},{s:"O",l:"Dead"},{s:"S",l:"Snake"},
-  {s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"},{s:"S\u2206",l:"Sn+Dor"},
-  {s:"^",l:"Shallow"},{s:"v",l:"Deep"}
+  {s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"},{s:"S\u2206",l:"Sn+Dor"}
 ];
+const MODIFIERS=[{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
 const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
 const DAYS=["Fri","Sat","Sun"];
 const PTS=15;
@@ -233,6 +233,10 @@ function listenFirebase(){
     if(!popCell){
       panelBuilt[activeTab]=false;
       showTab(activeTab);
+    } else if(activeTab==='stats'){
+      // Always refresh stats even if popup open (stats has no popup)
+      panelBuilt['stats']=false;
+      renderIntoPanel('stats');
     }
     updateScoreBar();
     document.getElementById('sst').textContent='Live \u2014 Synced';
@@ -567,6 +571,7 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
   // Reset picker
   window._selSym='';
+  window._selMod='';
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
@@ -638,6 +643,28 @@ function buildMoveContent(){
     symGrid.appendChild(btn);
   });
   cont.appendChild(symGrid);
+
+  // Depth modifier (optional) — appends to symbol
+  const modLbl=document.createElement('div');
+  modLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:8px 0 4px';
+  modLbl.textContent='Depth modifier (optional):';
+  cont.appendChild(modLbl);
+
+  const modRow=document.createElement('div');
+  modRow.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px';
+  MODIFIERS.forEach(({s,l})=>{
+    const btn=document.createElement('button');
+    btn.style.cssText='padding:8px;border:2px solid #ccc;border-radius:3px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
+    btn.textContent=s+' '+l;
+    if(window._selMod===s){btn.style.borderColor='#333';btn.style.background='#f0f0f0';}
+    btn.onclick=()=>{
+      modRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
+      if(window._selMod===s){window._selMod='';}
+      else{btn.style.borderColor='#333';btn.style.background='#f0f0f0';window._selMod=s;}
+    };
+    modRow.appendChild(btn);
+  });
+  cont.appendChild(modRow);
 
   // Order selector
   const orderLbl=document.createElement('div');
@@ -732,8 +759,9 @@ window.applyMove=()=>{
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
 
   // Push new move to array (multiple moves supported)
+  const finalSym=(window._selSym||'')+(window._selMod||'');
   data[tabId][mk][tk][idx][bk].push({
-    sym:window._selSym,
+    sym:finalSym,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
     seqNum:window._selSeq||null
@@ -743,6 +771,7 @@ window.applyMove=()=>{
 
   // Reset picker, keep popup open
   window._selSym='';
+  window._selMod='';
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
@@ -769,28 +798,40 @@ document.getElementById('moveo').addEventListener('click',function(e){if(e.targe
 function renderStats(panel){
   const div=document.createElement('div');div.className='stats-wrap';
   const bkAll={};
-  BKS.forEach(b=>bkAll[b]={runs:0,deaths:0});
+  BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0});
   const teamStats={};
-  TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0});});
+  TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0});});
 
   TABS.forEach(t=>{
     if(t.id==='stats'||!data[t.id]) return;
     ['m1','m2'].forEach(mk=>{
       const md=data[t.id][mk];
-      ['t1pts','t2pts'].forEach((tk,ti)=>{
-        const tname=ti===0?md.t1name:md.t2name;
-        (md[tk]||[]).forEach(pt=>{
+      // Process both teams together so we can cross-reference kills
+      const teams=[
+        {tk:'t1pts',name:md.t1name,oppTk:'t2pts',oppName:md.t2name},
+        {tk:'t2pts',name:md.t2name,oppTk:'t1pts',oppName:md.t1name}
+      ];
+      teams.forEach(({tk,name,oppTk})=>{
+        (md[tk]||[]).forEach((pt,ptIdx)=>{
+          const oppPt=(md[oppTk]||[])[ptIdx]||{};
           BKS.forEach(b=>{
+            // Count runs and deaths for this team
             (pt[b]||[]).forEach(mv=>{
               if(mv.sym&&mv.sym!=='_'){
                 bkAll[b].runs++;
-                if(tname&&teamStats[tname]) teamStats[tname][b].runs++;
+                if(name&&teamStats[name]) teamStats[name][b].runs++;
               }
-              if(mv.sym==='O'){
+              if(mv.sym&&mv.sym.startsWith('O')){
                 bkAll[b].deaths++;
-                if(tname&&teamStats[tname]) teamStats[tname][b].deaths++;
+                if(name&&teamStats[name]) teamStats[name][b].deaths++;
               }
             });
+            // Kills = number of deaths the opponent had in this same bunker this point
+            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.sym==='O').length;
+            if(oppDeaths>0){
+              bkAll[b].kills+=oppDeaths;
+              if(name&&teamStats[name]) teamStats[name][b].kills+=oppDeaths;
+            }
           });
         });
       });
@@ -814,20 +855,22 @@ function makeStatsTbl(bkData){
     const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
   });
   tbl.appendChild(hdr);
-  let totRuns=0,totDeaths=0;
+  let totRuns=0,totDeaths=0,totKills=0;
   BKS.forEach((b,i)=>{
-    const s=bkData[b]||{runs:0,deaths:0};
-    totRuns+=s.runs;totDeaths+=s.deaths;
-    const pct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
+    const s=bkData[b]||{runs:0,deaths:0,kills:0};
+    totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
+    const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
+    const killPct=s.runs>0?(s.kills/s.runs*100).toFixed(0)+'%':'\u2014';
     const tr=document.createElement('tr');
-    [b,SHAPES[i]||'',s.runs,s.deaths,pct,s.deaths,pct].forEach(v=>{
+    [b,SHAPES[i]||'',s.runs,s.deaths,deathPct,s.kills,killPct].forEach(v=>{
       const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
     });
     tbl.appendChild(tr);
   });
-  const totPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
+  const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
+  const totKillPct=totRuns>0?(totKills/totRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
-  ['TOTAL','',totRuns,totDeaths,totPct,totDeaths,totPct].forEach(v=>{
+  ['TOTAL','',totRuns,totDeaths,totDeathPct,totKills,totKillPct].forEach(v=>{
     const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);
   });
   tbl.appendChild(totTr);
