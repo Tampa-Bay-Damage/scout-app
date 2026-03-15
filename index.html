@@ -413,8 +413,7 @@ function makeRow(tabId,mk,tk,idx,pt){
     const moves=pt[b]||[];
     const td=document.createElement('td');td.className='cbk';
     td.dataset.bkkey=`${tabId}|${mk}|${tk}|${idx}|${b}`;
-    const grp=(moves[0]&&moves[0].groupId)||null;
-    renderBkCell(td,moves,grp);
+    renderBkCell(td,moves);
     td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b,data[tabId][mk][tk][idx][b]);
     row.appendChild(td);
   });
@@ -472,7 +471,7 @@ function getSeqGroups(pt){
   return groups;
 }
 
-function renderBkCell(td,moves,groupNum){
+function renderBkCell(td,moves){
   td.innerHTML='';
   td.className=td.className.replace(/\s*mv-\w+/g,'');
   td.style.background='';
@@ -492,9 +491,9 @@ function renderBkCell(td,moves,groupNum){
     span.style.fontWeight='bold';
     span.textContent=txt;
     td.appendChild(span);
-    if(groupNum){
+    if(mv.seqNum){
       const sup=document.createElement('sup');
-      sup.textContent=groupNum;
+      sup.textContent=mv.seqNum;
       sup.style.color='#000';
       td.appendChild(sup);
     }
@@ -507,9 +506,11 @@ let popCell=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
-  window._selSym='';
-  window._selOrder='primary';
-  window._selPen='none';
+  const existing=(existingMoves||[])[0]||{};
+  window._selSym=existing.sym||'';
+  window._selOrder=existing.order||'primary';
+  window._selPen=existing.pen||'none';
+  window._selSeq=existing.seqNum||null;
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
@@ -560,6 +561,21 @@ function buildMoveContent(){
   });
   cont.appendChild(orderRow);
 
+  // Sequence # (optional)
+  const seqRow=document.createElement('div');
+  seqRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  const seqLbl=document.createElement('div');
+  seqLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;white-space:nowrap';
+  seqLbl.textContent='Sequence # (optional):';
+  const seqInp=document.createElement('input');
+  seqInp.type='number';seqInp.min='1';seqInp.max='9';
+  seqInp.value=window._selSeq||'';
+  seqInp.placeholder='—';
+  seqInp.style.cssText='width:50px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;font-size:12px;text-align:center';
+  seqInp.oninput=()=>{window._selSeq=seqInp.value?parseInt(seqInp.value):null;};
+  seqRow.appendChild(seqLbl);seqRow.appendChild(seqInp);
+  cont.appendChild(seqRow);
+
   // Penalty (optional)
   const penLbl=document.createElement('div');
   penLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px';
@@ -604,14 +620,9 @@ window.applyMove=()=>{
   
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
   
-  // Get next group ID for this point
-  const ptData=data[tabId][mk][tk][idx];
-  let maxG=0;
-  BKS.forEach(b=>{(ptData[b]||[]).forEach(m=>{if(m.groupId&&m.groupId>maxG)maxG=m.groupId;});});
-  const groupId=maxG+1;
-  
-  // Save move
-  data[tabId][mk][tk][idx][bk]=[{sym:window._selSym,order:window._selOrder,pen:window._selPen||'none',groupId}];
+  // Save move with optional manual sequence number
+  const seqNum=window._selSeq||null;
+  data[tabId][mk][tk][idx][bk]=[{sym:window._selSym,order:window._selOrder,pen:window._selPen||'none',seqNum}];
   
   saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);
 };
