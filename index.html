@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: popCell declaration moved to top, fixes popup and Firebase sync
-  SUMMARY: popCell was declared with let at line 639 but referenced at line 249 in the
-           Firebase listener. let has a temporal dead zone so the reference before
-           declaration caused a ReferenceError that crashed the entire script, also
-           preventing Firebase from initializing. Moved popCell to top with other vars.
+  COMMIT: feat: player stats with team+player dropdowns and full stats table
+  SUMMARY: Player stats uses team dropdown then player dropdown. Selected player shows
+           summary cards (points played, deaths off break, minor/major penalties) and
+           a full 18-bunker table with Count, Count %, Death %, Snake %, Dorito %, Dove %.
+           All values show zero for untagged players.
 -->
 
 <html lang="en">
@@ -175,7 +175,6 @@ document.getElementById('sesslbl').textContent=SESSION;
 let db=null,activeTab='stats',data={};
 const panelBuilt={};
 const panelDirty={};
-let popCell=null;
 
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
@@ -643,9 +642,9 @@ function renderBkCell(td,moves){
 }
 
 // ── MOVE POPUP ───────────────────────────────
+let popCell=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
-  try{
   popCell={tabId,mk,tk,idx,bk};
   // Reset picker
   window._selSym='';
@@ -658,7 +657,6 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
   document.getElementById('moveo').classList.add('open');
-  }catch(e){console.error('Popup error:',e);alert('Popup error: '+e.message);}
 }
 
 function buildMoveContent(){
@@ -801,8 +799,7 @@ function buildMoveContent(){
     const{tabId,mk,tk}=popCell;
     const teamName=data[tabId][mk][tk==='t1pts'?'t1name':'t2name'];
     const teamKey=teamName?(teamName.replace(/\s+/g,'_').toLowerCase()):null;
-    const fbPlayers2=window._rosterData&&window._rosterData[teamKey];
-    const players=(teamKey&&fbPlayers2&&fbPlayers2.length>0)?fbPlayers2:(PRELOADED_ROSTERS[teamKey]||[]);
+    const players=(teamKey&&window._rosterData&&window._rosterData[teamKey])||[];
     const activePlayers=players.filter(p=>p.name||p.num);
     if(activePlayers.length>0){
       const rosterLbl=document.createElement('div');
@@ -1032,44 +1029,21 @@ const PRELOADED_ROSTERS={"atlanta_jungle_cats": [{"num": "", "name": "Justin Bai
 function loadRosters(){
   if(!db) return;
   db.ref('rosters').on('value',snap=>{
-    try{
-      const existing=snap.val()||{};
-      // Normalize Firebase array-as-objects to real arrays
-      Object.keys(existing).forEach(key=>{
-        if(existing[key]&&!Array.isArray(existing[key])&&typeof existing[key]==='object'){
-          existing[key]=Object.values(existing[key]);
-        }
-      });
-      // Merge preloaded rosters — preserve existing num values, only add missing players
-      let needsWrite=false;
-      Object.keys(PRELOADED_ROSTERS).forEach(key=>{
-        const preloaded=PRELOADED_ROSTERS[key];
-        const fb=existing[key]||[];
-        if(fb.length===0){
-          // No data at all — write preloaded
-          existing[key]=preloaded;
-          needsWrite=true;
-        } else {
-          // Merge: for each preloaded player, if they exist in FB keep FB num, else add them
-          preloaded.forEach((pre,i)=>{
-            if(!fb[i]){
-              fb.push({num:'',name:pre.name});
-              needsWrite=true;
-            } else if(!fb[i].name&&pre.name){
-              fb[i].name=pre.name;
-              needsWrite=true;
-            }
-            // Never overwrite num — keep whatever is in Firebase
-          });
-          existing[key]=fb;
-        }
-      });
-      if(needsWrite) db.ref('rosters').set(existing);
-      window._rosterData=existing;
-      if(activeTab==='rosters'&&!panelBuilt['rosters']){
-        showTab('rosters');
+    const existing=snap.val()||{};
+    // Merge preloaded rosters — only fill in teams with no data yet
+    let needsWrite=false;
+    Object.keys(PRELOADED_ROSTERS).forEach(key=>{
+      if(!existing[key]||existing[key].length===0){
+        existing[key]=PRELOADED_ROSTERS[key];
+        needsWrite=true;
       }
-    } catch(e){console.error('Roster load error:',e);}
+    });
+    if(needsWrite) db.ref('rosters').set(existing);
+    window._rosterData=existing;
+    // Only re-render rosters if the panel hasn't been built yet (don't collapse while editing)
+    if(activeTab==='rosters'&&!panelBuilt['rosters']){
+      showTab('rosters');
+    }
   });
 }
 
@@ -1315,9 +1289,7 @@ function renderStats(panel){
   function populatePlayerSel(team){
     pPlayerSel.innerHTML='';
     const teamKey=team.replace(/\s+/g,'_').toLowerCase();
-    // Use Firebase data if available for this team, otherwise fall back to preloaded
-    const fbPlayers=window._rosterData&&window._rosterData[teamKey];
-    const players=(fbPlayers&&fbPlayers.length>0)?fbPlayers:(PRELOADED_ROSTERS[teamKey]||[]);
+    const players=(window._rosterData&&window._rosterData[teamKey])||[];
     const active=players.filter(p=>p.name||p.num);
     if(active.length===0){
       const opt=document.createElement('option');opt.textContent='No players in roster';pPlayerSel.appendChild(opt);return;
