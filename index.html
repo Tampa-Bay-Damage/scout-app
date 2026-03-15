@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: remove Key column and duplicate Notes/Key headers
-  SUMMARY: Removed the unused Key column entirely from all match sheet headers. Removed the
-           keyrow legend at the bottom of each table. Fixed duplicate Notes/Key labels that
-           appeared across all three header rows.
+  COMMIT: feat: player stats section on stats tab
+  SUMMARY: Added Player Stats section below team stats. Team and player dropdowns filter
+           stats for the selected player. Shows summary cards for points played, points died
+           off break (with %), and secondary move %. Below that a bunker breakdown table
+           shows runs, run %, and shooting direction (Snake/Dorito/Dove) per bunker.
+           Only counts points where the player was tagged via roster buttons in the popup.
 -->
 
 <html lang="en">
@@ -358,12 +360,12 @@ function renderIntoPanel(tabId){
     const r1=document.createElement('tr');r1.className='hr1';
     const thLabel=document.createElement('th');thLabel.textContent=matchLabel;thLabel.colSpan=5;r1.appendChild(thLabel);
     BKS.forEach(()=>{const th=document.createElement('th');r1.appendChild(th);});
-    const thNotes1=document.createElement('th');thNotes1.textContent='Notes';r1.appendChild(thNotes1);
+    const thNotes1=document.createElement('th');thNotes1.textContent='';r1.appendChild(thNotes1);
     thead.appendChild(r1);
 
     // Row 2 - shapes
     const r2=document.createElement('tr');r2.className='hr2';
-    ['','Shapes','','','',...SHAPES,'Notes'].forEach(t=>{
+    ['','Shapes','','','',...SHAPES,''].forEach(t=>{
       const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
     });
     thead.appendChild(r2);
@@ -1219,6 +1221,168 @@ function renderStats(panel){
   teamSel.onchange=()=>renderTeamStats(teamSel.value);
   matchSel.onchange=()=>renderTeamStatsWithMatch(teamSel.value, parseInt(matchSel.value));
   renderTeamStats(TEAMS[0]);
+
+  // ── PLAYER STATS SECTION ──
+  const playerSection=document.createElement('div');
+  playerSection.style.cssText='margin-top:24px;border-top:2px solid #e0e0e0;padding-top:16px';
+
+  const playerH2=document.createElement('div');
+  playerH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px';
+  playerH2.textContent='Player Stats';
+  playerSection.appendChild(playerH2);
+
+  // Team + Player dropdowns
+  const playerHdrRow=document.createElement('div');
+  playerHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap';
+
+  const pTeamSel=document.createElement('select');
+  pTeamSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
+  TEAMS.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;pTeamSel.appendChild(opt);});
+
+  const pPlayerSel=document.createElement('select');
+  pPlayerSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
+
+  playerHdrRow.appendChild(document.createTextNode('Team: '));
+  playerHdrRow.appendChild(pTeamSel);
+  playerHdrRow.appendChild(document.createTextNode('Player: '));
+  playerHdrRow.appendChild(pPlayerSel);
+  playerSection.appendChild(playerHdrRow);
+
+  const playerTblWrap=document.createElement('div');
+  playerSection.appendChild(playerTblWrap);
+  div.appendChild(playerSection);
+
+  function calcPlayerStats(team, playerLabel){
+    const teamKey=team.replace(/\s+/g,'_').toLowerCase();
+    const stats={
+      pointsPlayed:0, pointsDied:0,
+      bunkers:{}, shootingDir:{}, secondaryMoves:0
+    };
+    BKS.forEach(b=>{stats.bunkers[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
+
+    TABS.forEach(t=>{
+      if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
+      ['m1','m2'].forEach(mk=>{
+        const md=data[t.id][mk];
+        ['t1pts','t2pts'].forEach((tk,ti)=>{
+          const tname=ti===0?md.t1name:md.t2name;
+          if(tname!==team) return;
+          (md[tk]||[]).forEach(pt=>{
+            // Check if player appears in this point
+            let appearedInPoint=false;
+            let diedInPoint=false;
+            BKS.forEach(b=>{
+              (pt[b]||[]).forEach(mv=>{
+                if(!mv.player) return;
+                // Match by label (#7 Bailey) or num or initials
+                const mvLabel=mv.player&&mv.player.label?mv.player.label:mv.player;
+                if(mvLabel!==playerLabel) return;
+                appearedInPoint=true;
+                stats.bunkers[b]=(stats.bunkers[b]||0)+1;
+                if(mv.isDead) diedInPoint=true;
+                if(mv.order==='secondary') stats.secondaryMoves++;
+                // Shooting direction from symbol
+                const sym=mv.sym||'';
+                if(sym.startsWith('S')) stats.shootingDir[b].S++;
+                else if(sym.startsWith('\u2206')) stats.shootingDir[b]['\u2206']++;
+                else if(sym.startsWith('X')) stats.shootingDir[b].X++;
+              });
+            });
+            if(appearedInPoint){stats.pointsPlayed++;if(diedInPoint)stats.pointsDied++;}
+          });
+        });
+      });
+    });
+    return stats;
+  }
+
+  function populatePlayerSel(team){
+    pPlayerSel.innerHTML='';
+    const teamKey=team.replace(/\s+/g,'_').toLowerCase();
+    const players=(window._rosterData&&window._rosterData[teamKey])||[];
+    const active=players.filter(p=>p.name||p.num);
+    if(active.length===0){
+      const opt=document.createElement('option');opt.textContent='No players in roster';pPlayerSel.appendChild(opt);
+      return;
+    }
+    active.forEach(p=>{
+      const lastName=p.name.split(' ').pop();
+      const label=p.num?('#'+p.num+' '+lastName):lastName;
+      const opt=document.createElement('option');opt.value=label;opt.textContent=label;
+      pPlayerSel.appendChild(opt);
+    });
+  }
+
+  function renderPlayerStats(team, playerLabel){
+    playerTblWrap.innerHTML='';
+    const s=calcPlayerStats(team, playerLabel);
+
+    if(s.pointsPlayed===0){
+      const msg=document.createElement('div');
+      msg.style.cssText='color:#999;font-size:12px;padding:8px 0';
+      msg.textContent='No tagged data found for this player yet.';
+      playerTblWrap.appendChild(msg);
+      return;
+    }
+
+    // Summary row
+    const summaryDiv=document.createElement('div');
+    summaryDiv.style.cssText='display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px';
+    [
+      {label:'Points Played',val:s.pointsPlayed},
+      {label:'Points Died Off Break',val:s.pointsDied+' ('+( s.pointsPlayed>0?(s.pointsDied/s.pointsPlayed*100).toFixed(0):0)+'%)'},
+      {label:'Secondary Move %',val:s.pointsPlayed>0?(s.secondaryMoves/s.pointsPlayed*100).toFixed(0)+'%':'—'},
+    ].forEach(({label,val})=>{
+      const card=document.createElement('div');
+      card.style.cssText='background:#f5f5f5;border:1px solid #e0e0e0;border-radius:4px;padding:8px 12px;min-width:140px';
+      const lbl=document.createElement('div');lbl.style.cssText='font-size:10px;color:#666;margin-bottom:2px';lbl.textContent=label;
+      const v=document.createElement('div');v.style.cssText='font-size:16px;font-weight:bold;color:#1a6e1a';v.textContent=val;
+      card.appendChild(lbl);card.appendChild(v);
+      summaryDiv.appendChild(card);
+    });
+    playerTblWrap.appendChild(summaryDiv);
+
+    // Bunker breakdown table
+    const tbl=document.createElement('table');tbl.className='stats-tbl';
+    const hdr=document.createElement('tr');
+    ['Bunker','Shape','Runs','Run %','Shooting Snake','Shooting Dorito','Dove'].forEach(h=>{
+      const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
+    });
+    tbl.appendChild(hdr);
+
+    const totalRuns=BKS.reduce((sum,b)=>sum+(s.bunkers[b]||0),0);
+    let hasData=false;
+    BKS.forEach((b,i)=>{
+      const runs=s.bunkers[b]||0;
+      if(runs===0) return;
+      hasData=true;
+      const runPct=totalRuns>0?(runs/totalRuns*100).toFixed(1)+'%':'—';
+      const d=s.shootingDir[b]||{S:0,'\u2206':0,X:0};
+      const tr=document.createElement('tr');
+      [b,SHAPES[i]||'',runs,runPct,d.S,d['\u2206'],d.X].forEach(v=>{
+        const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+
+    if(!hasData){
+      const msg=document.createElement('div');
+      msg.style.cssText='color:#999;font-size:12px;padding:8px 0';
+      msg.textContent='No bunker data found for this player.';
+      playerTblWrap.appendChild(msg);
+    } else {
+      playerTblWrap.appendChild(tbl);
+    }
+  }
+
+  populatePlayerSel(TEAMS[0]);
+  renderPlayerStats(TEAMS[0], pPlayerSel.value);
+
+  pTeamSel.onchange=()=>{
+    populatePlayerSel(pTeamSel.value);
+    renderPlayerStats(pTeamSel.value, pPlayerSel.value);
+  };
+  pPlayerSel.onchange=()=>renderPlayerStats(pTeamSel.value, pPlayerSel.value);
 }
 
 function makeStatsTbl(bkData, killsOnly, totalPts){
