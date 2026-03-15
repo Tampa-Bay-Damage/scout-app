@@ -82,7 +82,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#1565c0}
 .symgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:4px;width:100%}
 .sym{height:70px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;text-align:center;line-height:1}
-.sym .sl{display:none}
+.sym .sl{display:block;font-size:9px;font-weight:normal;color:#555;margin-top:2px}
 .sym.sel{border-color:#1a6e1a;background:#e8f5e9}
 .bkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px}
 .bkbtn{padding:7px 4px;border:2px solid #ccc;background:#fff;font-size:11px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px}
@@ -151,8 +151,8 @@ const FB={
 const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Whiskey","Baby","Beast","100","200","300"];
 const SHAPES=["SB","","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
 const SYMS=[
-  {s:"S",l:"Snake"},
-  {s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"}
+  {s:"S",l:"Shooting Snake"},
+  {s:"\u2206",l:"Shooting Dorito"},{s:"X",l:"Dove"}
 ];
 const MODIFIERS=[{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
 const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
