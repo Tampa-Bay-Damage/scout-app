@@ -75,7 +75,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .step-lbl .dot{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;color:#fff}
 .dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#1565c0}
 .symgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:4px;width:100%}
-.sym{height:32px;width:100%;border:2px solid #ccc;background:#fff;font-size:11px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px;padding:0;line-height:1}
+.sym{height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;text-align:center;line-height:1}
 .sym .sl{display:none}
 .sym.sel{border-color:#1a6e1a;background:#e8f5e9}
 .bkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px}
@@ -681,7 +681,7 @@ function buildMoveContent(){
     {label:'Minor',val:'Mi',bg:'#fff8e1',border:'#f9a825'}
   ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:center;aspect-ratio:1;min-height:44px;display:flex;align-items:center;justify-content:center;width:100%';
+    btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0';
     btn.textContent=label;
     // Check current selection
     const isSelected=(val==='death'&&window._selDeath)||(val==='v'&&window._selMod==='v')||(val==='^'&&window._selMod==='^')||((val==='Mi'||val==='Mj')&&window._selPen===val);
@@ -723,7 +723,7 @@ function buildMoveContent(){
     {label:'🔴 Tertiary',val:'tertiary',bg:'#fce4ec',border:'#b71c1c'}
   ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;aspect-ratio:1;min-height:52px;display:flex;align-items:center;justify-content:center;width:100%;text-align:center';
+    btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0';
     btn.textContent=label;
     if(val===window._selOrder){btn.style.borderColor=border;btn.style.background=bg;}
     btn.onclick=()=>{
@@ -745,7 +745,7 @@ function buildMoveContent(){
   [1,2,3,4,5].forEach(n=>{
     const btn=document.createElement('button');
     btn.textContent=n;
-    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;aspect-ratio:1;min-height:44px;display:flex;align-items:center;justify-content:center;width:100%';
+    btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0';
     if(window._selSeq==n){btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';}
     btn.onclick=()=>{
       seqRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
