@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 
 <!--
+  COMMIT: chore: remove sequence number row from popup
+  SUMMARY: Sequence number buttons fully removed from popup. Player selection now
+           serves as the identifier shown as superscript in data cells.
+
   COMMIT: fix: player number/initials now show as superscript in data cells
   SUMMARY: Fixed _selPlayer storage to be an object {label, num, initials} instead of a string.
            seqNum is now derived directly from the stored num or initials without needing
@@ -801,27 +805,6 @@ function buildMoveContent(){
   });
   cont.appendChild(orderRow);
 
-  // Sequence # (optional) — buttons 1-5
-  const seqLbl=document.createElement('div');
-  seqLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin-bottom:3px';
-  seqLbl.textContent='Sequence:';
-  cont.appendChild(seqLbl);
-  const seqRow=document.createElement('div');
-  seqRow.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:4px;width:100%';
-  [1,2,3,4,5].forEach(n=>{
-    const btn=document.createElement('button');
-    btn.textContent=n;
-    btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0';
-    if(window._selSeq==n){btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';}
-    btn.onclick=()=>{
-      seqRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
-      if(window._selSeq==n){window._selSeq=null;}
-      else{btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';window._selSeq=n;}
-    };
-    seqRow.appendChild(btn);
-  });
-  cont.appendChild(seqRow);
-
   // Clear button
   // Player roster buttons
   if(popCell){
@@ -908,7 +891,6 @@ window.applyMove=()=>{
     seqNum,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
-    seqNum:window._selSeq||null
   });
 
   saveTab(tabId);
