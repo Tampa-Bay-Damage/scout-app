@@ -799,9 +799,9 @@ document.getElementById('moveo').addEventListener('click',function(e){if(e.targe
 function renderStats(panel){
   const div=document.createElement('div');div.className='stats-wrap';
   const bkAll={};
-  BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0});
+  BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0,oppRuns:0});
   const teamStats={};
-  TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0});});
+  TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0,oppRuns:0});});
 
   TABS.forEach(t=>{
     if(t.id==='stats'||!data[t.id]) return;
@@ -833,6 +833,12 @@ function renderStats(panel){
               bkAll[b].kills+=oppDeaths;
               if(name&&teamStats[name]) teamStats[name][b].kills+=oppDeaths;
             }
+            // Opponent runs at this bunker (denominator for kill %)
+            const oppRunCount=(oppPt[b]||[]).filter(mv=>mv.sym&&mv.sym!=='_').length;
+            if(oppRunCount>0){
+              bkAll[b].oppRuns+=oppRunCount;
+              if(name&&teamStats[name]) teamStats[name][b].oppRuns+=oppRunCount;
+            }
           });
         });
       });
@@ -861,15 +867,17 @@ function makeStatsTbl(bkData){
     const s=bkData[b]||{runs:0,deaths:0,kills:0};
     totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
     const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
-    const killPct=s.runs>0?(s.kills/s.runs*100).toFixed(0)+'%':'\u2014';
+    const killPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'\u2014';
     const tr=document.createElement('tr');
     [b,SHAPES[i]||'',s.runs,s.deaths,deathPct,s.kills,killPct].forEach(v=>{
       const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
     });
     tbl.appendChild(tr);
   });
+  let totOppRuns=0;
+  BKS.forEach(b=>{totOppRuns+=(bkData[b]||{oppRuns:0}).oppRuns;});
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
-  const totKillPct=totRuns>0?(totKills/totRuns*100).toFixed(0)+'%':'\u2014';
+  const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
   ['TOTAL','',totRuns,totDeaths,totDeathPct,totKills,totKillPct].forEach(v=>{
     const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);
