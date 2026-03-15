@@ -1,5 +1,17 @@
 <!DOCTYPE html>
 
+<!--
+  COMMIT: fix: player number/initials now show as superscript in data cells
+  SUMMARY: Fixed _selPlayer storage to be an object {label, num, initials} instead of a string.
+           seqNum is now derived directly from the stored num or initials without needing
+           regex parsing or roster lookups at save time. Fixes superscripts not appearing in cells.
+
+  COMMIT: feat: player number/initials replace sequence numbers
+  SUMMARY: Removed sequence number buttons from popup. Player buttons now show "#7 Bailey" format.
+           When a player is selected and ADD is hit, their jersey number (e.g. 7) or initials (e.g. JB)
+           are saved as the seqNum and displayed as a superscript in the cell.
+-->
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -832,14 +844,17 @@ function buildMoveContent(){
         btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
         btn.textContent=label;
         btn.title=p.name;
-        if(window._selPlayer===label){btn.style.borderColor='#1565c0';btn.style.background='#e3f2fd';}
+        // Store num and initials directly on button for easy retrieval
+        btn.dataset.playerNum=p.num||'';
+        btn.dataset.playerInitials=p.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+        if(window._selPlayer&&window._selPlayer.label===label){btn.style.borderColor='#1565c0';btn.style.background='#e3f2fd';}
         btn.onclick=()=>{
           rosterGrid.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
-          if(window._selPlayer===label){
+          if(window._selPlayer&&window._selPlayer.label===label){
             window._selPlayer=null;
           } else {
             btn.style.borderColor='#1565c0';btn.style.background='#e3f2fd';
-            window._selPlayer=label;
+            window._selPlayer={label,num:btn.dataset.playerNum,initials:btn.dataset.playerInitials};
           }
         };
         rosterGrid.appendChild(btn);
@@ -884,22 +899,7 @@ window.applyMove=()=>{
   // Derive superscript label from selected player
   let seqNum=null;
   if(window._selPlayer){
-    // _selPlayer is stored as "#7 Bailey" or "Bailey"
-    const numMatch=window._selPlayer.match(/^#(\d+)/);
-    if(numMatch) seqNum=numMatch[1]; // jersey number
-    else {
-      // Get initials from full name via roster lookup
-      const{tabId:tid,mk:tmk,tk:ttk}=popCell;
-      const tname=data[tid][tmk][ttk==='t1pts'?'t1name':'t2name'];
-      const tkey=tname?(tname.replace(/\s+/g,'_').toLowerCase()):null;
-      const players=(tkey&&window._rosterData&&window._rosterData[tkey])||[];
-      const found=players.find(p=>p.name.split(' ').pop()===window._selPlayer);
-      if(found&&found.name){
-        seqNum=found.name.split(' ').map(w=>w[0]).join('');
-      } else {
-        seqNum=window._selPlayer.substring(0,2).toUpperCase();
-      }
-    }
+    seqNum=window._selPlayer.num||window._selPlayer.initials||null;
   }
   data[tabId][mk][tk][idx][bk].push({
     sym:finalSym,
