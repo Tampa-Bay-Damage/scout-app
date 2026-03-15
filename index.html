@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: player dropdown always populated from PRELOADED_ROSTERS per team
-  SUMMARY: Fixed roster lookup to check per-team rather than globally. If Firebase has
-           no data for a specific team key, falls back to PRELOADED_ROSTERS for that team.
-           Also fixed popup roster buttons to use the same fallback logic.
+  COMMIT: fix: roster data deleted due to Firebase array-as-object normalization bug
+  SUMMARY: loadRosters was checking existing[key].length===0 but Firebase returns arrays
+           as objects {0:{...},1:{...}} which have no .length property, causing the check
+           to fail and overwrite existing roster data with preloaded data. Fixed by
+           normalizing Firebase objects to arrays first before checking length.
 -->
 
 <html lang="en">
@@ -1030,7 +1031,13 @@ function loadRosters(){
   if(!db) return;
   db.ref('rosters').on('value',snap=>{
     const existing=snap.val()||{};
-    // Merge preloaded rosters — only fill in teams with no data yet
+    // Normalize Firebase array-as-objects to real arrays
+    Object.keys(existing).forEach(key=>{
+      if(existing[key]&&!Array.isArray(existing[key])&&typeof existing[key]==='object'){
+        existing[key]=Object.values(existing[key]);
+      }
+    });
+    // Only fill in teams that have NO data at all in Firebase
     let needsWrite=false;
     Object.keys(PRELOADED_ROSTERS).forEach(key=>{
       if(!existing[key]||existing[key].length===0){
