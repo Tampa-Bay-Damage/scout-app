@@ -154,12 +154,8 @@ const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 
 let db=null,activeTab='stats',data={};
-
-// Track which panels have been built and which need a re-render
 const panelBuilt={};
 const panelDirty={};
-
-let popCell=null,popMoves=[];
 
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
@@ -507,28 +503,13 @@ function renderBkCell(td,moves,groupNum){
 }
 
 // ── MOVE POPUP ───────────────────────────────
+let popCell=null;
+
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
-  // Load all moves in the same group as the tapped bunker
-  const ptData=data[tabId][mk][tk][idx];
-  const tappedMoves=existingMoves||[];
-  const groupId=tappedMoves.length>0?tappedMoves[0].groupId:null;
-  if(groupId){
-    // Collect all moves in this group across all bunkers
-    popMoves=[];
-    BKS.forEach(b=>{
-      (ptData[b]||[]).forEach(m=>{
-        if(m.groupId===groupId) popMoves.push({...m,bk:b});
-      });
-    });
-    popMoves.sort((a,b)=>a.order==='primary'?-1:b.order==='primary'?1:0);
-  } else {
-    popMoves=[];
-  }
-  // Pre-fill primary sym if editing existing
-  const primMove=popMoves.find(m=>m.order==='primary');
-  window._primarySym=primMove?primMove.sym:'';
-  window._primaryPen=primMove?primMove.pen:'none';
+  window._selSym='';
+  window._selOrder='primary';
+  window._selPen='none';
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
@@ -539,216 +520,102 @@ function buildMoveContent(){
   const cont=document.getElementById('move-content');
   cont.innerHTML='';
 
-  // Show confirmed secondary/tertiary moves summary
-  if(popMoves.length>0){
-    const sumDiv=document.createElement('div');sumDiv.className='move-summary';
-    popMoves.forEach((mv,i)=>{
-      const row=document.createElement('div');row.className='ms-row';
-      const dot=document.createElement('span');
-      dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
-      dot.textContent=i+1;
-      const sym=document.createElement('span');sym.className='ms-sym';sym.textContent=mv.sym||'';
-      if(mv.order==='primary')sym.style.color='#1b5e20';
-      else if(mv.order==='secondary')sym.style.color='#e65100';
-      else sym.style.color='#b71c1c';
-      const bkSpan=document.createElement('span');bkSpan.className='ms-bk';
-      bkSpan.textContent=mv.bk+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
-      const del=document.createElement('span');del.textContent='\u2715';
-      del.style.cssText='color:#999;cursor:pointer;margin-left:auto;font-size:12px';
-      del.onclick=()=>{
-        if(mv.order==='primary'){
-          // Delete primary = delete entire group
-          popMoves=[];
-          window._primarySym='';
-          window._primaryPen='none';
-        } else {
-          popMoves.splice(i,1);
-        }
-        buildMoveContent();
-      };
-      row.appendChild(dot);row.appendChild(sym);row.appendChild(bkSpan);row.appendChild(del);
-      sumDiv.appendChild(row);
-    });
-    cont.appendChild(sumDiv);
-  }
+  // Symbol grid
+  const symGrid=document.createElement('div');symGrid.className='symgrid';
+  SYMS.forEach(({s,l})=>{
+    const btn=document.createElement('button');btn.className='sym';
+    btn.innerHTML=s+'<span class="sl">'+l+'</span>';
+    btn.onclick=()=>{
+      symGrid.querySelectorAll('.sym').forEach(x=>x.classList.remove('sel'));
+      btn.classList.add('sel');
+      window._selSym=s;
+    };
+    symGrid.appendChild(btn);
+  });
+  cont.appendChild(symGrid);
 
-  // Primary sym picker — always visible
-  buildSymPicker(cont,'primary',popCell.bk);
+  // Order selector
+  const orderLbl=document.createElement('div');
+  orderLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:10px 0 5px;text-transform:uppercase;letter-spacing:1px';
+  orderLbl.textContent='Move Order:';
+  cont.appendChild(orderLbl);
 
-  // Add secondary button — always shown below primary picker if < 3 moves
-  if(popMoves.length<2){
-    const nextOrder=popMoves.length===0?'secondary':'tertiary';
-    const nextColor=nextOrder==='secondary'?'#e65100':'#b71c1c';
-    const nextLabel=nextOrder==='secondary'?'+ Add Secondary Move':'+ Add Tertiary Move';
-    const addBtn=document.createElement('button');
-    addBtn.id='add-extra-btn';
-    addBtn.className='add-move-btn';
-    addBtn.style.cssText='color:'+nextColor+';border-color:'+nextColor+';margin-top:8px';
-    addBtn.textContent=nextLabel;
-    addBtn.onclick=()=>{addBtn.style.display='none';buildExtraPicker(cont,nextOrder);};
-    cont.appendChild(addBtn);
-  }
-}
-
-function buildExtraPicker(cont,order){
-  const orderColor=order==='secondary'?'#e65100':'#b71c1c';
-  const section=document.createElement('div');section.className='extra-section';
-  const lbl=document.createElement('div');
-  lbl.style.cssText='font-size:10px;font-weight:bold;color:'+orderColor+';margin:8px 0 4px';
-  lbl.textContent=(order==='secondary'?'Secondary':'Tertiary')+' Move \u2014 Pick bunker:';
-  section.appendChild(lbl);
-  const bkGrid=document.createElement('div');bkGrid.className='bkgrid';
-  BKS.forEach(b=>{
+  const orderRow=document.createElement('div');
+  orderRow.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px';
+  [
+    {label:'🟢 Primary',val:'primary',bg:'#e8f5e9',border:'#1b5e20'},
+    {label:'🟡 Secondary',val:'secondary',bg:'#fff8e1',border:'#e65100'},
+    {label:'🔴 Tertiary',val:'tertiary',bg:'#fce4ec',border:'#b71c1c'}
+  ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.className='bkbtn';btn.textContent=b;
+    btn.style.cssText='padding:8px 4px;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
+    btn.textContent=label;
+    if(val===window._selOrder){btn.style.borderColor=border;btn.style.background=bg;}
     btn.onclick=()=>{
-      bkGrid.querySelectorAll('.bkbtn').forEach(x=>x.classList.remove('sel-y','sel-r'));
-      btn.classList.add(order==='secondary'?'sel-y':'sel-r');
-      const old=section.querySelector('.sym-section');if(old)old.remove();
-      buildSymPickerExtra(section,order,b);
+      orderRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
+      btn.style.borderColor=border;btn.style.background=bg;
+      window._selOrder=val;
     };
-    bkGrid.appendChild(btn);
+    orderRow.appendChild(btn);
   });
-  section.appendChild(bkGrid);
-  cont.appendChild(section);
-}
+  cont.appendChild(orderRow);
 
-function buildSymPickerExtra(cont,order,bk){
-  const existing=cont.querySelector('.sym-section');if(existing)existing.remove();
-  const section=document.createElement('div');section.className='sym-section';
-  const symGrid=document.createElement('div');symGrid.className='symgrid';
-  let selSym='',selPen='none';
-  SYMS.forEach(({s,l})=>{
-    const btn=document.createElement('button');btn.className='sym';
-    btn.innerHTML=s+'<span class="sl">'+l+'</span>';
-    btn.onclick=()=>{symGrid.querySelectorAll('.sym').forEach(x=>x.classList.remove('sel'));btn.classList.add('sel');selSym=s;};
-    symGrid.appendChild(btn);
-  });
-  section.appendChild(symGrid);
-  const penRow=document.createElement('div');penRow.className='pen-row';penRow.style.marginTop='6px';
+  // Penalty (optional)
+  const penLbl=document.createElement('div');
+  penLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px';
+  penLbl.textContent='Penalty (optional):';
+  cont.appendChild(penLbl);
+
+  const penRow=document.createElement('div');penRow.className='pen-row';
   ['Minor (Mi)','Major (Mj)'].forEach((label,i)=>{
     const btn=document.createElement('button');btn.className='pen-btn';btn.textContent=label;
+    const pv=i===0?'Mi':'Mj';
     btn.onclick=()=>{
       penRow.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
-      if(selPen===(i===0?'Mi':'Mj')){selPen='none';}else{btn.classList.add('sel');selPen=i===0?'Mi':'Mj';}
+      if(window._selPen===pv){window._selPen='none';}
+      else{btn.classList.add('sel');window._selPen=pv;}
     };
     penRow.appendChild(btn);
   });
-  section.appendChild(penRow);
-  const confirmBtn=document.createElement('button');
-  confirmBtn.className='add-move-btn';
-  confirmBtn.style.cssText='background:#e8f5e9;border-color:#1a6e1a;color:#1a6e1a;margin-top:6px';
-  confirmBtn.textContent='\u2713 Confirm '+(order==='secondary'?'Secondary':'Tertiary')+' Move';
-  confirmBtn.onclick=()=>{
-    if(!selSym){alert('Pick a symbol first.');return;}
-    popMoves.push({bk,sym:selSym,order,pen:selPen});
-    buildMoveContent();
+  cont.appendChild(penRow);
+
+  // Clear button
+  const clearBtn=document.createElement('button');
+  clearBtn.style.cssText='width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;background:#fff;color:#999;font-size:11px;cursor:pointer;border-radius:3px;font-family:Arial,sans-serif';
+  clearBtn.textContent='Clear This Cell';
+  clearBtn.onclick=()=>{
+    if(!popCell) return;
+    const{tabId,mk,tk,idx,bk}=popCell;
+    data[tabId][mk][tk][idx][bk]=[];
+    saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);
   };
-  section.appendChild(confirmBtn);
-  cont.appendChild(section);
+  cont.appendChild(clearBtn);
 }
-
-function buildSymPicker(cont,order,bk){
-  const existing=cont.querySelector('.sym-section');if(existing)existing.remove();
-  const section=document.createElement('div');section.className='sym-section';
-  const symGrid=document.createElement('div');symGrid.className='symgrid';
-  window._primarySym='';window._primaryPen='none';
-  SYMS.forEach(({s,l})=>{
-    const btn=document.createElement('button');btn.className='sym';
-    btn.innerHTML=s+'<span class="sl">'+l+'</span>';
-    btn.onclick=()=>{symGrid.querySelectorAll('.sym').forEach(x=>x.classList.remove('sel'));btn.classList.add('sel');window._primarySym=s;};
-    symGrid.appendChild(btn);
-  });
-  section.appendChild(symGrid);
-  const penRow=document.createElement('div');penRow.className='pen-row';penRow.style.marginTop='6px';
-  ['Minor (Mi)','Major (Mj)'].forEach((label,i)=>{
-    const btn=document.createElement('button');btn.className='pen-btn';btn.textContent=label;
-    btn.onclick=()=>{
-      penRow.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
-      if(window._primaryPen===(i===0?'Mi':'Mj')){window._primaryPen='none';}
-      else{btn.classList.add('sel');window._primaryPen=i===0?'Mi':'Mj';}
-    };
-    penRow.appendChild(btn);
-  });
-  section.appendChild(penRow);
-  cont.appendChild(section);
-}
-
 
 window.closeMove=()=>{
   document.getElementById('moveo').classList.remove('open');
-  popCell=null;popMoves=[];
+  popCell=null;
 };
 
 window.applyMove=()=>{
   if(!popCell) return;
   const{tabId,mk,tk,idx,bk}=popCell;
-
-  // If no confirmed secondary/tertiary moves, read primary from picker
-  if(popMoves.length===0){
-    const sym=window._primarySym||'';
-    if(!sym){
-      // Clear the cell - remove this group
-      const ptData=data[tabId][mk][tk][idx];
-      const existingGroup=((ptData[bk]||[]).find(m=>m.groupId)||{}).groupId;
-      if(existingGroup){
-        BKS.forEach(b=>{
-          ptData[b]=(ptData[b]||[]).filter(m=>m.groupId!==existingGroup);
-        });
-      } else {
-        ptData[bk]=[];
-      }
-      saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);return;
-    }
-    popMoves=[{bk,sym,order:'primary',pen:window._primaryPen||'none'}];
-  } else {
-    // Make sure primary sym is updated from picker if changed
-    const sym=window._primarySym||'';
-    if(sym) popMoves[0]={bk,sym,order:'primary',pen:window._primaryPen||'none'};
-  }
-
-  // Assign a group ID — use next available group number for this point
+  if(!window._selSym){alert('Please pick a symbol.');return;}
+  
+  if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
+  
+  // Get next group ID for this point
   const ptData=data[tabId][mk][tk][idx];
-  let maxGroup=0;
-  BKS.forEach(b=>{(ptData[b]||[]).forEach(m=>{if(m.groupId&&m.groupId>maxGroup)maxGroup=m.groupId;});});
-  // If editing existing group (tapped bunker already has moves), reuse its groupId
-  const existingGroup=(ptData[bk]||[]).find(m=>m.groupId);
-  const groupId=existingGroup?existingGroup.groupId:maxGroup+1;
-
-  // Clear all bunkers involved in this group first
-  BKS.forEach(b=>{
-    if((ptData[b]||[]).some(m=>m.groupId===groupId)){
-      ptData[b]=ptData[b].filter(m=>m.groupId!==groupId);
-      if(ptData[b].length===0) ptData[b]=[];
-    }
-  });
-
-  // Save new moves with groupId
-  popMoves.forEach(mv=>{
-    if(!ptData[mv.bk]) ptData[mv.bk]=[];
-    ptData[mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen,groupId});
-  });
-
-  saveTab(tabId);
-  closeMove();
-  panelBuilt[tabId]=false;
-  showTab(tabId);
+  let maxG=0;
+  BKS.forEach(b=>{(ptData[b]||[]).forEach(m=>{if(m.groupId&&m.groupId>maxG)maxG=m.groupId;});});
+  const groupId=maxG+1;
+  
+  // Save move
+  data[tabId][mk][tk][idx][bk]=[{sym:window._selSym,order:window._selOrder,pen:window._selPen||'none',groupId}];
+  
+  saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);
 };
 
-// Refresh a single bunker cell without rebuilding the whole table
-function refreshBkCell(tabId,mk,tk,idx,bk){
-  const panel=document.getElementById('panel-'+tabId);
-  if(!panel) return;
-  // Find the row: teamhdr + idx rows offset
-  // Easier: find all cbk cells with matching onclick context via data attribute
-  // We tag cells with data-bkkey on build
-  const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
-  const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
-  if(cell) renderBkCell(cell,data[tabId][mk][tk][idx][bk]||[]);
-}
-
-// Override makeRow to add data-bkkey attributes
-const _origMakeRow=makeRow;
 
 document.getElementById('btn-cls').onclick=()=>closeMove();
 document.getElementById('btn-can').onclick=()=>closeMove();
