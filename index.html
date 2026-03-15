@@ -43,7 +43,7 @@ td.crb.Red{background:#ffe0e0;color:#c00}td.crb.Blue{background:#e0e0ff;color:#0
 td.csc{min-width:28px;font-weight:bold;font-size:11px}
 td.ctm{min-width:44px;padding:0}
 td.ctm input{width:100%;height:20px;border:none;padding:0 3px;font-family:Arial,sans-serif;font-size:10px;background:transparent;outline:none;text-align:center}
-td.cbk{min-width:46px;cursor:pointer;font-size:11px;font-weight:bold;padding:1px 2px;position:relative}
+td.cbk{min-width:52px;cursor:pointer;font-size:11px;font-weight:bold;padding:1px 2px;position:relative;height:22px}
 td.cbk:active{opacity:.7}
 td.cno{min-width:90px;padding:0}
 td.cno input{width:100%;height:20px;border:none;padding:0 3px;font-family:Arial,sans-serif;font-size:10px;background:transparent;outline:none}
@@ -255,6 +255,10 @@ function normalizePt(pt){
     if(!val||val==='') out[b]=[];
     else if(typeof val==='string') out[b]=[{sym:val,order:'primary',pen:'none'}]; // legacy string format
     else if(Array.isArray(val)) out[b]=val;
+    else if(typeof val==='object'){
+      // Firebase converts arrays to objects with numeric keys {0:{...},1:{...}}
+      out[b]=Object.values(val);
+    }
     else out[b]=[];
   });
   return out;
@@ -538,7 +542,7 @@ function renderBkCell(td,moves){
     // Multiple moves — split vertically
     td.style.display='flex';
     td.style.height='100%';
-    td.style.minHeight='20px';
+    td.style.minHeight='22px';
     realMoves.forEach(mv=>{
       const half=document.createElement('div');
       half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+(orderColor[mv.order]||'#eee')+';padding:0 2px';
