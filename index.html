@@ -1000,7 +1000,7 @@ function renderStats(panel){
               if(name&&teamStats[name]) teamStats[name][b].kills+=oppDeaths;
             }
             // Opponent runs at this bunker (denominator for kill %)
-            const oppRunCount=(oppPt[b]||[]).filter(mv=>mv.sym&&mv.sym!=='_').length;
+            const oppRunCount=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
             if(oppRunCount>0){
               bkAll[b].oppRuns+=oppRunCount;
               if(name&&teamStats[name]) teamStats[name][b].oppRuns+=oppRunCount;
@@ -1035,7 +1035,7 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
     totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
     const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
     const killPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'\u2014';
-    const bunkPct=totalPts>0?(s.runs/totalPts*100).toFixed(0)+'%':'\u2014';
+    const bunkPct=totRuns>0?(s.runs/totRuns*100).toFixed(1)+'%':'\u2014';
     const tr=document.createElement('tr');
     const vals=killsOnly
       ?[b,SHAPES[i]||'',s.runs,bunkPct,s.kills,killPct]
@@ -1048,10 +1048,9 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
-  const totBunkPct=totalPts>0?(totRuns/totalPts*100).toFixed(0)+'%':'\u2014';
   const totVals=killsOnly
-    ?['TOTAL','',totRuns,totBunkPct,totKills,totKillPct]
-    :['TOTAL','',totRuns,totBunkPct,totDeaths,totDeathPct,totKills,totKillPct];
+    ?['TOTAL','',totRuns,'100%',totKills,totKillPct]
+    :['TOTAL','',totRuns,'100%',totDeaths,totDeathPct,totKills,totKillPct];
   totVals.forEach(v=>{const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);});
   tbl.appendChild(totTr);
   return tbl;
