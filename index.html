@@ -18,8 +18,8 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .sess-lbl{font-size:10px;color:#888;border:1px solid #ddd;padding:2px 6px;border-radius:3px;background:#fff}
 .score-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:3px 10px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;flex-wrap:wrap;min-height:24px}
 .sc-red{font-weight:bold;color:#c00}.sc-blue{font-weight:bold;color:#00c}.sc-lbl{color:#555}
-.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;position:relative}
-.tab-panel{display:none;position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.sheet-wrap{flex:1;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.tab-panel{display:none;flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
 .tab-panel.active{display:block}
 .tab-bar{background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;overflow-x:auto;flex-shrink:0;height:32px;padding:0 4px}
 .tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
@@ -599,23 +599,19 @@ window.applyMove=()=>{
   const{tabId,mk,tk,idx,bk}=popCell;
   if(popMoves.length===0){
     data[tabId][mk][tk][idx][bk]=[];
-    saveTab(tabId);closeMove();
-    // Update just the affected cell
-    refreshBkCell(tabId,mk,tk,idx,bk);
-    return;
+  } else {
+    data[tabId][mk][tk][idx][bk]=[];
+    popMoves.forEach(mv=>{data[tabId][mk][tk][idx][mv.bk]=[];});
+    popMoves.forEach(mv=>{
+      if(!data[tabId][mk][tk][idx][mv.bk]) data[tabId][mk][tk][idx][mv.bk]=[];
+      data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
+    });
   }
-  // Clear all bunkers involved
-  data[tabId][mk][tk][idx][bk]=[];
-  popMoves.forEach(mv=>{data[tabId][mk][tk][idx][mv.bk]=[];});
-  // Set moves
-  popMoves.forEach(mv=>{
-    if(!data[tabId][mk][tk][idx][mv.bk]) data[tabId][mk][tk][idx][mv.bk]=[];
-    data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
-  });
-  saveTab(tabId);closeMove();
-  // Refresh only the affected bunker cells in this row
-  const allBks=new Set([bk,...popMoves.map(m=>m.bk)]);
-  allBks.forEach(b=>refreshBkCell(tabId,mk,tk,idx,b));
+  saveTab(tabId);
+  closeMove();
+  // Re-render the panel to show updated cells
+  renderIntoPanel(tabId);
+  panelDirty[tabId]=false;
 };
 
 // Refresh a single bunker cell without rebuilding the whole table
