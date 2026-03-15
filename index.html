@@ -464,7 +464,6 @@ function renderBkCell(td,moves){
 
 // ── MOVE POPUP ───────────────────────────────
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
-  console.log('openMovePopup called',tabId,mk,tk,idx,bk);
   popCell={tabId,mk,tk,idx,bk};
   popMoves=existingMoves?JSON.parse(JSON.stringify(existingMoves)):[];
   document.getElementById('pop-pt').textContent=idx+1;
@@ -477,15 +476,17 @@ function buildMoveContent(){
   const cont=document.getElementById('move-content');
   cont.innerHTML='';
 
+  // Show existing moves summary
   if(popMoves.length>0){
     const sumDiv=document.createElement('div');sumDiv.className='move-summary';
     popMoves.forEach((mv,i)=>{
       const row=document.createElement('div');row.className='ms-row';
-      const dot=document.createElement('span');dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
+      const dot=document.createElement('span');
+      dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
       dot.textContent=i+1;
       const sym=document.createElement('span');sym.className='ms-sym';sym.textContent=mv.sym||'';
-      if(mv.order==='primary') sym.style.color='#1b5e20';
-      else if(mv.order==='secondary') sym.style.color='#e65100';
+      if(mv.order==='primary')sym.style.color='#1b5e20';
+      else if(mv.order==='secondary')sym.style.color='#e65100';
       else sym.style.color='#b71c1c';
       const bkSpan=document.createElement('span');bkSpan.className='ms-bk';
       bkSpan.textContent=mv.bk+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
@@ -498,101 +499,116 @@ function buildMoveContent(){
     cont.appendChild(sumDiv);
   }
 
-  const nextOrder=popMoves.length===0?'primary':popMoves.length===1?'secondary':'tertiary';
-  const orderLabels={primary:'🟢 Primary Move',secondary:'🟡 Secondary Move',tertiary:'🔴 Tertiary Move'};
-
-  if(popMoves.length<3){
-    const stepLbl=document.createElement('div');stepLbl.className='step-lbl';
-    const dotEl=document.createElement('span');dotEl.className='dot '+(nextOrder==='primary'?'dot-g':nextOrder==='secondary'?'dot-y':'dot-r');
-    dotEl.textContent=popMoves.length+1;
-    stepLbl.appendChild(dotEl);
-    stepLbl.appendChild(document.createTextNode(' '+orderLabels[nextOrder]));
-    cont.appendChild(stepLbl);
-
-    if(nextOrder!=='primary'){
-      const bkLbl=document.createElement('div');
-      bkLbl.style.cssText='font-size:10px;color:#555;margin-bottom:4px;font-weight:bold';
-      bkLbl.textContent='Pick destination bunker:';
-      cont.appendChild(bkLbl);
-      const bkGrid=document.createElement('div');bkGrid.className='bkgrid';bkGrid.id='bk-picker';
-      BKS.forEach(b=>{
-        const btn=document.createElement('button');
-        btn.className='bkbtn';btn.textContent=b;btn.dataset.bk=b;
-        btn.onclick=()=>{
-          document.querySelectorAll('.bkbtn').forEach(x=>x.classList.remove('sel-y','sel-r'));
-          btn.classList.add(nextOrder==='secondary'?'sel-y':'sel-r');
-          buildSymPicker(cont,nextOrder,b);
-        };
-        bkGrid.appendChild(btn);
-      });
-      cont.appendChild(bkGrid);
-    } else {
-      buildSymPicker(cont,nextOrder,popCell.bk);
-    }
+  // Primary: show sym picker directly — no confirm button needed, APPLY does it
+  if(popMoves.length===0){
+    buildSymPicker(cont,'primary',popCell.bk);
   }
 
-  if(popMoves.length>0&&popMoves.length<3){
-    const hr=document.createElement('hr');hr.className='divider';cont.appendChild(hr);
+  // Add secondary/tertiary button after primary is set
+  if(popMoves.length>=1&&popMoves.length<3){
+    const nextOrder=popMoves.length===1?'secondary':'tertiary';
+    const nextColor=popMoves.length===1?'#e65100':'#b71c1c';
+    const nextLabel=popMoves.length===1?'+ Add Secondary Move':'+ Add Tertiary Move';
+    const addBtn=document.createElement('button');
+    addBtn.className='add-move-btn';
+    addBtn.style.cssText='color:'+nextColor+';border-color:'+nextColor+';margin-top:8px';
+    addBtn.textContent=nextLabel;
+    addBtn.onclick=()=>{addBtn.remove();buildExtraPicker(cont,nextOrder);};
+    cont.appendChild(addBtn);
   }
 }
 
-function buildSymPicker(cont,order,bk){
-  const existing=cont.querySelector('.sym-section');
-  if(existing) existing.remove();
+function buildExtraPicker(cont,order){
+  const orderColor=order==='secondary'?'#e65100':'#b71c1c';
+  const section=document.createElement('div');section.className='extra-section';
+
+  const lbl=document.createElement('div');
+  lbl.style.cssText='font-size:10px;font-weight:bold;color:'+orderColor+';margin:8px 0 4px';
+  lbl.textContent=(order==='secondary'?'Secondary':'Tertiary')+' Move \u2014 Pick bunker:';
+  section.appendChild(lbl);
+
+  const bkGrid=document.createElement('div');bkGrid.className='bkgrid';
+  let selBk='';
+  BKS.forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='bkbtn';btn.textContent=b;
+    btn.onclick=()=>{
+      bkGrid.querySelectorAll('.bkbtn').forEach(x=>x.classList.remove('sel-y','sel-r'));
+      btn.classList.add(order==='secondary'?'sel-y':'sel-r');
+      selBk=b;
+      const old=section.querySelector('.sym-section');if(old)old.remove();
+      buildSymPickerExtra(section,order,b);
+    };
+    bkGrid.appendChild(btn);
+  });
+  section.appendChild(bkGrid);
+  cont.appendChild(section);
+}
+
+function buildSymPickerExtra(cont,order,bk){
+  const existing=cont.querySelector('.sym-section');if(existing)existing.remove();
   const section=document.createElement('div');section.className='sym-section';
-
-  const symLbl=document.createElement('div');
-  symLbl.style.cssText='font-size:10px;color:#555;margin:8px 0 4px;font-weight:bold';
-  symLbl.textContent='Pick symbol:';
-  section.appendChild(symLbl);
-
   const symGrid=document.createElement('div');symGrid.className='symgrid';
-  let selSym='';
-
+  let selSym='',selPen='none';
   SYMS.forEach(({s,l})=>{
     const btn=document.createElement('button');
     btn.className='sym';
     btn.innerHTML=s+'<span class="sl">'+l+'</span>';
-    btn.onclick=()=>{
-      document.querySelectorAll('.sym-section .sym').forEach(x=>x.classList.remove('sel'));
-      btn.classList.add('sel');selSym=s;
-    };
+    btn.onclick=()=>{symGrid.querySelectorAll('.sym').forEach(x=>x.classList.remove('sel'));btn.classList.add('sel');selSym=s;};
     symGrid.appendChild(btn);
   });
   section.appendChild(symGrid);
-
-  const penLbl=document.createElement('div');
-  penLbl.style.cssText='font-size:10px;color:#555;margin:8px 0 4px;font-weight:bold';
-  penLbl.textContent='Penalty (optional):';
-  section.appendChild(penLbl);
-
   const penRow=document.createElement('div');penRow.className='pen-row';
-  let selPen='none';
-
+  penRow.style.marginTop='6px';
   ['Minor (Mi)','Major (Mj)'].forEach((label,i)=>{
-    const btn=document.createElement('button');
-    btn.className='pen-btn';btn.textContent=label;
+    const btn=document.createElement('button');btn.className='pen-btn';btn.textContent=label;
     btn.onclick=()=>{
-      document.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
-      if(selPen===(i===0?'Mi':'Mj')){selPen='none';}
-      else{btn.classList.add('sel');selPen=i===0?'Mi':'Mj';}
+      penRow.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
+      if(selPen===(i===0?'Mi':'Mj')){selPen='none';}else{btn.classList.add('sel');selPen=i===0?'Mi':'Mj';}
     };
     penRow.appendChild(btn);
   });
   section.appendChild(penRow);
-
   const confirmBtn=document.createElement('button');
   confirmBtn.className='add-move-btn';
-  confirmBtn.style.cssText='background:#e8f5e9;border-color:#1a6e1a;color:#1a6e1a;margin-top:4px';
-  confirmBtn.textContent=order==='primary'?'✓ Set Primary Move':'✓ Add This Move';
+  confirmBtn.style.cssText='background:#e8f5e9;border-color:#1a6e1a;color:#1a6e1a;margin-top:6px';
+  confirmBtn.textContent='\u2713 Confirm '+(order==='secondary'?'Secondary':'Tertiary')+' Move';
   confirmBtn.onclick=()=>{
-    if(!selSym){alert('Please pick a symbol.');return;}
+    if(!selSym){alert('Pick a symbol first.');return;}
     popMoves.push({bk,sym:selSym,order,pen:selPen});
     buildMoveContent();
   };
   section.appendChild(confirmBtn);
   cont.appendChild(section);
 }
+
+function buildSymPicker(cont,order,bk){
+  const existing=cont.querySelector('.sym-section');if(existing)existing.remove();
+  const section=document.createElement('div');section.className='sym-section';
+  const symGrid=document.createElement('div');symGrid.className='symgrid';
+  window._primarySym='';window._primaryPen='none';
+  SYMS.forEach(({s,l})=>{
+    const btn=document.createElement('button');
+    btn.className='sym';
+    btn.innerHTML=s+'<span class="sl">'+l+'</span>';
+    btn.onclick=()=>{symGrid.querySelectorAll('.sym').forEach(x=>x.classList.remove('sel'));btn.classList.add('sel');window._primarySym=s;};
+    symGrid.appendChild(btn);
+  });
+  section.appendChild(symGrid);
+  const penRow=document.createElement('div');penRow.className='pen-row';penRow.style.marginTop='6px';
+  ['Minor (Mi)','Major (Mj)'].forEach((label,i)=>{
+    const btn=document.createElement('button');btn.className='pen-btn';btn.textContent=label;
+    btn.onclick=()=>{
+      penRow.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
+      if(window._primaryPen===(i===0?'Mi':'Mj')){window._primaryPen='none';}
+      else{btn.classList.add('sel');window._primaryPen=i===0?'Mi':'Mj';}
+    };
+    penRow.appendChild(btn);
+  });
+  section.appendChild(penRow);
+  cont.appendChild(section);
+}
+
 
 window.closeMove=()=>{
   document.getElementById('moveo').classList.remove('open');
@@ -602,23 +618,27 @@ window.closeMove=()=>{
 window.applyMove=()=>{
   if(!popCell) return;
   const{tabId,mk,tk,idx,bk}=popCell;
+
+  // If no confirmed moves yet, read primary sym from the picker
   if(popMoves.length===0){
-    data[tabId][mk][tk][idx][bk]=[];
-  } else {
-    data[tabId][mk][tk][idx][bk]=[];
-    popMoves.forEach(mv=>{data[tabId][mk][tk][idx][mv.bk]=[];});
-    popMoves.forEach(mv=>{
-      if(!data[tabId][mk][tk][idx][mv.bk]) data[tabId][mk][tk][idx][mv.bk]=[];
-      data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
-    });
+    const sym=window._primarySym||'';
+    if(!sym){alert('Please pick a symbol.');return;}
+    popMoves=[{bk,sym,order:'primary',pen:window._primaryPen||'none'}];
   }
-  console.log('applyMove data after:', JSON.stringify(data[tabId][mk][tk][idx][bk]));
+
+  // Clear all involved bunkers then set
+  const allBks=new Set(popMoves.map(m=>m.bk));
+  allBks.forEach(b=>{data[tabId][mk][tk][idx][b]=[];});
+  popMoves.forEach(mv=>{
+    if(!data[tabId][mk][tk][idx][mv.bk]) data[tabId][mk][tk][idx][mv.bk]=[];
+    data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
+  });
+
   saveTab(tabId);
   closeMove();
-  console.log('calling renderIntoPanel for', tabId);
   renderIntoPanel(tabId);
+  panelBuilt[tabId]=true;
   panelDirty[tabId]=false;
-  console.log('renderIntoPanel done');
 };
 
 // Refresh a single bunker cell without rebuilding the whole table
