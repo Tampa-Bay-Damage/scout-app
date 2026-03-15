@@ -223,46 +223,20 @@ function showTab(id){
 function listenFirebase(){
   onValue(ref(db,`sessions/${SESSION}`),snap=>{
     const d=snap.val()||{};
-    let anyChanged=false;
     TABS.forEach(t=>{
       if(t.id==='stats') return;
-      const incoming=d[t.id]?normalizeTab(JSON.parse(JSON.stringify(d[t.id]))):null;
-      // If no data in Firebase, initialize locally and save it
-      if(!incoming){
-        if(!data[t.id]){
-          initTab(t.id);
-          anyChanged=true;
-          panelDirty[t.id]=true;
-        }
-        return;
+      if(d[t.id]){
+        data[t.id]=normalizeTab(JSON.parse(JSON.stringify(d[t.id])));
+      } else {
+        initTab(t.id);
+        saveTab(t.id); // write blank data to Firebase so it persists
       }
-      const incomingStr=JSON.stringify(incoming);
-      const existingStr=JSON.stringify(data[t.id]||null);
-      if(incomingStr===existingStr) return; // nothing changed, skip
-      anyChanged=true;
-      if(incoming) data[t.id]=incoming;
-      else initTab(t.id);
-      // Only mark dirty — don't force re-render yet
       panelDirty[t.id]=true;
     });
-
-    if(!anyChanged){
-      document.getElementById('sst').textContent='Live \u2014 Synced';
-      return;
-    }
-
-    // Re-render active tab if it changed; others render lazily on next visit
-    if(panelDirty[activeTab]){
-      if(activeTab==='stats'||panelBuilt[activeTab]){
-        renderIntoPanel(activeTab);
-        panelDirty[activeTab]=false;
-        panelBuilt[activeTab]=true;
-      }
-    }
-    if(activeTab==='stats'&&anyChanged){
-      renderIntoPanel('stats');
-      panelDirty['stats']=false;
-    }
+    // Always re-render active tab
+    renderIntoPanel(activeTab);
+    panelBuilt[activeTab]=true;
+    panelDirty[activeTab]=false;
     updateScoreBar();
     document.getElementById('sst').textContent='Live \u2014 Synced';
   });
