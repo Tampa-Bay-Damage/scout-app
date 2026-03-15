@@ -649,6 +649,7 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
+  window._selPlayer=null;
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
@@ -811,6 +812,42 @@ function buildMoveContent(){
   cont.appendChild(seqRow);
 
   // Clear button
+  // Player roster buttons
+  if(popCell){
+    const{tabId,mk,tk}=popCell;
+    const teamName=data[tabId][mk][tk==='t1pts'?'t1name':'t2name'];
+    const teamKey=teamName?(teamName.replace(/\s+/g,'_').toLowerCase()):null;
+    const players=(teamKey&&window._rosterData&&window._rosterData[teamKey])||[];
+    const activePlayers=players.filter(p=>p.name||p.num);
+    if(activePlayers.length>0){
+      const rosterLbl=document.createElement('div');
+      rosterLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:6px 0 3px';
+      rosterLbl.textContent='Player:';
+      cont.appendChild(rosterLbl);
+      const rosterGrid=document.createElement('div');
+      rosterGrid.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:6px';
+      activePlayers.forEach(p=>{
+        const label=p.num||p.name.split(' ').pop();
+        const btn=document.createElement('button');
+        btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+        btn.textContent=label;
+        btn.title=p.name;
+        if(window._selPlayer===label){btn.style.borderColor='#1565c0';btn.style.background='#e3f2fd';}
+        btn.onclick=()=>{
+          rosterGrid.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
+          if(window._selPlayer===label){
+            window._selPlayer=null;
+          } else {
+            btn.style.borderColor='#1565c0';btn.style.background='#e3f2fd';
+            window._selPlayer=label;
+          }
+        };
+        rosterGrid.appendChild(btn);
+      });
+      cont.appendChild(rosterGrid);
+    }
+  }
+
   const clearBtn=document.createElement('button');
   clearBtn.style.cssText='width:100%;padding:5px;margin-top:6px;border:1px solid #ccc;background:#fff;color:#999;font-size:11px;cursor:pointer;border-radius:3px;font-family:Arial,sans-serif';
   clearBtn.textContent='Clear This Cell';
@@ -847,6 +884,7 @@ window.applyMove=()=>{
   data[tabId][mk][tk][idx][bk].push({
     sym:finalSym,
     isDead:window._selDeath||false,
+    player:window._selPlayer||null,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
     seqNum:window._selSeq||null
@@ -861,6 +899,7 @@ window.applyMove=()=>{
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
+  window._selPlayer=null;
 
   // Refresh cell in background without closing popup
   const panel=document.getElementById('panel-'+tabId);
