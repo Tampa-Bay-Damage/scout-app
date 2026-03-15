@@ -828,7 +828,7 @@ function renderStats(panel){
               }
             });
             // Kills = number of deaths the opponent had in this same bunker this point
-            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.sym==='O').length;
+            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.sym&&mv.sym.startsWith('O')).length;
             if(oppDeaths>0){
               bkAll[b].kills+=oppDeaths;
               if(name&&teamStats[name]) teamStats[name][b].kills+=oppDeaths;
