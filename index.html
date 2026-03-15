@@ -1065,21 +1065,47 @@ function renderStats(panel){
   eventWrap.appendChild(makeStatsTbl(bkAll, true, totalPtsAll));
   statsLayout.appendChild(eventWrap);
 
-  // Team stats with dropdown
+  // Build per-match index for each team: [{tabId,mk,label}]
+  const teamMatches={};
+  TEAMS.forEach(t=>{teamMatches[t]=[];});
+  TABS.forEach(t=>{
+    if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
+    ['m1','m2'].forEach(mk=>{
+      const md=data[t.id][mk];
+      // Check both teams in this match
+      [{tk:'t1pts',name:md.t1name},{tk:'t2pts',name:md.t2name}].forEach(({tk,name})=>{
+        if(!name) return;
+        const pts=md[tk]||[];
+        const hasData=pts.some(pt=>pt.wl||BKS.some(b=>(pt[b]||[]).length>0));
+        if(hasData&&teamMatches[name]){
+          teamMatches[name].push({tabId:t.id,mk,tk});
+        }
+      });
+    });
+  });
+
+  // Team stats with dropdowns
   const teamWrap=document.createElement('div');
   const teamHdrRow=document.createElement('div');
-  teamHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  teamHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap';
+
   const teamH2=document.createElement('span');
   teamH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a';
   teamH2.textContent='Team Stats:';
+
   const teamSel=document.createElement('select');
   teamSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
   TEAMS.forEach(t=>{
     const opt=document.createElement('option');opt.value=t;opt.textContent=t;
     teamSel.appendChild(opt);
   });
+
+  const matchSel=document.createElement('select');
+  matchSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
+
   teamHdrRow.appendChild(teamH2);
   teamHdrRow.appendChild(teamSel);
+  teamHdrRow.appendChild(matchSel);
   teamWrap.appendChild(teamHdrRow);
 
   const teamTblWrap=document.createElement('div');
@@ -1088,11 +1114,54 @@ function renderStats(panel){
   div.appendChild(statsLayout);
   panel.appendChild(div);
 
-  function renderTeamStats(team){
-    teamTblWrap.innerHTML='';
-    teamTblWrap.appendChild(makeStatsTbl(teamStats[team], false, teamPts[team]||0));
+  function calcTeamStats(team, matchIdx){
+    // matchIdx = -1 means all matches
+    const bk={};
+    BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,oppRuns:0});
+    let pts=0;
+    const matches=matchIdx===-1?teamMatches[team]:[teamMatches[team][matchIdx]].filter(Boolean);
+    matches.forEach(({tabId,mk,tk})=>{
+      const md=data[tabId][mk];
+      const oppTk=tk==='t1pts'?'t2pts':'t1pts';
+      (md[tk]||[]).forEach((pt,ptIdx)=>{
+        const oppPt=(md[oppTk]||[])[ptIdx]||{};
+        const hasData=pt.wl||BKS.some(b=>(pt[b]||[]).length>0);
+        if(hasData) pts++;
+        BKS.forEach(b=>{
+          (pt[b]||[]).forEach(mv=>{
+            if(mv.isDead||(mv.sym&&mv.sym!=='_')){bk[b].runs++;}
+            if(mv.isDead){bk[b].deaths++;}
+          });
+          const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
+          bk[b].kills+=oppDeaths;
+          const oppRuns=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
+          bk[b].oppRuns+=oppRuns;
+        });
+      });
+    });
+    return {bk,pts};
   }
+
+  function populateMatchSel(team){
+    matchSel.innerHTML='';
+    const allOpt=document.createElement('option');allOpt.value='-1';allOpt.textContent='All Matches';
+    matchSel.appendChild(allOpt);
+    (teamMatches[team]||[]).forEach((_,i)=>{
+      const opt=document.createElement('option');opt.value=i;opt.textContent='Match '+(i+1);
+      matchSel.appendChild(opt);
+    });
+  }
+
+  function renderTeamStats(team){
+    populateMatchSel(team);
+    const matchIdx=parseInt(matchSel.value);
+    const {bk,pts}=calcTeamStats(team,matchIdx);
+    teamTblWrap.innerHTML='';
+    teamTblWrap.appendChild(makeStatsTbl(bk, false, pts));
+  }
+
   teamSel.onchange=()=>renderTeamStats(teamSel.value);
+  matchSel.onchange=()=>renderTeamStats(teamSel.value);
   renderTeamStats(TEAMS[0]);
 }
 
