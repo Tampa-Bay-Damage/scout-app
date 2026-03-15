@@ -229,13 +229,14 @@ function listenFirebase(){
       }
       panelDirty[t.id]=true;
     });
+    // Always mark stats dirty so it rebuilds next visit
+    panelBuilt['stats']=false;
     // Re-render active tab with latest data — but not if popup is open
     if(!popCell){
       panelBuilt[activeTab]=false;
       showTab(activeTab);
     } else if(activeTab==='stats'){
       // Always refresh stats even if popup open (stats has no popup)
-      panelBuilt['stats']=false;
       renderIntoPanel('stats');
     }
     updateScoreBar();
