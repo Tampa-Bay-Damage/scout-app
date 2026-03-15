@@ -285,7 +285,7 @@ function updateScoreBar(){
   const bar=document.getElementById('scorebar');
   if(activeTab==='stats'){bar.innerHTML='<span style="color:#888;font-size:11px">Event Stats</span>';return;}
   const td=data[activeTab];if(!td){bar.innerHTML='';return;}
-  const sc=(mk,tk)=>(data[activeTab][mk][tk]||[]).filter(p=>p.wl==='W').length;
+  const sc=(mk,tk)=>{const pts=data[activeTab][mk][tk]||[];return pts.filter(p=>p.wl==='W').length+'-'+pts.filter(p=>p.wl==='L').length;};
   bar.innerHTML=`
     <span class="sc-lbl">M1:</span>
     <span class="sc-red">${td.m1.t1name||'Top Team'} ${sc('m1','t1pts')}</span>
@@ -307,49 +307,56 @@ function renderIntoPanel(tabId){
   if(tabId==='stats'){renderStats(panel);return;}
   initTab(tabId);
   const td=data[tabId];
-  const tbl=document.createElement('table');
-  const thead=document.createElement('thead');
-  const tbody=document.createElement('tbody');
 
-  // Row 1
-  const r1=document.createElement('tr');r1.className='hr1';
-  ['NXL','','','','Team',...BKS.map(()=>''),'Notes','Key'].forEach((t,i)=>{
-    const th=document.createElement('th');th.textContent=t;r1.appendChild(th);
-  });
-  r1.children[5+Math.floor(BKS.length/2)].textContent=tabId.replace(/-/g,' ').toUpperCase();
-  thead.appendChild(r1);
+  function makeMatchTable(mk,matchLabel){
+    const tbl=document.createElement('table');
+    const thead=document.createElement('thead');
+    const tbody=document.createElement('tbody');
 
-  // Row 2 - shapes
-  const r2=document.createElement('tr');r2.className='hr2';
-  ['','Shapes','','','',...SHAPES,'Notes','Key'].forEach(t=>{
-    const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
-  });
-  thead.appendChild(r2);
+    // Row 1
+    const r1=document.createElement('tr');r1.className='hr1';
+    ['NXL','','','','Team',...BKS.map(()=>''),'Notes','Key'].forEach((t,i)=>{
+      const th=document.createElement('th');th.textContent=t;r1.appendChild(th);
+    });
+    r1.children[5+Math.floor(BKS.length/2)].textContent=matchLabel;
+    thead.appendChild(r1);
 
-  // Row 3 - bunker names
-  const r3=document.createElement('tr');r3.className='hr3';
-  ['*','W/L','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
-    const th=document.createElement('th');th.textContent=t;
-    if(i>=5&&i<5+BKS.length) th.classList.add('bk');
-    r3.appendChild(th);
-  });
-  thead.appendChild(r3);
-  tbl.appendChild(thead);
+    // Row 2 - shapes
+    const r2=document.createElement('tr');r2.className='hr2';
+    ['','Shapes','','','',...SHAPES,'Notes','Key'].forEach(t=>{
+      const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
+    });
+    thead.appendChild(r2);
 
-  renderMatch(tbody,tabId,'m1',td.m1);
-  const sep=document.createElement('tr');sep.className='msep';
-  const sepc=document.createElement('td');sepc.colSpan=7+BKS.length;
-  sepc.textContent='\u2500\u2500\u2500\u2500\u2500  MATCH 2  \u2500\u2500\u2500\u2500\u2500';
-  sep.appendChild(sepc);tbody.appendChild(sep);
-  renderMatch(tbody,tabId,'m2',td.m2);
+    // Row 3 - bunker names
+    const r3=document.createElement('tr');r3.className='hr3';
+    ['*','W/L','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
+      const th=document.createElement('th');th.textContent=t;
+      if(i>=5&&i<5+BKS.length) th.classList.add('bk');
+      r3.appendChild(th);
+    });
+    thead.appendChild(r3);
+    tbl.appendChild(thead);
 
-  const kr=document.createElement('tr');kr.className='keyrow';
-  const kt=document.createElement('td');kt.colSpan=7+BKS.length;
-  kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used  | \ud83d\udfe2=Primary  \ud83d\udfe1=Secondary  \ud83d\udd34=Tertiary  | Mi=Minor Pen  Mj=Major Pen';
-  kr.appendChild(kt);tbody.appendChild(kr);
+    renderMatch(tbody,tabId,mk,td[mk]);
 
-  tbl.appendChild(tbody);
-  panel.appendChild(tbl);
+    const kr=document.createElement('tr');kr.className='keyrow';
+    const kt=document.createElement('td');kt.colSpan=7+BKS.length;
+    kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used  | \ud83d\udfe2=Primary  \ud83d\udfe1=Secondary  \ud83d\udd34=Tertiary  | Mi=Minor Pen  Mj=Major Pen';
+    kr.appendChild(kt);tbody.appendChild(kr);
+
+    tbl.appendChild(tbody);
+    return tbl;
+  }
+
+  panel.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 1'));
+
+  const divider=document.createElement('div');
+  divider.style.cssText='background:#d5d5d5;font-weight:bold;font-size:11px;text-align:center;padding:6px;letter-spacing:2px;color:#333;border-top:3px solid #888;border-bottom:3px solid #888;margin:0';
+  divider.textContent=tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 2';
+  panel.appendChild(divider);
+
+  panel.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 2'));
 }
 
 function renderMatch(tbody,tabId,mk,md){
@@ -373,17 +380,28 @@ function makeRow(tabId,mk,tk,idx,pt){
 
   const tdPt=document.createElement('td');tdPt.className='cpt';tdPt.textContent=idx+1;row.appendChild(tdPt);
 
-  const tdWL=document.createElement('td');tdWL.className='cwl '+(pt.wl||'');tdWL.textContent=pt.wl||'';
-  tdWL.onclick=()=>{
-    const c=data[tabId][mk][tk][idx].wl;
-    data[tabId][mk][tk][idx].wl=c===''?'W':c==='W'?'L':'';
+  const tdWL=document.createElement('td');tdWL.className='cwl';tdWL.style.padding='0';
+  const wlSel=document.createElement('select');
+  wlSel.style.cssText='width:100%;height:20px;border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;text-align:center;cursor:pointer;outline:none';
+  ['','W','L','NP'].forEach(v=>{
+    const opt=document.createElement('option');opt.value=v;opt.textContent=v||'-';
+    if(v===(pt.wl||'')) opt.selected=true;
+    wlSel.appendChild(opt);
+  });
+  function applyWLStyle(){
+    const v=wlSel.value;
+    wlSel.style.background=v==='W'?'#d4edda':v==='L'?'#f8d7da':v==='NP'?'#fff3cd':'transparent';
+    wlSel.style.color=v==='W'?'#155724':v==='L'?'#721c24':v==='NP'?'#856404':'#000';
+  }
+  applyWLStyle();
+  wlSel.onchange=()=>{
+    data[tabId][mk][tk][idx].wl=wlSel.value;
+    applyWLStyle();
     saveTab(tabId);
-    // Update just this cell instead of full re-render
-    tdWL.className='cwl '+(data[tabId][mk][tk][idx].wl||'');
-    tdWL.textContent=data[tabId][mk][tk][idx].wl||'';
     updateScoreCell(tabId,mk,tk);
     updateScoreBar();
   };
+  tdWL.appendChild(wlSel);
   row.appendChild(tdWL);
 
   const tdRB=document.createElement('td');tdRB.className='crb '+(pt.rb||'');tdRB.textContent=pt.rb||'';
@@ -399,8 +417,14 @@ function makeRow(tabId,mk,tk,idx,pt){
   // Score cell — give it an ID so we can update it without full re-render
   const tdSc=document.createElement('td');tdSc.className='csc';
   tdSc.dataset.scorefor=`${tabId}|${mk}|${tk}`;
-  let sc=0;for(let i=0;i<=idx;i++)if(data[tabId][mk][tk][i]?.wl==='W')sc++;
-  tdSc.textContent=sc||'';
+  {
+    let w=0,l=0;
+    for(let i=0;i<=idx;i++){
+      const v=data[tabId][mk][tk][i]?.wl;
+      if(v==='W')w++;else if(v==='L')l++;
+    }
+    tdSc.textContent=w+'-'+l;
+  }
   row.appendChild(tdSc);
 
   const tdTm=document.createElement('td');tdTm.className='ctm';
@@ -435,9 +459,12 @@ function updateScoreCell(tabId,mk,tk){
   if(!panel) return;
   const cells=[...panel.querySelectorAll(`td[data-scorefor="${tabId}|${mk}|${tk}"]`)];
   cells.forEach((cell,idx)=>{
-    let sc=0;
-    for(let i=0;i<=idx;i++) if(data[tabId][mk][tk][i]?.wl==='W') sc++;
-    cell.textContent=sc||'';
+    let w=0,l=0;
+    for(let i=0;i<=idx;i++){
+      const v=data[tabId][mk][tk][i]?.wl;
+      if(v==='W')w++;else if(v==='L')l++;
+    }
+    cell.textContent=w+'-'+l;
   });
 }
 
