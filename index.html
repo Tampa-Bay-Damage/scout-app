@@ -607,11 +607,13 @@ window.applyMove=()=>{
       data[tabId][mk][tk][idx][mv.bk].push({sym:mv.sym,order:mv.order,pen:mv.pen});
     });
   }
+  console.log('applyMove data after:', JSON.stringify(data[tabId][mk][tk][idx][bk]));
   saveTab(tabId);
   closeMove();
-  // Re-render the panel to show updated cells
+  console.log('calling renderIntoPanel for', tabId);
   renderIntoPanel(tabId);
   panelDirty[tabId]=false;
+  console.log('renderIntoPanel done');
 };
 
 // Refresh a single bunker cell without rebuilding the whole table
