@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: player dropdown always populated using PRELOADED_ROSTERS fallback
-  SUMMARY: populatePlayerSel now falls back to PRELOADED_ROSTERS if Firebase roster
-           data hasn't loaded yet, ensuring the player dropdown is always filled.
+  COMMIT: fix: player dropdown always populated from PRELOADED_ROSTERS per team
+  SUMMARY: Fixed roster lookup to check per-team rather than globally. If Firebase has
+           no data for a specific team key, falls back to PRELOADED_ROSTERS for that team.
+           Also fixed popup roster buttons to use the same fallback logic.
 -->
 
 <html lang="en">
@@ -797,7 +798,8 @@ function buildMoveContent(){
     const{tabId,mk,tk}=popCell;
     const teamName=data[tabId][mk][tk==='t1pts'?'t1name':'t2name'];
     const teamKey=teamName?(teamName.replace(/\s+/g,'_').toLowerCase()):null;
-    const players=(teamKey&&window._rosterData&&window._rosterData[teamKey])||[];
+    const fbPlayers2=window._rosterData&&window._rosterData[teamKey];
+    const players=(teamKey&&fbPlayers2&&fbPlayers2.length>0)?fbPlayers2:(PRELOADED_ROSTERS[teamKey]||[]);
     const activePlayers=players.filter(p=>p.name||p.num);
     if(activePlayers.length>0){
       const rosterLbl=document.createElement('div');
@@ -1287,8 +1289,9 @@ function renderStats(panel){
   function populatePlayerSel(team){
     pPlayerSel.innerHTML='';
     const teamKey=team.replace(/\s+/g,'_').toLowerCase();
-    const rosterSrc=window._rosterData||PRELOADED_ROSTERS;
-    const players=(rosterSrc[teamKey])||[];
+    // Use Firebase data if available for this team, otherwise fall back to preloaded
+    const fbPlayers=window._rosterData&&window._rosterData[teamKey];
+    const players=(fbPlayers&&fbPlayers.length>0)?fbPlayers:(PRELOADED_ROSTERS[teamKey]||[]);
     const active=players.filter(p=>p.name||p.num);
     if(active.length===0){
       const opt=document.createElement('option');opt.textContent='No players in roster';pPlayerSel.appendChild(opt);return;
