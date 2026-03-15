@@ -1029,13 +1029,20 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
     :['Bunker','Shape','Bunkers Off Break','Bunker %','Deaths Off Break','Death %','Kills Off Break','Kill %'];
   headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);});
   tbl.appendChild(hdr);
-  let totRuns=0,totDeaths=0,totKills=0;
+
+  // Pre-calculate totals so Bunker % uses correct denominator
+  let allRuns=0,totRuns=0,totDeaths=0,totKills=0,totOppRuns=0;
+  BKS.forEach(b=>{
+    const s=bkData[b]||{runs:0,deaths:0,kills:0,oppRuns:0};
+    allRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;totOppRuns+=s.oppRuns;
+  });
+  totRuns=allRuns;
+
   BKS.forEach((b,i)=>{
     const s=bkData[b]||{runs:0,deaths:0,kills:0,oppRuns:0};
-    totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
     const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
     const killPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'\u2014';
-    const bunkPct=totRuns>0?(s.runs/totRuns*100).toFixed(1)+'%':'\u2014';
+    const bunkPct=allRuns>0?(s.runs/allRuns*100).toFixed(1)+'%':'\u2014';
     const tr=document.createElement('tr');
     const vals=killsOnly
       ?[b,SHAPES[i]||'',s.runs,bunkPct,s.kills,killPct]
@@ -1043,8 +1050,7 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
     vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     tbl.appendChild(tr);
   });
-  let totOppRuns=0;
-  BKS.forEach(b=>{totOppRuns+=(bkData[b]||{oppRuns:0}).oppRuns;});
+
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
