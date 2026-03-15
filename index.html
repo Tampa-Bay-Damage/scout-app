@@ -1152,16 +1152,19 @@ function renderStats(panel){
     });
   }
 
-  function renderTeamStats(team){
-    populateMatchSel(team);
-    const matchIdx=parseInt(matchSel.value);
+  function renderTeamStatsWithMatch(team, matchIdx){
     const {bk,pts}=calcTeamStats(team,matchIdx);
     teamTblWrap.innerHTML='';
     teamTblWrap.appendChild(makeStatsTbl(bk, false, pts));
   }
 
+  function renderTeamStats(team){
+    populateMatchSel(team);
+    renderTeamStatsWithMatch(team, -1);
+  }
+
   teamSel.onchange=()=>renderTeamStats(teamSel.value);
-  matchSel.onchange=()=>renderTeamStats(teamSel.value);
+  matchSel.onchange=()=>renderTeamStatsWithMatch(teamSel.value, parseInt(matchSel.value));
   renderTeamStats(TEAMS[0]);
 }
 
