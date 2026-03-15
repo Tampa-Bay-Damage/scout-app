@@ -31,6 +31,7 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .tab.sat{color:#1565c0}.tab.sat.active{color:#1565c0}
 .tab.sun{color:#2e7d32}.tab.sun.active{color:#2e7d32}
 .tab.stats-tab{color:#6a1b9a}.tab.stats-tab.active{color:#6a1b9a}
+.tab.rosters{color:#00695c}.tab.rosters.active{color:#00695c}
 table{border-collapse:collapse;width:max-content}
 th,td{border:1px solid #d0d0d0;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
 .hr1 th{background:#BDC0BF;font-size:11px;font-weight:bold;position:sticky;top:0;z-index:10;height:20px}
@@ -55,7 +56,7 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
 .mv-primary{background:#c8e6c9;color:#000}
 .mv-secondary{background:#ffe0b2;color:#000}
-.mv-tertiary{background:#ffcdd2;color:#000}
+.mv-tertiary{background:#bbdefb;color:#000}
 .stats-wrap{padding:12px;overflow:auto;height:100%}
 .stats-wrap h2{font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px}
 .stats-wrap h3{font-size:12px;font-weight:bold;color:#333;margin:14px 0 4px;background:#f0f0f0;padding:4px 6px;border-left:3px solid #6a1b9a}
@@ -72,7 +73,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .pcls{background:#f0f0f0;border:1px solid #ccc;border-radius:50%;width:26px;height:26px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .step-lbl{font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;display:flex;align-items:center;gap:6px}
 .step-lbl .dot{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;color:#fff}
-.dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#b71c1c}
+.dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#1565c0}
 .symgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
 .sym{padding:9px 4px;border:2px solid #ccc;background:#fff;font-size:14px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px}
 .sym .sl{display:block;font-size:9px;font-weight:normal;color:#666;margin-top:1px}
@@ -144,14 +145,14 @@ const FB={
 const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Baby","Beast","100","200","300"];
 const SHAPES=["SB","","S","C","GB","GW","C","","MT","MT","","MT","GW","GB","Br","T","SD"];
 const SYMS=[
-  {s:"O",l:"Dead"},{s:"S",l:"Snake"},
+  {s:"S",l:"Snake"},
   {s:"\u2206",l:"Dorito"},{s:"X",l:"Dived"}
 ];
 const MODIFIERS=[{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
 const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
 const DAYS=["Fri","Sat","Sun"];
 const PTS=15;
-const TABS=[{id:"stats",label:"Stats",day:"stats"}];
+const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
 
 function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event1';}
@@ -168,6 +169,7 @@ catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
 buildTabs();
 createPanels();
 listenFirebase();
+loadRosters();
 showTab('stats');
 
 // ── TABS ─────────────────────────────────────
@@ -225,7 +227,7 @@ function listenFirebase(){
   db.ref(`sessions/${SESSION}`).on('value',snap=>{
     const d=snap.val()||{};
     TABS.forEach(t=>{
-      if(t.id==='stats') return;
+      if(t.id==='stats'||t.id==='rosters') return;
       if(d[t.id]){
         data[t.id]=normalizeTab(JSON.parse(JSON.stringify(d[t.id])));
       } else {
@@ -321,6 +323,7 @@ function renderIntoPanel(tabId){
   if(!panel) return;
   panel.innerHTML='';
   if(tabId==='stats'){renderStats(panel);return;}
+  if(tabId==='rosters'){renderRosters(panel);return;}
   initTab(tabId);
   const td=data[tabId];
 
@@ -528,7 +531,9 @@ function renderBkCell(td,moves){
   const realMoves=moves.filter(mv=>mv.sym&&mv.sym!=='_');
   if(realMoves.length===0) return;
 
-  const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#ffcdd2'};
+  const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#bbdefb'};
+  // Death overrides color to red
+  if(realMoves.length===1&&realMoves[0].isDead){td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';const span=document.createElement('span');span.style.cssText='color:#000;font-weight:bold';let txt=realMoves[0].sym||'';if(realMoves[0].pen&&realMoves[0].pen!=='none')txt+='\u00b0'+realMoves[0].pen;if(realMoves[0].mod)txt+=realMoves[0].mod;span.textContent=txt||'';td.appendChild(span);if(realMoves[0].seqNum){const sup=document.createElement('sup');sup.textContent=realMoves[0].seqNum;sup.style.color='#000';td.appendChild(sup);}return;}
 
   if(realMoves.length===1){
     // Single move — full cell color, centered
@@ -552,9 +557,10 @@ function renderBkCell(td,moves){
     td.style.minHeight='22px';
     realMoves.forEach(mv=>{
       const half=document.createElement('div');
-      half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+(orderColor[mv.order]||'#eee')+';padding:0 2px';
-      let txt=mv.sym;
-      if(mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
+      const bg=mv.isDead?'#ef9a9a':(orderColor[mv.order]||'#eee');
+      half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+bg+';padding:0 2px';
+      let txt=mv.isDead?'✝':(mv.sym||'');
+      if(!mv.isDead&&mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
       half.style.color='#000';
       half.style.fontWeight='bold';
       half.style.fontSize='11px';
@@ -575,6 +581,7 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   // Reset picker
   window._selSym='';
   window._selMod='';
+  window._selDeath=false;
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
@@ -647,27 +654,49 @@ function buildMoveContent(){
   });
   cont.appendChild(symGrid);
 
-  // Depth modifier (optional) — appends to symbol
-  const modLbl=document.createElement('div');
-  modLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:8px 0 4px';
-  modLbl.textContent='Depth modifier (optional):';
-  cont.appendChild(modLbl);
+  // Options row: Death, Deep, Shallow, Major, Minor
+  const optLbl=document.createElement('div');
+  optLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:8px 0 4px';
+  optLbl.textContent='Options:';
+  cont.appendChild(optLbl);
 
-  const modRow=document.createElement('div');
-  modRow.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px';
-  MODIFIERS.forEach(({s,l})=>{
+  const optRow=document.createElement('div');
+  optRow.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px';
+  [
+    {label:'Death',val:'death',bg:'#ffcdd2',border:'#c62828'},
+    {label:'Deep',val:'v',bg:'#e3f2fd',border:'#1565c0'},
+    {label:'Shallow',val:'^',bg:'#e3f2fd',border:'#1565c0'},
+    {label:'Major',val:'Mj',bg:'#fff3e0',border:'#e65100'},
+    {label:'Minor',val:'Mi',bg:'#fff8e1',border:'#f9a825'}
+  ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.style.cssText='padding:8px;border:2px solid #ccc;border-radius:3px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
-    btn.textContent=s+' '+l;
-    if(window._selMod===s){btn.style.borderColor='#333';btn.style.background='#f0f0f0';}
+    btn.style.cssText='padding:6px 2px;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:center';
+    btn.textContent=label;
+    // Check current selection
+    const isSelected=(val==='death'&&window._selDeath)||(val==='v'&&window._selMod==='v')||(val==='^'&&window._selMod==='^')||((val==='Mi'||val==='Mj')&&window._selPen===val);
+    if(isSelected){btn.style.borderColor=border;btn.style.background=bg;}
     btn.onclick=()=>{
-      modRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
-      if(window._selMod===s){window._selMod='';}
-      else{btn.style.borderColor='#333';btn.style.background='#f0f0f0';window._selMod=s;}
+      if(val==='death'){
+        window._selDeath=!window._selDeath;
+        btn.style.borderColor=window._selDeath?border:'#ccc';
+        btn.style.background=window._selDeath?bg:'#fff';
+      } else if(val==='v'||val==='^'){
+        const already=window._selMod===val;
+        // Reset all depth btns
+        optRow.querySelectorAll('button').forEach((b,bi)=>{if(bi===1||bi===2){b.style.borderColor='#ccc';b.style.background='#fff';}});
+        window._selMod=already?'':val;
+        if(!already){btn.style.borderColor=border;btn.style.background=bg;}
+      } else {
+        const already=window._selPen===val;
+        // Reset pen btns
+        optRow.querySelectorAll('button').forEach((b,bi)=>{if(bi===3||bi===4){b.style.borderColor='#ccc';b.style.background='#fff';}});
+        window._selPen=already?'none':val;
+        if(!already){btn.style.borderColor=border;btn.style.background=bg;}
+      }
     };
-    modRow.appendChild(btn);
+    optRow.appendChild(btn);
   });
-  cont.appendChild(modRow);
+  cont.appendChild(optRow);
 
   // Order selector
   const orderLbl=document.createElement('div');
@@ -710,25 +739,6 @@ function buildMoveContent(){
   seqRow.appendChild(seqLbl);seqRow.appendChild(seqInp);
   cont.appendChild(seqRow);
 
-  // Penalty (optional)
-  const penLbl=document.createElement('div');
-  penLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px';
-  penLbl.textContent='Penalty (optional):';
-  cont.appendChild(penLbl);
-
-  const penRow=document.createElement('div');penRow.className='pen-row';
-  ['Minor (Mi)','Major (Mj)'].forEach((label,i)=>{
-    const btn=document.createElement('button');btn.className='pen-btn';btn.textContent=label;
-    const pv=i===0?'Mi':'Mj';
-    btn.onclick=()=>{
-      penRow.querySelectorAll('.pen-btn').forEach(x=>x.classList.remove('sel'));
-      if(window._selPen===pv){window._selPen='none';}
-      else{btn.classList.add('sel');window._selPen=pv;}
-    };
-    penRow.appendChild(btn);
-  });
-  cont.appendChild(penRow);
-
   // Clear button
   const clearBtn=document.createElement('button');
   clearBtn.style.cssText='width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;background:#fff;color:#999;font-size:11px;cursor:pointer;border-radius:3px;font-family:Arial,sans-serif';
@@ -762,9 +772,11 @@ window.applyMove=()=>{
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
 
   // Push new move to array (multiple moves supported)
-  const finalSym=(window._selSym||'')+(window._selMod||'');
+  const finalSym=window._selDeath?'':(window._selSym||'');
+  const finalMod=window._selDeath?'':(window._selMod||'');
   data[tabId][mk][tk][idx][bk].push({
-    sym:finalSym,
+    sym:finalSym+finalMod,
+    isDead:window._selDeath||false,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
     seqNum:window._selSeq||null
@@ -775,6 +787,7 @@ window.applyMove=()=>{
   // Reset picker, keep popup open
   window._selSym='';
   window._selMod='';
+  window._selDeath=false;
   window._selOrder='primary';
   window._selPen='none';
   window._selSeq=null;
@@ -796,6 +809,129 @@ document.getElementById('btn-cls').onclick=()=>closeMove();
 document.getElementById('btn-can').onclick=()=>closeMove();
 document.getElementById('btn-app').onclick=()=>applyMove();
 document.getElementById('moveo').addEventListener('click',function(e){if(e.target.id==='moveo') closeMove();});
+
+// ── ROSTERS ─────────────────────────────────
+function renderRosters(panel){
+  panel.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='padding:10px;overflow:auto;height:100%';
+
+  const title=document.createElement('div');
+  title.style.cssText='font-size:14px;font-weight:bold;color:#00695c;margin-bottom:10px';
+  title.textContent='Team Rosters';
+  wrap.appendChild(title);
+
+  // Load roster data from Firebase or local
+  const rosterData=window._rosterData||{};
+
+  TEAMS.forEach(team=>{
+    const teamKey=team.replace(/\s+/g,'_').toLowerCase();
+
+    // Accordion header
+    const hdr=document.createElement('div');
+    hdr.style.cssText='background:#e0f2f1;border:1px solid #b2dfdb;border-radius:4px;padding:8px 12px;margin-bottom:4px;cursor:pointer;font-weight:bold;font-size:12px;display:flex;justify-content:space-between;align-items:center;user-select:none';
+    hdr.textContent=team;
+    const arrow=document.createElement('span');
+    arrow.textContent='▶';arrow.style.fontSize='10px';
+    hdr.appendChild(arrow);
+
+    // Roster body (hidden by default)
+    const body=document.createElement('div');
+    body.style.cssText='display:none;border:1px solid #b2dfdb;border-top:none;border-radius:0 0 4px 4px;margin-bottom:6px;padding:6px';
+
+    // Players table
+    const tbl=document.createElement('table');
+    tbl.style.cssText='width:100%;border-collapse:collapse;margin-bottom:6px';
+
+    // Header
+    const hrow=document.createElement('tr');
+    ['#','Name'].forEach(h=>{
+      const th=document.createElement('th');
+      th.style.cssText='background:#b2dfdb;padding:4px 8px;font-size:11px;text-align:left;border:1px solid #ccc';
+      th.textContent=h;hrow.appendChild(th);
+    });
+    tbl.appendChild(hrow);
+
+    // Existing players
+    const players=rosterData[teamKey]||[];
+    // Always show at least 15 rows
+    const rowCount=Math.max(players.length+1,15);
+    for(let i=0;i<rowCount;i++){
+      const p=players[i]||{num:'',name:''};
+      const tr=document.createElement('tr');
+
+      const tdNum=document.createElement('td');
+      tdNum.style.cssText='border:1px solid #ddd;padding:2px;width:50px';
+      const numInp=document.createElement('input');
+      numInp.type='text';numInp.value=p.num||'';numInp.placeholder='#';
+      numInp.style.cssText='width:100%;border:none;outline:none;font-size:11px;padding:2px 4px;text-align:center';
+      numInp.onchange=()=>saveRosterRow(teamKey,i,numInp.value,nameInp.value);
+      tdNum.appendChild(numInp);tr.appendChild(tdNum);
+
+      const tdName=document.createElement('td');
+      tdName.style.cssText='border:1px solid #ddd;padding:2px';
+      const nameInp=document.createElement('input');
+      nameInp.type='text';nameInp.value=p.name||'';nameInp.placeholder='Player name...';
+      nameInp.style.cssText='width:100%;border:none;outline:none;font-size:11px;padding:2px 4px';
+      nameInp.onchange=()=>saveRosterRow(teamKey,i,numInp.value,nameInp.value);
+      tdName.appendChild(nameInp);tr.appendChild(tdName);
+
+      tbl.appendChild(tr);
+    }
+    body.appendChild(tbl);
+
+    // Add row button
+    const addBtn=document.createElement('button');
+    addBtn.textContent='+ Add Player';
+    addBtn.style.cssText='padding:5px 10px;border:1px dashed #00695c;background:#fff;color:#00695c;font-size:11px;cursor:pointer;border-radius:3px;width:100%';
+    addBtn.onclick=()=>{
+      if(!window._rosterData) window._rosterData={};
+      if(!window._rosterData[teamKey]) window._rosterData[teamKey]=[];
+      window._rosterData[teamKey].push({num:'',name:''});
+      renderRosters(panel);
+      // Re-open this team's accordion
+      setTimeout(()=>{
+        const hdrs=[...panel.querySelectorAll('[data-teamkey]')];
+        const h=hdrs.find(x=>x.dataset.teamkey===teamKey);
+        if(h) h.click();
+      },50);
+    };
+    body.appendChild(addBtn);
+
+    // Toggle accordion
+    hdr.dataset.teamkey=teamKey;
+    hdr.onclick=()=>{
+      const isOpen=body.style.display!=='none';
+      body.style.display=isOpen?'none':'block';
+      arrow.textContent=isOpen?'▶':'▼';
+    };
+
+    wrap.appendChild(hdr);
+    wrap.appendChild(body);
+  });
+
+  panel.appendChild(wrap);
+}
+
+function saveRosterRow(teamKey,idx,num,name){
+  if(!window._rosterData) window._rosterData={};
+  if(!window._rosterData[teamKey]) window._rosterData[teamKey]=[];
+  window._rosterData[teamKey][idx]={num,name};
+  // Save to Firebase
+  if(db) db.ref('rosters/'+teamKey).set(window._rosterData[teamKey]);
+}
+
+// Load rosters from Firebase on init
+function loadRosters(){
+  if(!db) return;
+  db.ref('rosters').on('value',snap=>{
+    window._rosterData=snap.val()||{};
+    if(activeTab==='rosters'){
+      panelBuilt['rosters']=false;
+      showTab('rosters');
+    }
+  });
+}
 
 // ── STATS ─────────────────────────────────────
 function renderStats(panel){
@@ -820,17 +956,17 @@ function renderStats(panel){
           BKS.forEach(b=>{
             // Count runs and deaths for this team
             (pt[b]||[]).forEach(mv=>{
-              if(mv.sym&&mv.sym!=='_'){
+              if(mv.isDead||(mv.sym&&mv.sym!=='_')){
                 bkAll[b].runs++;
                 if(name&&teamStats[name]) teamStats[name][b].runs++;
               }
-              if(mv.sym&&mv.sym.startsWith('O')){
+              if(mv.isDead){
                 bkAll[b].deaths++;
                 if(name&&teamStats[name]) teamStats[name][b].deaths++;
               }
             });
             // Kills = number of deaths the opponent had in this same bunker this point
-            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.sym&&mv.sym.startsWith('O')).length;
+            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
             if(oppDeaths>0){
               bkAll[b].kills+=oppDeaths;
               if(name&&teamStats[name]) teamStats[name][b].kills+=oppDeaths;
