@@ -227,6 +227,15 @@ function listenFirebase(){
     TABS.forEach(t=>{
       if(t.id==='stats') return;
       const incoming=d[t.id]?normalizeTab(JSON.parse(JSON.stringify(d[t.id]))):null;
+      // If no data in Firebase, initialize locally and save it
+      if(!incoming){
+        if(!data[t.id]){
+          initTab(t.id);
+          anyChanged=true;
+          panelDirty[t.id]=true;
+        }
+        return;
+      }
       const incomingStr=JSON.stringify(incoming);
       const existingStr=JSON.stringify(data[t.id]||null);
       if(incomingStr===existingStr) return; // nothing changed, skip
