@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: remove Firebase check that was breaking the entire page
-  SUMMARY: The Firebase SDK check I added threw an error that halted all script execution
-           and split the code into two script tags. Removed entirely — back to original
-           single script tag approach.
+  COMMIT: fix: popCell declaration moved to top, fixes popup and Firebase sync
+  SUMMARY: popCell was declared with let at line 639 but referenced at line 249 in the
+           Firebase listener. let has a temporal dead zone so the reference before
+           declaration caused a ReferenceError that crashed the entire script, also
+           preventing Firebase from initializing. Moved popCell to top with other vars.
 -->
 
 <html lang="en">
@@ -174,6 +175,7 @@ document.getElementById('sesslbl').textContent=SESSION;
 let db=null,activeTab='stats',data={};
 const panelBuilt={};
 const panelDirty={};
+let popCell=null;
 
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
@@ -641,7 +643,6 @@ function renderBkCell(td,moves){
 }
 
 // ── MOVE POPUP ───────────────────────────────
-let popCell=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   try{
