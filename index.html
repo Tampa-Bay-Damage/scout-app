@@ -533,7 +533,7 @@ function renderBkCell(td,moves){
 
   const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#bbdefb'};
   // Death overrides color to red
-  if(realMoves.length===1&&realMoves[0].isDead){td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';const span=document.createElement('span');span.style.cssText='color:#000;font-weight:bold';let txt=realMoves[0].sym||'';if(realMoves[0].pen&&realMoves[0].pen!=='none')txt+='\u00b0'+realMoves[0].pen;if(realMoves[0].mod)txt+=realMoves[0].mod;span.textContent=txt||'';td.appendChild(span);if(realMoves[0].seqNum){const sup=document.createElement('sup');sup.textContent=realMoves[0].seqNum;sup.style.color='#000';td.appendChild(sup);}return;}
+  if(realMoves.length===1&&realMoves[0].isDead){td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';return;}
 
   if(realMoves.length===1){
     // Single move — full cell color, centered
@@ -559,7 +559,7 @@ function renderBkCell(td,moves){
       const half=document.createElement('div');
       const bg=mv.isDead?'#ef9a9a':(orderColor[mv.order]||'#eee');
       half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+bg+';padding:0 2px';
-      let txt=mv.isDead?'✝':(mv.sym||'');
+      let txt=mv.isDead?'':(mv.sym||'');
       if(!mv.isDead&&mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
       half.style.color='#000';
       half.style.fontWeight='bold';
@@ -725,19 +725,25 @@ function buildMoveContent(){
   });
   cont.appendChild(orderRow);
 
-  // Sequence # (optional)
+  // Sequence # (optional) — buttons 1-5
   const seqRow=document.createElement('div');
-  seqRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  seqRow.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:8px';
   const seqLbl=document.createElement('div');
   seqLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;white-space:nowrap';
-  seqLbl.textContent='Sequence # (optional):';
-  const seqInp=document.createElement('input');
-  seqInp.type='text';
-  seqInp.value=window._selSeq||'';
-  seqInp.placeholder='—';
-  seqInp.style.cssText='width:50px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;font-size:12px;text-align:center';
-  seqInp.oninput=()=>{window._selSeq=seqInp.value||null;};
-  seqRow.appendChild(seqLbl);seqRow.appendChild(seqInp);
+  seqLbl.textContent='Sequence:';
+  seqRow.appendChild(seqLbl);
+  [1,2,3,4,5].forEach(n=>{
+    const btn=document.createElement('button');
+    btn.textContent=n;
+    btn.style.cssText='width:32px;height:32px;border:2px solid #ccc;border-radius:50%;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
+    if(window._selSeq==n){btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';}
+    btn.onclick=()=>{
+      seqRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
+      if(window._selSeq==n){window._selSeq=null;}
+      else{btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';window._selSeq=n;}
+    };
+    seqRow.appendChild(btn);
+  });
   cont.appendChild(seqRow);
 
   // Clear button
