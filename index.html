@@ -161,7 +161,7 @@ const panelDirty={};
 
 let popCell=null,popMoves=[];
 
-try{firebase.initializeApp(FB);db=firebase.database();console.log('Firebase initialized OK');}
+try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
 
 buildTabs();
@@ -221,9 +221,7 @@ function showTab(id){
 
 // ── FIREBASE ─────────────────────────────────
 function listenFirebase(){
-  console.log('listenFirebase called, SESSION=',SESSION);
   db.ref(`sessions/${SESSION}`).on('value',snap=>{
-    console.log('Firebase onValue fired, val=',snap.val());
     const d=snap.val()||{};
     TABS.forEach(t=>{
       if(t.id==='stats') return;
@@ -313,10 +311,6 @@ function renderIntoPanel(tabId){
   panel.innerHTML='';
   if(tabId==='stats'){renderStats(panel);return;}
   initTab(tabId);
-  if(!data[tabId]||!data[tabId].m1||!data[tabId].m1.t1pts){
-    panel.innerHTML='<div style="padding:20px;color:#999">Loading...</div>';
-    return;
-  }
   const td=data[tabId];
   const tbl=document.createElement('table');
   const thead=document.createElement('thead');
