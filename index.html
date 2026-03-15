@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: feat: player stats section on stats tab
-  SUMMARY: Added Player Stats section below team stats. Team and player dropdowns filter
-           stats for the selected player. Shows summary cards for points played, points died
-           off break (with %), and secondary move %. Below that a bunker breakdown table
-           shows runs, run %, and shooting direction (Snake/Dorito/Dove) per bunker.
-           Only counts points where the player was tagged via roster buttons in the popup.
+  COMMIT: feat: player bunker table updated with Count, Death %, direction %
+  SUMMARY: Renamed Runs to Count. Removed Shape column. Added Death % per bunker
+           (deaths / count at that bunker). Direction columns now show % of visits
+           shooting Snake/Dorito/Dove rather than raw counts.
 -->
 
 <html lang="en">
@@ -1231,21 +1229,14 @@ function renderStats(panel){
   playerH2.textContent='Player Stats';
   playerSection.appendChild(playerH2);
 
-  // Team + Player dropdowns
+  // Team dropdown only
   const playerHdrRow=document.createElement('div');
   playerHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap';
-
   const pTeamSel=document.createElement('select');
   pTeamSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
   TEAMS.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;pTeamSel.appendChild(opt);});
-
-  const pPlayerSel=document.createElement('select');
-  pPlayerSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
-
   playerHdrRow.appendChild(document.createTextNode('Team: '));
   playerHdrRow.appendChild(pTeamSel);
-  playerHdrRow.appendChild(document.createTextNode('Player: '));
-  playerHdrRow.appendChild(pPlayerSel);
   playerSection.appendChild(playerHdrRow);
 
   const playerTblWrap=document.createElement('div');
@@ -1253,13 +1244,9 @@ function renderStats(panel){
   div.appendChild(playerSection);
 
   function calcPlayerStats(team, playerLabel){
-    const teamKey=team.replace(/\s+/g,'_').toLowerCase();
-    const stats={
-      pointsPlayed:0, pointsDied:0,
-      bunkers:{}, shootingDir:{}, secondaryMoves:0
-    };
-    BKS.forEach(b=>{stats.bunkers[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
-
+    const stats={pointsPlayed:0,pointsDied:0,secondaryMoves:0,penalties:{Mi:0,Mj:0},bunkers:{},shootingDir:{}};
+    BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths={};stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
+    BKS.forEach(b=>{stats.deaths[b]=0;});
     TABS.forEach(t=>{
       if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
       ['m1','m2'].forEach(mk=>{
@@ -1268,27 +1255,24 @@ function renderStats(panel){
           const tname=ti===0?md.t1name:md.t2name;
           if(tname!==team) return;
           (md[tk]||[]).forEach(pt=>{
-            // Check if player appears in this point
-            let appearedInPoint=false;
-            let diedInPoint=false;
+            let appeared=false,died=false;
             BKS.forEach(b=>{
               (pt[b]||[]).forEach(mv=>{
-                if(!mv.player) return;
-                // Match by label (#7 Bailey) or num or initials
-                const mvLabel=mv.player&&mv.player.label?mv.player.label:mv.player;
+                const mvLabel=mv.player&&mv.player.label?mv.player.label:(mv.player||null);
                 if(mvLabel!==playerLabel) return;
-                appearedInPoint=true;
-                stats.bunkers[b]=(stats.bunkers[b]||0)+1;
-                if(mv.isDead) diedInPoint=true;
+                appeared=true;
+                stats.bunkers[b]++;
+                if(mv.isDead){died=true;stats.deaths[b]=(stats.deaths[b]||0)+1;}
                 if(mv.order==='secondary') stats.secondaryMoves++;
-                // Shooting direction from symbol
+                if(mv.pen==='Mi') stats.penalties.Mi++;
+                if(mv.pen==='Mj') stats.penalties.Mj++;
                 const sym=mv.sym||'';
                 if(sym.startsWith('S')) stats.shootingDir[b].S++;
                 else if(sym.startsWith('\u2206')) stats.shootingDir[b]['\u2206']++;
                 else if(sym.startsWith('X')) stats.shootingDir[b].X++;
               });
             });
-            if(appearedInPoint){stats.pointsPlayed++;if(diedInPoint)stats.pointsDied++;}
+            if(appeared){stats.pointsPlayed++;if(died)stats.pointsDied++;}
           });
         });
       });
@@ -1296,93 +1280,76 @@ function renderStats(panel){
     return stats;
   }
 
-  function populatePlayerSel(team){
-    pPlayerSel.innerHTML='';
+  function renderAllPlayerStats(team){
+    playerTblWrap.innerHTML='';
     const teamKey=team.replace(/\s+/g,'_').toLowerCase();
     const players=(window._rosterData&&window._rosterData[teamKey])||[];
     const active=players.filter(p=>p.name||p.num);
     if(active.length===0){
-      const opt=document.createElement('option');opt.textContent='No players in roster';pPlayerSel.appendChild(opt);
-      return;
+      const msg=document.createElement('div');msg.style.cssText='color:#999;font-size:12px';
+      msg.textContent='No players in roster.';playerTblWrap.appendChild(msg);return;
     }
     active.forEach(p=>{
-      const lastName=p.name.split(' ').pop();
+      const lastName=p.name?p.name.split(' ').pop():'';
       const label=p.num?('#'+p.num+' '+lastName):lastName;
-      const opt=document.createElement('option');opt.value=label;opt.textContent=label;
-      pPlayerSel.appendChild(opt);
-    });
-  }
+      const displayName=p.num?('#'+p.num+' '+p.name):p.name;
+      const s=calcPlayerStats(team,label);
 
-  function renderPlayerStats(team, playerLabel){
-    playerTblWrap.innerHTML='';
-    const s=calcPlayerStats(team, playerLabel);
+      // Player header
+      const pHdr=document.createElement('div');
+      pHdr.style.cssText='font-size:12px;font-weight:bold;background:#ede7f6;padding:5px 8px;margin-top:14px;margin-bottom:4px;border-left:4px solid #6a1b9a;border-radius:0 3px 3px 0';
+      pHdr.textContent=displayName;
+      playerTblWrap.appendChild(pHdr);
 
-    if(s.pointsPlayed===0){
-      const msg=document.createElement('div');
-      msg.style.cssText='color:#999;font-size:12px;padding:8px 0';
-      msg.textContent='No tagged data found for this player yet.';
-      playerTblWrap.appendChild(msg);
-      return;
-    }
-
-    // Summary row
-    const summaryDiv=document.createElement('div');
-    summaryDiv.style.cssText='display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px';
-    [
-      {label:'Points Played',val:s.pointsPlayed},
-      {label:'Points Died Off Break',val:s.pointsDied+' ('+( s.pointsPlayed>0?(s.pointsDied/s.pointsPlayed*100).toFixed(0):0)+'%)'},
-      {label:'Secondary Move %',val:s.pointsPlayed>0?(s.secondaryMoves/s.pointsPlayed*100).toFixed(0)+'%':'—'},
-    ].forEach(({label,val})=>{
-      const card=document.createElement('div');
-      card.style.cssText='background:#f5f5f5;border:1px solid #e0e0e0;border-radius:4px;padding:8px 12px;min-width:140px';
-      const lbl=document.createElement('div');lbl.style.cssText='font-size:10px;color:#666;margin-bottom:2px';lbl.textContent=label;
-      const v=document.createElement('div');v.style.cssText='font-size:16px;font-weight:bold;color:#1a6e1a';v.textContent=val;
-      card.appendChild(lbl);card.appendChild(v);
-      summaryDiv.appendChild(card);
-    });
-    playerTblWrap.appendChild(summaryDiv);
-
-    // Bunker breakdown table
-    const tbl=document.createElement('table');tbl.className='stats-tbl';
-    const hdr=document.createElement('tr');
-    ['Bunker','Shape','Runs','Run %','Shooting Snake','Shooting Dorito','Dove'].forEach(h=>{
-      const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
-    });
-    tbl.appendChild(hdr);
-
-    const totalRuns=BKS.reduce((sum,b)=>sum+(s.bunkers[b]||0),0);
-    let hasData=false;
-    BKS.forEach((b,i)=>{
-      const runs=s.bunkers[b]||0;
-      if(runs===0) return;
-      hasData=true;
-      const runPct=totalRuns>0?(runs/totalRuns*100).toFixed(1)+'%':'—';
-      const d=s.shootingDir[b]||{S:0,'\u2206':0,X:0};
-      const tr=document.createElement('tr');
-      [b,SHAPES[i]||'',runs,runPct,d.S,d['\u2206'],d.X].forEach(v=>{
-        const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+      // Summary row
+      const summaryDiv=document.createElement('div');
+      summaryDiv.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px';
+      const pp=s.pointsPlayed;
+      const deathPct=pp>0?(s.pointsDied/pp*100).toFixed(0)+'%':'0%';
+      [
+        {label:'Points Played',val:pp},
+        {label:'Points Died Off Break',val:s.pointsDied+' ('+deathPct+')'},
+        {label:'Minor Penalties',val:s.penalties.Mi},
+        {label:'Major Penalties',val:s.penalties.Mj},
+      ].forEach(({label,val})=>{
+        const card=document.createElement('div');
+        card.style.cssText='background:#f5f5f5;border:1px solid #e0e0e0;border-radius:4px;padding:5px 10px;min-width:120px';
+        const lbl=document.createElement('div');lbl.style.cssText='font-size:9px;color:#666';lbl.textContent=label;
+        const v=document.createElement('div');v.style.cssText='font-size:14px;font-weight:bold;color:#1a6e1a';v.textContent=val;
+        card.appendChild(lbl);card.appendChild(v);summaryDiv.appendChild(card);
       });
-      tbl.appendChild(tr);
-    });
+      playerTblWrap.appendChild(summaryDiv);
 
-    if(!hasData){
-      const msg=document.createElement('div');
-      msg.style.cssText='color:#999;font-size:12px;padding:8px 0';
-      msg.textContent='No bunker data found for this player.';
-      playerTblWrap.appendChild(msg);
-    } else {
+      // Bunker table
+      const tbl=document.createElement('table');tbl.className='stats-tbl';
+      const hdr=document.createElement('tr');
+      ['Bunker','Count','Count %','Death %','Snake %','Dorito %','Dove %'].forEach(h=>{
+        const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
+      });
+      tbl.appendChild(hdr);
+      const totalCount=BKS.reduce((sum,b)=>sum+(s.bunkers[b]||0),0);
+      BKS.forEach((b,i)=>{
+        const count=s.bunkers[b]||0;
+        const countPct=(totalCount>0&&count>0)?(count/totalCount*100).toFixed(1)+'%':'0%';
+        const deaths=s.deaths&&s.deaths[b]?s.deaths[b]:0;
+        const deathPct=count>0?(deaths/count*100).toFixed(0)+'%':'0%';
+        const d=s.shootingDir[b]||{S:0,'\u2206':0,X:0};
+        const dirTotal=d.S+d['\u2206']+d.X;
+        const sPct=dirTotal>0?(d.S/dirTotal*100).toFixed(0)+'%':'0%';
+        const dPct=dirTotal>0?(d['\u2206']/dirTotal*100).toFixed(0)+'%':'0%';
+        const xPct=dirTotal>0?(d.X/dirTotal*100).toFixed(0)+'%':'0%';
+        const tr=document.createElement('tr');
+        [b,count,countPct,deathPct,sPct,dPct,xPct].forEach(v=>{
+          const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+        });
+        tbl.appendChild(tr);
+      });
       playerTblWrap.appendChild(tbl);
-    }
+    });
   }
 
-  populatePlayerSel(TEAMS[0]);
-  renderPlayerStats(TEAMS[0], pPlayerSel.value);
-
-  pTeamSel.onchange=()=>{
-    populatePlayerSel(pTeamSel.value);
-    renderPlayerStats(pTeamSel.value, pPlayerSel.value);
-  };
-  pPlayerSel.onchange=()=>renderPlayerStats(pTeamSel.value, pPlayerSel.value);
+  pTeamSel.onchange=()=>renderAllPlayerStats(pTeamSel.value);
+  renderAllPlayerStats(TEAMS[0]);
 }
 
 function makeStatsTbl(bkData, killsOnly, totalPts){
