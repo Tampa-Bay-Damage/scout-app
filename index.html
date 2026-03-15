@@ -500,9 +500,14 @@ function makeRow(tabId,mk,tk,idx,pt){
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
 
+  const _BK_DARK=['S1','Alpha','HS','H\u2206','Baby','100'];
+  const _BK_MED=['SC','Beast'];
+  const _BK_LITE=['Sniper','Dagger'];
   BKS.forEach(b=>{
     const moves=pt[b]||[];
-    const td=document.createElement('td');td.className='cbk';
+    const td=document.createElement('td');
+    const shade=_BK_DARK.includes(b)?'cbk cbk-dark':_BK_MED.includes(b)?'cbk cbk-med':_BK_LITE.includes(b)?'cbk cbk-lite':'cbk';
+    td.className=shade;
     td.dataset.bkkey=`${tabId}|${mk}|${tk}|${idx}|${b}`;
     renderBkCell(td,moves);
     td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b,data[tabId][mk][tk][idx][b]);
