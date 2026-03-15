@@ -229,9 +229,11 @@ function listenFirebase(){
       }
       panelDirty[t.id]=true;
     });
-    // Re-render active tab with latest data
-    panelBuilt[activeTab]=false; // force rebuild with fresh data
-    showTab(activeTab);
+    // Re-render active tab with latest data — but not if popup is open
+    if(!popCell){
+      panelBuilt[activeTab]=false;
+      showTab(activeTab);
+    }
     updateScoreBar();
     document.getElementById('sst').textContent='Live \u2014 Synced';
   });
@@ -601,8 +603,13 @@ function buildMoveContent(){
         del.onclick=()=>{
           data[tabId][mk][tk][idx][bk].splice(i,1);
           saveTab(tabId);
-          panelBuilt[tabId]=false;
-          showTab(tabId);
+          // Refresh cell without closing popup
+          const panel=document.getElementById('panel-'+tabId);
+          if(panel){
+            const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
+            const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
+            if(cell) renderBkCell(cell,data[tabId][mk][tk][idx][bk]);
+          }
           buildMoveContent();
         };
         row.appendChild(dot);row.appendChild(symSpan);row.appendChild(ordSpan);row.appendChild(del);
@@ -696,7 +703,14 @@ function buildMoveContent(){
     if(!popCell) return;
     const{tabId,mk,tk,idx,bk}=popCell;
     data[tabId][mk][tk][idx][bk]=[];
-    saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);
+    saveTab(tabId);
+    const panel=document.getElementById('panel-'+tabId);
+    if(panel){
+      const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
+      const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
+      if(cell) renderBkCell(cell,[]);
+    }
+    closeMove();
   };
   cont.appendChild(clearBtn);
 }
@@ -710,14 +724,35 @@ window.applyMove=()=>{
   if(!popCell) return;
   const{tabId,mk,tk,idx,bk}=popCell;
   if(!window._selSym){alert('Please pick a symbol.');return;}
-  
+
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
-  
-  // Save move with optional manual sequence number
-  const seqNum=window._selSeq||null;
-  data[tabId][mk][tk][idx][bk]=[{sym:window._selSym,order:window._selOrder,pen:window._selPen||'none',seqNum}];
-  
-  saveTab(tabId);closeMove();panelBuilt[tabId]=false;showTab(tabId);
+
+  // Push new move to array (multiple moves supported)
+  data[tabId][mk][tk][idx][bk].push({
+    sym:window._selSym,
+    order:window._selOrder||'primary',
+    pen:window._selPen||'none',
+    seqNum:window._selSeq||null
+  });
+
+  saveTab(tabId);
+
+  // Reset picker, keep popup open
+  window._selSym='';
+  window._selOrder='primary';
+  window._selPen='none';
+  window._selSeq=null;
+
+  // Refresh cell in background without closing popup
+  const panel=document.getElementById('panel-'+tabId);
+  if(panel){
+    const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
+    const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
+    if(cell) renderBkCell(cell,data[tabId][mk][tk][idx][bk]);
+  }
+
+  // Rebuild popup content to show updated move list
+  buildMoveContent();
 };
 
 
