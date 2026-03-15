@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: roster data deleted due to Firebase array-as-object normalization bug
-  SUMMARY: loadRosters was checking existing[key].length===0 but Firebase returns arrays
-           as objects {0:{...},1:{...}} which have no .length property, causing the check
-           to fail and overwrite existing roster data with preloaded data. Fixed by
-           normalizing Firebase objects to arrays first before checking length.
+  COMMIT: fix: roster data protected, popup restored, smart merge preserves jersey numbers
+  SUMMARY: loadRosters now merges per-player — never overwrites existing num values in Firebase.
+           Missing players are added, existing ones are preserved. Array-as-object normalization
+           fixed. try/catch added to prevent roster errors from crashing the app.
 -->
 
 <html lang="en">
@@ -1030,27 +1029,44 @@ const PRELOADED_ROSTERS={"atlanta_jungle_cats": [{"num": "", "name": "Justin Bai
 function loadRosters(){
   if(!db) return;
   db.ref('rosters').on('value',snap=>{
-    const existing=snap.val()||{};
-    // Normalize Firebase array-as-objects to real arrays
-    Object.keys(existing).forEach(key=>{
-      if(existing[key]&&!Array.isArray(existing[key])&&typeof existing[key]==='object'){
-        existing[key]=Object.values(existing[key]);
+    try{
+      const existing=snap.val()||{};
+      // Normalize Firebase array-as-objects to real arrays
+      Object.keys(existing).forEach(key=>{
+        if(existing[key]&&!Array.isArray(existing[key])&&typeof existing[key]==='object'){
+          existing[key]=Object.values(existing[key]);
+        }
+      });
+      // Merge preloaded rosters — preserve existing num values, only add missing players
+      let needsWrite=false;
+      Object.keys(PRELOADED_ROSTERS).forEach(key=>{
+        const preloaded=PRELOADED_ROSTERS[key];
+        const fb=existing[key]||[];
+        if(fb.length===0){
+          // No data at all — write preloaded
+          existing[key]=preloaded;
+          needsWrite=true;
+        } else {
+          // Merge: for each preloaded player, if they exist in FB keep FB num, else add them
+          preloaded.forEach((pre,i)=>{
+            if(!fb[i]){
+              fb.push({num:'',name:pre.name});
+              needsWrite=true;
+            } else if(!fb[i].name&&pre.name){
+              fb[i].name=pre.name;
+              needsWrite=true;
+            }
+            // Never overwrite num — keep whatever is in Firebase
+          });
+          existing[key]=fb;
+        }
+      });
+      if(needsWrite) db.ref('rosters').set(existing);
+      window._rosterData=existing;
+      if(activeTab==='rosters'&&!panelBuilt['rosters']){
+        showTab('rosters');
       }
-    });
-    // Only fill in teams that have NO data at all in Firebase
-    let needsWrite=false;
-    Object.keys(PRELOADED_ROSTERS).forEach(key=>{
-      if(!existing[key]||existing[key].length===0){
-        existing[key]=PRELOADED_ROSTERS[key];
-        needsWrite=true;
-      }
-    });
-    if(needsWrite) db.ref('rosters').set(existing);
-    window._rosterData=existing;
-    // Only re-render rosters if the panel hasn't been built yet (don't collapse while editing)
-    if(activeTab==='rosters'&&!panelBuilt['rosters']){
-      showTab('rosters');
-    }
+    } catch(e){console.error('Roster load error:',e);}
   });
 }
 
