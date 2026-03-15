@@ -1025,8 +1025,8 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
   const tbl=document.createElement('table');tbl.className='stats-tbl';
   const hdr=document.createElement('tr');
   const headers=killsOnly
-    ?['Bunker','Shape','Bunker %','Bunkers Off Break','Kills Off Break','Kill %']
-    :['Bunker','Shape','Bunker %','Bunkers Off Break','Deaths Off Break','Death %','Kills Off Break','Kill %'];
+    ?['Bunker','Shape','Bunkers Off Break','Bunker %','Kills Off Break','Kill %']
+    :['Bunker','Shape','Bunkers Off Break','Bunker %','Deaths Off Break','Death %','Kills Off Break','Kill %'];
   headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);});
   tbl.appendChild(hdr);
   let totRuns=0,totDeaths=0,totKills=0;
@@ -1038,8 +1038,8 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
     const bunkPct=totalPts>0?(s.runs/totalPts*100).toFixed(0)+'%':'\u2014';
     const tr=document.createElement('tr');
     const vals=killsOnly
-      ?[b,SHAPES[i]||'',bunkPct,s.runs,s.kills,killPct]
-      :[b,SHAPES[i]||'',bunkPct,s.runs,s.deaths,deathPct,s.kills,killPct];
+      ?[b,SHAPES[i]||'',s.runs,bunkPct,s.kills,killPct]
+      :[b,SHAPES[i]||'',s.runs,bunkPct,s.deaths,deathPct,s.kills,killPct];
     vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     tbl.appendChild(tr);
   });
@@ -1048,9 +1048,10 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
+  const totBunkPct=totalPts>0?(totRuns/totalPts*100).toFixed(0)+'%':'\u2014';
   const totVals=killsOnly
-    ?['TOTAL','','-',totRuns,totKills,totKillPct]
-    :['TOTAL','','-',totRuns,totDeaths,totDeathPct,totKills,totKillPct];
+    ?['TOTAL','',totRuns,totBunkPct,totKills,totKillPct]
+    :['TOTAL','',totRuns,totBunkPct,totDeaths,totDeathPct,totKills,totKillPct];
   totVals.forEach(v=>{const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);});
   tbl.appendChild(totTr);
   return tbl;
