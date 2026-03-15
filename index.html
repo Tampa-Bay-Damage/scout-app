@@ -112,12 +112,12 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
   <div class="pbox" id="movebox">
     <div class="ptitle">
       <span>Pt <span id="pop-pt"></span> &mdash; <span id="pop-bk" style="color:#1a6e1a"></span></span>
-      <button class="pcls" onclick="closeMove()">&#x2715;</button>
+      <button class="pcls" id="btn-cls">&#x2715;</button>
     </div>
     <div id="move-content"></div>
     <div class="pbtns">
-      <button class="bcan" onclick="closeMove()">Cancel</button>
-      <button class="bapp" onclick="applyMove()">APPLY</button>
+      <button class="bcan" id="btn-can">Cancel</button>
+      <button class="bapp" id="btn-app">APPLY</button>
     </div>
   </div>
 </div>
@@ -460,6 +460,7 @@ function renderBkCell(td,moves){
 
 // ── MOVE POPUP ───────────────────────────────
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
+  console.log('openMovePopup called',tabId,mk,tk,idx,bk);
   popCell={tabId,mk,tk,idx,bk};
   popMoves=existingMoves?JSON.parse(JSON.stringify(existingMoves)):[];
   document.getElementById('pop-pt').textContent=idx+1;
@@ -631,6 +632,9 @@ function refreshBkCell(tabId,mk,tk,idx,bk){
 // Override makeRow to add data-bkkey attributes
 const _origMakeRow=makeRow;
 
+document.getElementById('btn-cls').onclick=()=>closeMove();
+document.getElementById('btn-can').onclick=()=>closeMove();
+document.getElementById('btn-app').onclick=()=>applyMove();
 document.getElementById('moveo').addEventListener('click',function(e){if(e.target.id==='moveo') closeMove();});
 
 // ── STATS ─────────────────────────────────────
