@@ -74,8 +74,8 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .step-lbl{font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;display:flex;align-items:center;gap:6px}
 .step-lbl .dot{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;color:#fff}
 .dot-g{background:#1b5e20}.dot-y{background:#e65100}.dot-r{background:#1565c0}
-.symgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
-.sym{padding:9px 4px;border:2px solid #ccc;background:#fff;font-size:14px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px}
+.symgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px;width:100%}
+.sym{padding:0;border:2px solid #ccc;background:#fff;font-size:14px;font-weight:bold;cursor:pointer;text-align:center;font-family:Arial,sans-serif;border-radius:3px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
 .sym .sl{display:block;font-size:9px;font-weight:normal;color:#666;margin-top:1px}
 .sym.sel{border-color:#1a6e1a;background:#e8f5e9}
 .bkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px}
@@ -92,9 +92,9 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .ms-sym{font-weight:bold;font-size:13px}
 .ms-bk{color:#555}
 .ms-pen{font-size:10px;color:#888}
-.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-.bcan{padding:10px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px}
-.bapp{padding:10px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px}
+.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;width:100%}
+.bcan{padding:14px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px;width:100%}
+.bapp{padding:14px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px;width:100%}
 .divider{border:none;border-top:1px solid #e0e0e0;margin:8px 0}
 </style>
 </head>
@@ -673,7 +673,7 @@ function buildMoveContent(){
   cont.appendChild(optLbl);
 
   const optRow=document.createElement('div');
-  optRow.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px';
+  optRow.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px;width:100%';
   [
     {label:'Death',val:'death',bg:'#ffcdd2',border:'#c62828'},
     {label:'Deep',val:'v',bg:'#e3f2fd',border:'#1565c0'},
@@ -682,7 +682,7 @@ function buildMoveContent(){
     {label:'Minor',val:'Mi',bg:'#fff8e1',border:'#f9a825'}
   ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.style.cssText='padding:6px 2px;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:center';
+    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:center;aspect-ratio:1;min-height:44px;display:flex;align-items:center;justify-content:center;width:100%';
     btn.textContent=label;
     // Check current selection
     const isSelected=(val==='death'&&window._selDeath)||(val==='v'&&window._selMod==='v')||(val==='^'&&window._selMod==='^')||((val==='Mi'||val==='Mj')&&window._selPen===val);
@@ -717,14 +717,14 @@ function buildMoveContent(){
   cont.appendChild(orderLbl);
 
   const orderRow=document.createElement('div');
-  orderRow.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px';
+  orderRow.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;width:100%';
   [
     {label:'🟢 Primary',val:'primary',bg:'#e8f5e9',border:'#1b5e20'},
     {label:'🟡 Secondary',val:'secondary',bg:'#fff8e1',border:'#e65100'},
     {label:'🔴 Tertiary',val:'tertiary',bg:'#fce4ec',border:'#b71c1c'}
   ].forEach(({label,val,bg,border})=>{
     const btn=document.createElement('button');
-    btn.style.cssText='padding:8px 4px;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
+    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;aspect-ratio:1;min-height:52px;display:flex;align-items:center;justify-content:center;width:100%;text-align:center';
     btn.textContent=label;
     if(val===window._selOrder){btn.style.borderColor=border;btn.style.background=bg;}
     btn.onclick=()=>{
@@ -738,7 +738,7 @@ function buildMoveContent(){
 
   // Sequence # (optional) — buttons 1-5
   const seqRow=document.createElement('div');
-  seqRow.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:8px';
+  seqRow.style.cssText='display:grid;grid-template-columns:auto repeat(5,1fr);gap:6px;margin-bottom:8px;align-items:center;width:100%';
   const seqLbl=document.createElement('div');
   seqLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;white-space:nowrap';
   seqLbl.textContent='Sequence:';
@@ -746,7 +746,7 @@ function buildMoveContent(){
   [1,2,3,4,5].forEach(n=>{
     const btn=document.createElement('button');
     btn.textContent=n;
-    btn.style.cssText='width:32px;height:32px;border:2px solid #ccc;border-radius:50%;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif';
+    btn.style.cssText='padding:0;border:2px solid #ccc;border-radius:3px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;aspect-ratio:1;min-height:44px;display:flex;align-items:center;justify-content:center;width:100%';
     if(window._selSeq==n){btn.style.borderColor='#1a6e1a';btn.style.background='#e8f5e9';}
     btn.onclick=()=>{
       seqRow.querySelectorAll('button').forEach(b=>{b.style.borderColor='#ccc';b.style.background='#fff';});
