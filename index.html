@@ -843,10 +843,9 @@ window.applyMove=()=>{
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
 
   // Push new move to array (multiple moves supported)
-  const finalSym=window._selDeath?'':(window._selSym||'');
-  const finalMod=window._selDeath?'':(window._selMod||'');
+  const finalSym=(window._selSym||'')+(window._selDeath?'':(window._selMod||''));
   data[tabId][mk][tk][idx][bk].push({
-    sym:finalSym+finalMod,
+    sym:finalSym,
     isDead:window._selDeath||false,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
