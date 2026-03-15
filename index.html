@@ -584,7 +584,20 @@ function renderBkCell(td,moves){
 
   const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#bbdefb'};
   // Death overrides color to red
-  if(realMoves.length===1&&realMoves[0].isDead){td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';return;}
+  if(realMoves.length===1&&realMoves[0].isDead){
+    td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';
+    const mv=realMoves[0];
+    if(mv.sym){
+      const span=document.createElement('span');
+      let txt=mv.sym;
+      if(mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
+      span.style.cssText='color:#000;font-weight:bold';
+      span.textContent=txt;
+      td.appendChild(span);
+      if(mv.seqNum){const sup=document.createElement('sup');sup.textContent=mv.seqNum;sup.style.color='#000';td.appendChild(sup);}
+    }
+    return;
+  }
 
   if(realMoves.length===1){
     // Single move — full cell color, centered
@@ -610,8 +623,8 @@ function renderBkCell(td,moves){
       const half=document.createElement('div');
       const bg=mv.isDead?'#ef9a9a':(orderColor[mv.order]||'#eee');
       half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+bg+';padding:0 2px';
-      let txt=mv.isDead?'':(mv.sym||'');
-      if(!mv.isDead&&mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
+      let txt=mv.sym||'';
+      if(mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
       half.style.color='#000';
       half.style.fontWeight='bold';
       half.style.fontSize='11px';
