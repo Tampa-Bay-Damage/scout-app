@@ -648,7 +648,6 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   window._selDeath=false;
   window._selOrder='primary';
   window._selPen='none';
-  window._selSeq=null;
   window._selPlayer=null;
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
@@ -675,7 +674,7 @@ function buildMoveContent(){
         // Sym + seq
         const symSpan=document.createElement('span');symSpan.className='ms-sym';
         const dispSym=mv.isDead?'Death':(mv.sym||'');
-        symSpan.textContent=dispSym+(mv.seqNum?'¹²³'[mv.seqNum-1]||mv.seqNum:'')+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
+        symSpan.textContent=dispSym+(mv.seqNum?mv.seqNum:'')+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
         if(mv.order==='primary')symSpan.style.color='#1b5e20';
         else if(mv.order==='secondary')symSpan.style.color='#e65100';
         else symSpan.style.color='#1565c0';
@@ -827,7 +826,8 @@ function buildMoveContent(){
       const rosterGrid=document.createElement('div');
       rosterGrid.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:6px';
       activePlayers.forEach(p=>{
-        const label=p.num||p.name.split(' ').pop();
+        const lastName=p.name.split(' ').pop();
+        const label=p.num?('#'+p.num+' '+lastName):lastName;
         const btn=document.createElement('button');
         btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
         btn.textContent=label;
@@ -881,10 +881,31 @@ window.applyMove=()=>{
 
   // Push new move to array (multiple moves supported)
   const finalSym=(window._selSym||'')+(window._selDeath?'':(window._selMod||''));
+  // Derive superscript label from selected player
+  let seqNum=null;
+  if(window._selPlayer){
+    // _selPlayer is stored as "#7 Bailey" or "Bailey"
+    const numMatch=window._selPlayer.match(/^#(\d+)/);
+    if(numMatch) seqNum=numMatch[1]; // jersey number
+    else {
+      // Get initials from full name via roster lookup
+      const{tabId:tid,mk:tmk,tk:ttk}=popCell;
+      const tname=data[tid][tmk][ttk==='t1pts'?'t1name':'t2name'];
+      const tkey=tname?(tname.replace(/\s+/g,'_').toLowerCase()):null;
+      const players=(tkey&&window._rosterData&&window._rosterData[tkey])||[];
+      const found=players.find(p=>p.name.split(' ').pop()===window._selPlayer);
+      if(found&&found.name){
+        seqNum=found.name.split(' ').map(w=>w[0]).join('');
+      } else {
+        seqNum=window._selPlayer.substring(0,2).toUpperCase();
+      }
+    }
+  }
   data[tabId][mk][tk][idx][bk].push({
     sym:finalSym,
     isDead:window._selDeath||false,
     player:window._selPlayer||null,
+    seqNum,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
     seqNum:window._selSeq||null
@@ -898,7 +919,6 @@ window.applyMove=()=>{
   window._selDeath=false;
   window._selOrder='primary';
   window._selPen='none';
-  window._selSeq=null;
   window._selPlayer=null;
 
   // Refresh cell in background without closing popup
