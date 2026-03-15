@@ -959,6 +959,9 @@ function renderStats(panel){
   BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0,oppRuns:0});
   const teamStats={};
   TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0,oppRuns:0});});
+  const teamPts={};  // total points played per team
+  TEAMS.forEach(t=>{teamPts[t]=0;});
+  let totalPtsAll=0;
 
   TABS.forEach(t=>{
     if(t.id==='stats'||!data[t.id]) return;
@@ -972,6 +975,12 @@ function renderStats(panel){
       teams.forEach(({tk,name,oppTk})=>{
         (md[tk]||[]).forEach((pt,ptIdx)=>{
           const oppPt=(md[oppTk]||[])[ptIdx]||{};
+          // Count point as played if any bunker has a move or W/L is set
+          const hasData=pt.wl||BKS.some(b=>(pt[b]||[]).length>0);
+          if(hasData){
+            totalPtsAll++;
+            if(name&&teamPts[name]!==undefined) teamPts[name]++;
+          }
           BKS.forEach(b=>{
             // Count runs and deaths for this team
             (pt[b]||[]).forEach(mv=>{
@@ -1003,21 +1012,21 @@ function renderStats(panel){
   });
 
   div.innerHTML='<h2>Event Stats \u2014 All Matches</h2>';
-  div.appendChild(makeStatsTbl(bkAll, true));
+  div.appendChild(makeStatsTbl(bkAll, true, totalPtsAll));
   div.innerHTML+='<h2 style="margin-top:20px">Team Stats</h2>';
   TEAMS.forEach(team=>{
     const h3=document.createElement('h3');h3.textContent=team;div.appendChild(h3);
-    div.appendChild(makeStatsTbl(teamStats[team], false));
+    div.appendChild(makeStatsTbl(teamStats[team], false, teamPts[team]||0));
   });
   panel.appendChild(div);
 }
 
-function makeStatsTbl(bkData, killsOnly){
+function makeStatsTbl(bkData, killsOnly, totalPts){
   const tbl=document.createElement('table');tbl.className='stats-tbl';
   const hdr=document.createElement('tr');
   const headers=killsOnly
-    ?['Bunker','Shape','Bunkers Off Break','Kills Off Break','Kill %']
-    :['Bunker','Shape','Bunkers Off Break','Deaths Off Break','Death %','Kills Off Break','Kill %'];
+    ?['Bunker','Shape','Bunker %','Bunkers Off Break','Kills Off Break','Kill %']
+    :['Bunker','Shape','Bunker %','Bunkers Off Break','Deaths Off Break','Death %','Kills Off Break','Kill %'];
   headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);});
   tbl.appendChild(hdr);
   let totRuns=0,totDeaths=0,totKills=0;
@@ -1026,10 +1035,11 @@ function makeStatsTbl(bkData, killsOnly){
     totRuns+=s.runs;totDeaths+=s.deaths;totKills+=s.kills;
     const deathPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'\u2014';
     const killPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'\u2014';
+    const bunkPct=totalPts>0?(s.runs/totalPts*100).toFixed(0)+'%':'\u2014';
     const tr=document.createElement('tr');
     const vals=killsOnly
-      ?[b,SHAPES[i]||'',s.runs,s.kills,killPct]
-      :[b,SHAPES[i]||'',s.runs,s.deaths,deathPct,s.kills,killPct];
+      ?[b,SHAPES[i]||'',bunkPct,s.runs,s.kills,killPct]
+      :[b,SHAPES[i]||'',bunkPct,s.runs,s.deaths,deathPct,s.kills,killPct];
     vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     tbl.appendChild(tr);
   });
@@ -1039,8 +1049,8 @@ function makeStatsTbl(bkData, killsOnly){
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
   const totTr=document.createElement('tr');totTr.className='tot';
   const totVals=killsOnly
-    ?['TOTAL','',totRuns,totKills,totKillPct]
-    :['TOTAL','',totRuns,totDeaths,totDeathPct,totKills,totKillPct];
+    ?['TOTAL','','-',totRuns,totKills,totKillPct]
+    :['TOTAL','','-',totRuns,totDeaths,totDeathPct,totKills,totKillPct];
   totVals.forEach(v=>{const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);});
   tbl.appendChild(totTr);
   return tbl;
