@@ -89,7 +89,7 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
 .ms-sym{font-weight:bold;font-size:13px}
 .ms-bk{color:#555}
 .ms-pen{font-size:10px;color:#888}
-.pbtns{display:grid;grid-template-columns:1fr 2fr;gap:6px;margin-top:8px}
+.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
 .bcan{padding:10px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px}
 .bapp{padding:10px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px}
 .divider{border:none;border-top:1px solid #e0e0e0;margin:8px 0}
@@ -116,8 +116,8 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
     </div>
     <div id="move-content"></div>
     <div class="pbtns">
-      <button class="bcan" id="btn-can">Cancel</button>
-      <button class="bapp" id="btn-app">APPLY</button>
+      <button class="bapp" id="btn-app" style="background:#1565c0">ADD</button>
+      <button class="bcan" id="btn-can">CLOSE</button>
     </div>
   </div>
 </div>
@@ -513,30 +513,45 @@ function renderBkCell(td,moves){
   td.innerHTML='';
   td.className=td.className.replace(/\s*mv-\w+/g,'');
   td.style.background='';
+  td.style.padding='0';
   if(!moves||moves.length===0) return;
-  // Filter out "not used" underscore - show blank instead
   const realMoves=moves.filter(mv=>mv.sym&&mv.sym!=='_');
   if(realMoves.length===0) return;
-  const order=realMoves[0].order;
-  if(order==='primary') td.classList.add('mv-primary');
-  else if(order==='secondary') td.classList.add('mv-secondary');
-  else td.classList.add('mv-tertiary');
-  realMoves.forEach((mv,i)=>{
+
+  const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#ffcdd2'};
+
+  if(realMoves.length===1){
+    // Single move — full cell color
+    td.style.background=orderColor[realMoves[0].order]||'#eee';
     const span=document.createElement('span');
-    let txt=mv.sym||'';
-    if(mv.pen&&mv.pen!=='none') txt+='°'+(mv.pen==='Mi'?'Mi':'Mj');
-    span.style.color='#000';
-    span.style.fontWeight='bold';
+    let txt=realMoves[0].sym;
+    if(realMoves[0].pen&&realMoves[0].pen!=='none') txt+='°'+realMoves[0].pen;
+    span.style.cssText='color:#000;font-weight:bold';
     span.textContent=txt;
     td.appendChild(span);
-    if(mv.seqNum){
-      const sup=document.createElement('sup');
-      sup.textContent=mv.seqNum;
-      sup.style.color='#000';
-      td.appendChild(sup);
+    if(realMoves[0].seqNum){
+      const sup=document.createElement('sup');sup.textContent=realMoves[0].seqNum;sup.style.color='#000';td.appendChild(sup);
     }
-    if(i<realMoves.length-1){const sep=document.createElement('span');sep.textContent=' ';td.appendChild(sep);}
-  });
+  } else {
+    // Multiple moves — split vertically
+    td.style.display='flex';
+    td.style.height='100%';
+    td.style.minHeight='20px';
+    realMoves.forEach(mv=>{
+      const half=document.createElement('div');
+      half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+(orderColor[mv.order]||'#eee')+';padding:0 2px';
+      let txt=mv.sym;
+      if(mv.pen&&mv.pen!=='none') txt+='°'+mv.pen;
+      half.style.color='#000';
+      half.style.fontWeight='bold';
+      half.style.fontSize='11px';
+      half.textContent=txt;
+      if(mv.seqNum){
+        const sup=document.createElement('sup');sup.textContent=mv.seqNum;sup.style.color='#000';half.appendChild(sup);
+      }
+      td.appendChild(half);
+    });
+  }
 }
 
 // ── MOVE POPUP ───────────────────────────────
@@ -544,11 +559,11 @@ let popCell=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
-  const existing=(existingMoves||[])[0]||{};
-  window._selSym=existing.sym||'';
-  window._selOrder=existing.order||'primary';
-  window._selPen=existing.pen||'none';
-  window._selSeq=existing.seqNum||null;
+  // Reset picker
+  window._selSym='';
+  window._selOrder='primary';
+  window._selPen='none';
+  window._selSeq=null;
   document.getElementById('pop-pt').textContent=idx+1;
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
@@ -558,6 +573,46 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
 function buildMoveContent(){
   const cont=document.getElementById('move-content');
   cont.innerHTML='';
+
+  // Show existing moves for this cell at top
+  if(popCell){
+    const{tabId,mk,tk,idx,bk}=popCell;
+    const existing=(data[tabId][mk][tk][idx][bk]||[]);
+    if(existing.length>0){
+      const sumDiv=document.createElement('div');sumDiv.className='move-summary';
+      existing.forEach((mv,i)=>{
+        const row=document.createElement('div');row.className='ms-row';
+        // Color dot
+        const dot=document.createElement('span');
+        dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
+        dot.textContent=i+1;
+        // Sym + seq
+        const symSpan=document.createElement('span');symSpan.className='ms-sym';
+        symSpan.textContent=mv.sym+(mv.seqNum?'¹²³'[mv.seqNum-1]||mv.seqNum:'')+(mv.pen&&mv.pen!=='none'?' ('+mv.pen+')':'');
+        if(mv.order==='primary')symSpan.style.color='#1b5e20';
+        else if(mv.order==='secondary')symSpan.style.color='#e65100';
+        else symSpan.style.color='#b71c1c';
+        // Order label
+        const ordSpan=document.createElement('span');ordSpan.className='ms-bk';
+        ordSpan.textContent=mv.order;
+        // Delete
+        const del=document.createElement('span');del.textContent='✕';
+        del.style.cssText='color:#999;cursor:pointer;margin-left:auto;font-size:14px;padding:0 4px';
+        del.onclick=()=>{
+          data[tabId][mk][tk][idx][bk].splice(i,1);
+          saveTab(tabId);
+          panelBuilt[tabId]=false;
+          showTab(tabId);
+          buildMoveContent();
+        };
+        row.appendChild(dot);row.appendChild(symSpan);row.appendChild(ordSpan);row.appendChild(del);
+        sumDiv.appendChild(row);
+      });
+      cont.appendChild(sumDiv);
+      const hr=document.createElement('hr');hr.style.cssText='border:none;border-top:1px solid #e0e0e0;margin:8px 0';
+      cont.appendChild(hr);
+    }
+  }
 
   // Symbol grid
   const symGrid=document.createElement('div');symGrid.className='symgrid';
