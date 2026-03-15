@@ -1,19 +1,10 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: chore: remove sequence number row from popup
-  SUMMARY: Sequence number buttons fully removed from popup. Player selection now
-           serves as the identifier shown as superscript in data cells.
-
-  COMMIT: fix: player number/initials now show as superscript in data cells
-  SUMMARY: Fixed _selPlayer storage to be an object {label, num, initials} instead of a string.
-           seqNum is now derived directly from the stored num or initials without needing
-           regex parsing or roster lookups at save time. Fixes superscripts not appearing in cells.
-
-  COMMIT: feat: player number/initials replace sequence numbers
-  SUMMARY: Removed sequence number buttons from popup. Player buttons now show "#7 Bailey" format.
-           When a player is selected and ADD is hit, their jersey number (e.g. 7) or initials (e.g. JB)
-           are saved as the seqNum and displayed as a superscript in the cell.
+  COMMIT: fix: remove Key column and duplicate Notes/Key headers
+  SUMMARY: Removed the unused Key column entirely from all match sheet headers. Removed the
+           keyrow legend at the bottom of each table. Fixed duplicate Notes/Key labels that
+           appeared across all three header rows.
 -->
 
 <html lang="en">
@@ -75,7 +66,6 @@ td.cno input{width:100%;height:20px;border:none;padding:0 3px;font-family:Arial,
 tr.teamhdr td{background:#BDC0BF;font-weight:bold;font-size:11px;text-align:left;padding:1px 6px;border-top:2px solid #999}
 tr.teamhdr td input{border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;outline:none;width:200px;color:#000}
 tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;padding:2px 5px;border-top:3px solid #888;color:#333;letter-spacing:1px}
-tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding:1px 4px;border-top:1px solid #e8e8e8}
 .mv-primary{background:#c8e6c9;color:#000}
 .mv-secondary{background:#ffe0b2;color:#000}
 .mv-tertiary{background:#bbdefb;color:#000}
@@ -368,12 +358,12 @@ function renderIntoPanel(tabId){
     const r1=document.createElement('tr');r1.className='hr1';
     const thLabel=document.createElement('th');thLabel.textContent=matchLabel;thLabel.colSpan=5;r1.appendChild(thLabel);
     BKS.forEach(()=>{const th=document.createElement('th');r1.appendChild(th);});
-    ['Notes','Key'].forEach(t=>{const th=document.createElement('th');th.textContent=t;r1.appendChild(th);});
+    const thNotes1=document.createElement('th');thNotes1.textContent='Notes';r1.appendChild(thNotes1);
     thead.appendChild(r1);
 
     // Row 2 - shapes
     const r2=document.createElement('tr');r2.className='hr2';
-    ['','Shapes','','','',...SHAPES,'Notes','Key'].forEach(t=>{
+    ['','Shapes','','','',...SHAPES,'Notes'].forEach(t=>{
       const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
     });
     thead.appendChild(r2);
@@ -383,7 +373,7 @@ function renderIntoPanel(tabId){
     const BK_DARK=['S1','Alpha','HS','H∆','Baby','100'];
     const BK_MED=['SC','Beast'];
     const BK_LITE=['Sniper','Dagger'];
-    ['*','W/L','R/B','Score','Time',...BKS,'Notes','Key'].forEach((t,i)=>{
+    ['*','W/L','R/B','Score','Time',...BKS,'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
         const b=BKS[i-5];
@@ -399,10 +389,7 @@ function renderIntoPanel(tabId){
 
     renderMatch(tbody,tabId,mk,td[mk]);
 
-    const kr=document.createElement('tr');kr.className='keyrow';
-    const kt=document.createElement('td');kt.colSpan=7+BKS.length;
-    kt.textContent='Key:  O=Dead  S=Snake  \u2206=Dorito  X=Dived  S\u2206=Snake+Dorito  ^=Shallow  v=Deep  _=Not Used  | \ud83d\udfe2=Primary  \ud83d\udfe1=Secondary  \ud83d\udd34=Tertiary  | Mi=Minor Pen  Mj=Major Pen';
-    kr.appendChild(kt);tbody.appendChild(kr);
+
 
     tbl.appendChild(tbody);
     return tbl;
@@ -421,7 +408,7 @@ function renderMatch(tbody,tabId,mk,md){
 
 function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   const tr=document.createElement('tr');tr.className='teamhdr';
-  const td=document.createElement('td');td.colSpan=7+BKS.length;
+  const td=document.createElement('td');td.colSpan=6+BKS.length;
   const sel=document.createElement('select');
   sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px';
   const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
@@ -1052,8 +1039,8 @@ function loadRosters(){
     });
     if(needsWrite) db.ref('rosters').set(existing);
     window._rosterData=existing;
-    if(activeTab==='rosters'){
-      panelBuilt['rosters']=false;
+    // Only re-render rosters if the panel hasn't been built yet (don't collapse while editing)
+    if(activeTab==='rosters'&&!panelBuilt['rosters']){
       showTab('rosters');
     }
   });
