@@ -1052,120 +1052,46 @@ function renderStats(panel){
     });
   });
 
-  div.innerHTML='<h2>Event Stats \u2014 All Matches</h2>';
+  // Side-by-side layout: event stats left, team stats right
+  const statsLayout=document.createElement('div');
+  statsLayout.style.cssText='display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap';
 
-  // Layout: table left, chart right
-  const eventLayout=document.createElement('div');
-  eventLayout.style.cssText='display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px';
+  // Event stats
+  const eventWrap=document.createElement('div');
+  const eventH2=document.createElement('div');
+  eventH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:8px';
+  eventH2.textContent='Event Stats — All Matches';
+  eventWrap.appendChild(eventH2);
+  eventWrap.appendChild(makeStatsTbl(bkAll, true, totalPtsAll));
+  statsLayout.appendChild(eventWrap);
 
-  const eventTblWrap=document.createElement('div');
-  eventTblWrap.appendChild(makeStatsTbl(bkAll, true, totalPtsAll));
-
-  const eventChartWrap=document.createElement('div');
-  eventChartWrap.style.cssText='flex:1;min-width:280px';
-  const eventChartTitle=document.createElement('div');
-  eventChartTitle.style.cssText='font-size:11px;font-weight:bold;color:#333;margin-bottom:6px';
-  eventChartTitle.textContent='Bunker % \u2014 All Teams';
-  eventChartWrap.appendChild(eventChartTitle);
-  const allRunsTotal=BKS.reduce((s,b)=>(s+(bkAll[b]||{runs:0}).runs),0);
-  const eventChartDiv=document.createElement('div');
-  eventChartDiv.style.cssText='display:flex;flex-direction:column;gap:3px';
-  BKS.forEach(b=>{
-    const s=bkAll[b]||{runs:0};
-    if(s.runs===0) return;
-    const pct=allRunsTotal>0?(s.runs/allRunsTotal*100):0;
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:4px;font-size:10px';
-    const lbl=document.createElement('span');
-    lbl.style.cssText='width:52px;text-align:right;flex-shrink:0;font-weight:bold';
-    lbl.textContent=b;
-    const bar=document.createElement('div');
-    bar.style.cssText='height:14px;background:#1a6e1a;border-radius:2px;min-width:2px';
-    bar.style.width=Math.max(pct*2,2)+'px';
-    const val=document.createElement('span');
-    val.style.cssText='color:#555';
-    val.textContent=pct.toFixed(1)+'%';
-    row.appendChild(lbl);row.appendChild(bar);row.appendChild(val);
-    eventChartDiv.appendChild(row);
-  });
-  eventChartWrap.appendChild(eventChartDiv);
-  eventLayout.appendChild(eventTblWrap);
-  eventLayout.appendChild(eventChartWrap);
-  div.appendChild(eventLayout);
-  // Team stats section with dropdown selector
-  const teamSection=document.createElement('div');
-  teamSection.style.cssText='margin-top:20px';
-
+  // Team stats with dropdown
+  const teamWrap=document.createElement('div');
   const teamHdrRow=document.createElement('div');
-  teamHdrRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:8px';
-
+  teamHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
   const teamH2=document.createElement('span');
   teamH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a';
-  teamH2.textContent='Team Stats';
-
+  teamH2.textContent='Team Stats:';
   const teamSel=document.createElement('select');
   teamSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
   TEAMS.forEach(t=>{
     const opt=document.createElement('option');opt.value=t;opt.textContent=t;
     teamSel.appendChild(opt);
   });
-
   teamHdrRow.appendChild(teamH2);
   teamHdrRow.appendChild(teamSel);
-  teamSection.appendChild(teamHdrRow);
-
-  // Layout: table on left, chart on right
-  const teamLayout=document.createElement('div');
-  teamLayout.style.cssText='display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap';
+  teamWrap.appendChild(teamHdrRow);
 
   const teamTblWrap=document.createElement('div');
-  teamTblWrap.id='team-tbl-wrap';
-
-  const teamChartWrap=document.createElement('div');
-  teamChartWrap.id='team-chart-wrap';
-  teamChartWrap.style.cssText='flex:1;min-width:280px';
-
-  teamLayout.appendChild(teamTblWrap);
-  teamLayout.appendChild(teamChartWrap);
-  teamSection.appendChild(teamLayout);
-  div.appendChild(teamSection);
+  teamWrap.appendChild(teamTblWrap);
+  statsLayout.appendChild(teamWrap);
+  div.appendChild(statsLayout);
   panel.appendChild(div);
 
   function renderTeamStats(team){
     teamTblWrap.innerHTML='';
-    teamChartWrap.innerHTML='';
     teamTblWrap.appendChild(makeStatsTbl(teamStats[team], false, teamPts[team]||0));
-
-    // Build simple bar chart
-    const chartTitle=document.createElement('div');
-    chartTitle.style.cssText='font-size:11px;font-weight:bold;color:#333;margin-bottom:6px';
-    chartTitle.textContent='Bunker % — '+team;
-    teamChartWrap.appendChild(chartTitle);
-
-    const allRuns=BKS.reduce((s,b)=>(s+(teamStats[team][b]||{runs:0}).runs),0);
-    const chartDiv=document.createElement('div');
-    chartDiv.style.cssText='display:flex;flex-direction:column;gap:3px';
-    BKS.forEach(b=>{
-      const s=teamStats[team][b]||{runs:0};
-      if(s.runs===0) return;
-      const pct=allRuns>0?(s.runs/allRuns*100):0;
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:4px;font-size:10px';
-      const lbl=document.createElement('span');
-      lbl.style.cssText='width:52px;text-align:right;flex-shrink:0;font-weight:bold';
-      lbl.textContent=b;
-      const bar=document.createElement('div');
-      bar.style.cssText='height:14px;background:#7e57c2;border-radius:2px;min-width:2px';
-      bar.style.width=Math.max(pct*2,2)+'px';
-      const val=document.createElement('span');
-      val.style.cssText='color:#555';
-      val.textContent=pct.toFixed(1)+'%';
-      row.appendChild(lbl);row.appendChild(bar);row.appendChild(val);
-      chartDiv.appendChild(row);
-    });
-    teamChartWrap.appendChild(chartDiv);
   }
-
   teamSel.onchange=()=>renderTeamStats(teamSel.value);
   renderTeamStats(TEAMS[0]);
 }
