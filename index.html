@@ -523,6 +523,7 @@ function renderBkCell(td,moves){
   td.className=td.className.replace(/\s*mv-\w+/g,'');
   td.style.background='';
   td.style.padding='0';
+  td.style.display='';
   if(!moves||moves.length===0) return;
   const realMoves=moves.filter(mv=>mv.sym&&mv.sym!=='_');
   if(realMoves.length===0) return;
@@ -530,8 +531,11 @@ function renderBkCell(td,moves){
   const orderColor={primary:'#c8e6c9',secondary:'#ffe0b2',tertiary:'#ffcdd2'};
 
   if(realMoves.length===1){
-    // Single move — full cell color
+    // Single move — full cell color, centered
     td.style.background=orderColor[realMoves[0].order]||'#eee';
+    td.style.textAlign='center';
+    td.style.verticalAlign='middle';
+    td.style.padding='0 2px';
     const span=document.createElement('span');
     let txt=realMoves[0].sym;
     if(realMoves[0].pen&&realMoves[0].pen!=='none') txt+='°'+realMoves[0].pen;
