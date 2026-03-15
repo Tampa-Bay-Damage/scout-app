@@ -413,6 +413,7 @@ function makeRow(tabId,mk,tk,idx,pt){
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');td.className='cbk';
+    td.dataset.bkkey=`${tabId}|${mk}|${tk}|${idx}|${b}`;
     renderBkCell(td,moves);
     td.onclick=()=>openMovePopup(tabId,mk,tk,idx,b,data[tabId][mk][tk][idx][b]);
     row.appendChild(td);
