@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: fix: roster data protected, popup restored, smart merge preserves jersey numbers
-  SUMMARY: loadRosters now merges per-player — never overwrites existing num values in Firebase.
-           Missing players are added, existing ones are preserved. Array-as-object normalization
-           fixed. try/catch added to prevent roster errors from crashing the app.
+  COMMIT: fix: remove Firebase check that was breaking the entire page
+  SUMMARY: The Firebase SDK check I added threw an error that halted all script execution
+           and split the code into two script tags. Removed entirely — back to original
+           single script tag approach.
 -->
 
 <html lang="en">
@@ -644,6 +644,7 @@ function renderBkCell(td,moves){
 let popCell=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
+  try{
   popCell={tabId,mk,tk,idx,bk};
   // Reset picker
   window._selSym='';
@@ -656,6 +657,7 @@ function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   document.getElementById('pop-bk').textContent=bk;
   buildMoveContent();
   document.getElementById('moveo').classList.add('open');
+  }catch(e){console.error('Popup error:',e);alert('Popup error: '+e.message);}
 }
 
 function buildMoveContent(){
