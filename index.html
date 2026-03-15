@@ -226,7 +226,7 @@ function listenFirebase(){
     let anyChanged=false;
     TABS.forEach(t=>{
       if(t.id==='stats') return;
-      const incoming=d[t.id]||null;
+      const incoming=d[t.id]?normalizeTab(JSON.parse(JSON.stringify(d[t.id]))):null;
       const incomingStr=JSON.stringify(incoming);
       const existingStr=JSON.stringify(data[t.id]||null);
       if(incomingStr===existingStr) return; // nothing changed, skip
@@ -267,7 +267,30 @@ function initTab(id){
   };
 }
 
-function blankPts(){
+// Normalize a point object to ensure all bunkers are arrays
+function normalizePt(pt){
+  const out={wl:pt.wl||'',rb:pt.rb||'',time:pt.time||'',notes:pt.notes||''};
+  BKS.forEach(b=>{
+    const val=pt[b];
+    if(!val||val==='') out[b]=[];
+    else if(typeof val==='string') out[b]=[{sym:val,order:'primary',pen:'none'}]; // legacy string format
+    else if(Array.isArray(val)) out[b]=val;
+    else out[b]=[];
+  });
+  return out;
+}
+
+function normalizeTab(tabData){
+  if(!tabData) return null;
+  ['m1','m2'].forEach(mk=>{
+    if(!tabData[mk]) return;
+    ['t1pts','t2pts'].forEach(tk=>{
+      if(!tabData[mk][tk]) return;
+      tabData[mk][tk]=tabData[mk][tk].map(pt=>normalizePt(pt));
+    });
+  });
+  return tabData;
+}
   return Array.from({length:PTS},()=>{
     const p={wl:'',rb:'',time:'',notes:''};
     BKS.forEach(b=>p[b]=[]);
