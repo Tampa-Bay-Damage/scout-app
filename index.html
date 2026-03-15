@@ -324,12 +324,11 @@ function renderIntoPanel(tabId){
     const thead=document.createElement('thead');
     const tbody=document.createElement('tbody');
 
-    // Row 1
+    // Row 1 — merge first 5 cols for label, then blank bunker cols, then Notes/Key
     const r1=document.createElement('tr');r1.className='hr1';
-    ['NXL','','','','Team',...BKS.map(()=>''),'Notes','Key'].forEach((t,i)=>{
-      const th=document.createElement('th');th.textContent=t;r1.appendChild(th);
-    });
-    r1.children[5+Math.floor(BKS.length/2)].textContent=matchLabel;
+    const thLabel=document.createElement('th');thLabel.textContent=matchLabel;thLabel.colSpan=5;r1.appendChild(thLabel);
+    BKS.forEach(()=>{const th=document.createElement('th');r1.appendChild(th);});
+    ['Notes','Key'].forEach(t=>{const th=document.createElement('th');th.textContent=t;r1.appendChild(th);});
     thead.appendChild(r1);
 
     // Row 2 - shapes
