@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 
 <!--
-  COMMIT: feat: player stats with team+player dropdowns and full stats table
-  SUMMARY: Player stats uses team dropdown then player dropdown. Selected player shows
-           summary cards (points played, deaths off break, minor/major penalties) and
-           a full 18-bunker table with Count, Count %, Death %, Snake %, Dorito %, Dove %.
-           All values show zero for untagged players.
+  COMMIT: fix: player dropdown always populated using PRELOADED_ROSTERS fallback
+  SUMMARY: populatePlayerSel now falls back to PRELOADED_ROSTERS if Firebase roster
+           data hasn't loaded yet, ensuring the player dropdown is always filled.
 -->
 
 <html lang="en">
@@ -1289,7 +1287,8 @@ function renderStats(panel){
   function populatePlayerSel(team){
     pPlayerSel.innerHTML='';
     const teamKey=team.replace(/\s+/g,'_').toLowerCase();
-    const players=(window._rosterData&&window._rosterData[teamKey])||[];
+    const rosterSrc=window._rosterData||PRELOADED_ROSTERS;
+    const players=(rosterSrc[teamKey])||[];
     const active=players.filter(p=>p.name||p.num);
     if(active.length===0){
       const opt=document.createElement('option');opt.textContent='No players in roster';pPlayerSel.appendChild(opt);return;
