@@ -360,12 +360,6 @@ function renderIntoPanel(tabId){
   }
 
   panel.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 1'));
-
-  const divider=document.createElement('div');
-  divider.style.cssText='background:#d5d5d5;font-weight:bold;font-size:11px;text-align:center;padding:6px;letter-spacing:2px;color:#333;border-top:3px solid #888;border-bottom:3px solid #888;margin:0';
-  divider.textContent=tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 2';
-  panel.appendChild(divider);
-
   panel.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' — MATCH 2'));
 }
 
