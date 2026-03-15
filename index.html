@@ -122,9 +122,9 @@ tr.keyrow td{background:#fffde7;font-size:9px;color:#777;text-align:left;padding
   </div>
 </div>
 
-<script type="module">
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getDatabase,ref,set,onValue}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
 
 const FB={
   apiKey:"AIzaSyD-qvduCnJV7sQ2Nvhjvpj6yKKTQtkn0HU",
@@ -153,7 +153,7 @@ function getSession(){return new URLSearchParams(window.location.search).get('se
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 
-let db,activeTab='stats',data={};
+let db=null,activeTab='stats',data={};
 
 // Track which panels have been built and which need a re-render
 const panelBuilt={};
@@ -161,7 +161,7 @@ const panelDirty={};
 
 let popCell=null,popMoves=[];
 
-try{const app=initializeApp(FB);db=getDatabase(app);console.log('Firebase initialized OK');}
+try{firebase.initializeApp(FB);db=firebase.database();console.log('Firebase initialized OK');}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
 
 buildTabs();
@@ -222,7 +222,7 @@ function showTab(id){
 // ── FIREBASE ─────────────────────────────────
 function listenFirebase(){
   console.log('listenFirebase called, SESSION=',SESSION);
-  onValue(ref(db,`sessions/${SESSION}`),snap=>{
+  db.ref(`sessions/${SESSION}`).on('value',snap=>{
     console.log('Firebase onValue fired, val=',snap.val());
     const d=snap.val()||{};
     TABS.forEach(t=>{
@@ -283,7 +283,7 @@ function normalizeTab(tabData){
   });
 }
 
-function saveTab(id){if(db) set(ref(db,`sessions/${SESSION}/${id}`),data[id]);}
+function saveTab(id){if(db) db.ref(`sessions/${SESSION}/${id}`).set(data[id]);}
 
 // ── SCORE BAR ─────────────────────────────────
 function updateScoreBar(){
