@@ -1044,6 +1044,11 @@ function loadRosters(){
     if(activeTab==='rosters'&&!panelBuilt['rosters']){
       showTab('rosters');
     }
+    // Re-render stats so player dropdown populates with roster data
+    if(activeTab==='stats'){
+      panelBuilt['stats']=false;
+      showTab('stats');
+    }
   });
 }
 
