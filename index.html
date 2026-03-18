@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: update shooting direction buttons and player label format
+COMMIT: feat: update shooting direction buttons and player stats with Middle
 
 SUMMARY: Updated the symbol selection row in the bunker move popup. Added a
 "Shooting Direction:" label above the buttons for clarity. Removed "Shooting"
 from Snake and Dorito labels — now display as "Snake" and "Dorito". Replaced
 "Dove" with "Dive". Added a new "M" (Middle) button. Button order is now
 S, M, Dorito, Dive left to right. Grid updated from 3 to 4 columns to
-accommodate the new button. Player stats table header updated from "Dove %"
-to "Dive %" to match. Player label format updated in both the popup roster
-buttons and the stats dropdown — now displays as "## - Name" with no # symbol.
+accommodate the new button. Player stats table updated to track and display
+Middle % alongside Snake %, Dorito %, and Dive % — column order is Snake %,
+Middle %, Dorito %, Dive %. Player label format updated in both the popup
+roster buttons and the stats dropdown — now displays as "## - Name" with no
+# symbol.
 -->
 
 <html lang="en">
@@ -1096,7 +1098,7 @@ function renderStats(panel){
 
   function calcPlayerStats(team,playerLabel){
     const stats={pointsPlayed:0,pointsDied:0,penalties:{Mi:0,Mj:0},bunkers:{},deaths:{},shootingDir:{}};
-    BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
+    BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,M:0,X:0};});
     TABS.forEach(t=>{
       if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
       ['m1','m2'].forEach(mk=>{
@@ -1118,6 +1120,7 @@ function renderStats(panel){
                 const sym=mv.sym||'';
                 if(sym.startsWith('S')) stats.shootingDir[b].S++;
                 else if(sym.startsWith('\u2206')) stats.shootingDir[b]['\u2206']++;
+                else if(sym.startsWith('M')) stats.shootingDir[b].M++;
                 else if(sym.startsWith('X')) stats.shootingDir[b].X++;
               });
             });
@@ -1168,7 +1171,7 @@ function renderStats(panel){
     playerTblWrap.appendChild(summaryDiv);
     const tbl=document.createElement('table');tbl.className='stats-tbl';
     const hdr=document.createElement('tr');
-    ['Bunker','Count','Count %','Death %','Snake %','Dorito %','Dive %'].forEach(h=>{
+    ['Bunker','Count','Count %','Death %','Snake %','Middle %','Dorito %','Dive %'].forEach(h=>{
       const th=document.createElement('th');th.textContent=h;hdr.appendChild(th);
     });
     tbl.appendChild(hdr);
@@ -1178,13 +1181,14 @@ function renderStats(panel){
       const countPct=(totalCount>0&&count>0)?(count/totalCount*100).toFixed(1)+'%':'0%';
       const deaths=s.deaths[b]||0;
       const deathPctB=count>0?(deaths/count*100).toFixed(0)+'%':'0%';
-      const d=s.shootingDir[b]||{S:0,'\u2206':0,X:0};
-      const dirTotal=d.S+d['\u2206']+d.X;
+      const d=s.shootingDir[b]||{S:0,'\u2206':0,M:0,X:0};
+      const dirTotal=d.S+d['\u2206']+d.M+d.X;
       const sPct=dirTotal>0?(d.S/dirTotal*100).toFixed(0)+'%':'0%';
+      const mPct=dirTotal>0?(d.M/dirTotal*100).toFixed(0)+'%':'0%';
       const dPct=dirTotal>0?(d['\u2206']/dirTotal*100).toFixed(0)+'%':'0%';
       const xPct=dirTotal>0?(d.X/dirTotal*100).toFixed(0)+'%':'0%';
       const tr=document.createElement('tr');
-      [b,count,countPct,deathPctB,sPct,dPct,xPct].forEach(v=>{
+      [b,count,countPct,deathPctB,sPct,mPct,dPct,xPct].forEach(v=>{
         const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
       });
       tbl.appendChild(tr);
