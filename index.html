@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: update shooting direction buttons in move popup
+COMMIT: feat: update shooting direction buttons and player label format
 
 SUMMARY: Updated the symbol selection row in the bunker move popup. Added a
 "Shooting Direction:" label above the buttons for clarity. Removed "Shooting"
@@ -9,7 +9,8 @@ from Snake and Dorito labels — now display as "Snake" and "Dorito". Replaced
 "Dove" with "Dive". Added a new "M" (Middle) button. Button order is now
 S, M, Dorito, Dive left to right. Grid updated from 3 to 4 columns to
 accommodate the new button. Player stats table header updated from "Dove %"
-to "Dive %" to match.
+to "Dive %" to match. Player label format updated in both the popup roster
+buttons and the stats dropdown — now displays as "## - Name" with no # symbol.
 -->
 
 <html lang="en">
@@ -719,7 +720,7 @@ function buildMoveContent(){
       rosterGrid.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:6px';
       activePlayers.forEach(p=>{
         const lastName=p.name.split(' ').pop();
-        const label=p.num?('#'+p.num+' '+lastName):lastName;
+        const label=p.num?(p.num+' - '+lastName):lastName;
         const btn=document.createElement('button');
         btn.style.cssText='height:28px;width:100%;border:2px solid #ccc;border-radius:3px;font-size:10px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
         btn.textContent=label;
@@ -1138,8 +1139,8 @@ function renderStats(panel){
     }
     active.forEach(p=>{
       const lastName=p.name?p.name.split(' ').pop():'';
-      const label=p.num?('#'+p.num+' '+lastName):lastName;
-      const displayName=p.num?('#'+p.num+' '+p.name):p.name;
+      const label=p.num?(p.num+' - '+lastName):lastName;
+      const displayName=p.num?(p.num+' - '+p.name):p.name;
       const opt=document.createElement('option');opt.value=label;opt.textContent=displayName;
       pPlayerSel.appendChild(opt);
     });
