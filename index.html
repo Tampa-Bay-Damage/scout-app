@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: update shooting direction buttons, player stats, and roster jersey numbers
+COMMIT: feat: tap-to-edit moves in popup, update shooting direction buttons, player stats, and roster jersey numbers
 
-SUMMARY: Updated the symbol selection row in the bunker move popup. Added a
-"Shooting Direction:" label above the buttons for clarity. Removed "Shooting"
-from Snake and Dorito labels — now display as "Snake" and "Dorito". Replaced
-"Dove" with "Dive". Added a new "M" (Middle) button. Button order is now
-S, M, Dorito, Dive left to right. Grid updated from 3 to 4 columns to
-accommodate the new button. Player stats table updated to track and display
-Middle % alongside Snake %, Dorito %, and Dive % — column order is Snake %,
-Middle %, Dorito %, Dive %. Player label format updated in both the popup
-roster buttons and the stats dropdown — now displays as "## - Name" with no
-# symbol. PRELOADED_ROSTERS updated with jersey numbers for all 20 teams
-sourced from Pro_Jersey_numbers.xlsx.
+SUMMARY: Added tap-to-edit for existing moves in the bunker move popup. Tapping
+a move in the summary list highlights it and pre-fills all picker values (symbol,
+depth, penalty, order, player). ADD button changes to UPDATE (orange) while
+editing. Hitting UPDATE overwrites that move in place. Tapping the same move
+again or closing the popup cancels edit mode and restores ADD. Delete button
+still works independently during edit mode. Updated the symbol selection row —
+added "Shooting Direction:" label, shortened Snake/Dorito labels, replaced Dove
+with Dive, added M (Middle) button, reordered to S/M/Dorito/Dive, expanded grid
+to 4 columns. Player stats table updated to track and display Middle % column.
+Player label format updated to "## - Name" with no # symbol. PRELOADED_ROSTERS
+updated with jersey numbers for all 20 teams sourced from Pro_Jersey_numbers.xlsx.
 -->
 
 <html lang="en">
@@ -574,9 +574,11 @@ function renderBkCell(td,moves){
 
 // ── MOVE POPUP ───────────────────────────────
 let popCell=null;
+let _editingMoveIdx=null;
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
+  _editingMoveIdx=null;
   window._selSym='';
   window._selMod='';
   window._selDeath=false;
@@ -599,6 +601,9 @@ function buildMoveContent(){
       const sumDiv=document.createElement('div');sumDiv.className='move-summary';
       existing.forEach((mv,i)=>{
         const row=document.createElement('div');row.className='ms-row';
+        // Highlight if this move is being edited
+        const isEditing=(_editingMoveIdx===i);
+        row.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:2px;padding:3px 4px;border-radius:3px;cursor:pointer;'+(isEditing?'background:#e3f2fd;border:1px solid #1565c0;':'background:transparent;border:1px solid transparent;');
         const dot=document.createElement('span');
         dot.className='dot '+(mv.order==='primary'?'dot-g':mv.order==='secondary'?'dot-y':'dot-r');
         dot.textContent=i+1;
@@ -612,7 +617,18 @@ function buildMoveContent(){
         ordSpan.textContent=mv.order;
         const del=document.createElement('span');del.textContent='\u2715';
         del.style.cssText='color:#999;cursor:pointer;margin-left:auto;font-size:14px;padding:0 4px';
-        del.onclick=()=>{
+        del.onclick=(e)=>{
+          e.stopPropagation();
+          // If deleting the move being edited, cancel edit mode
+          if(_editingMoveIdx===i){
+            _editingMoveIdx=null;
+            window._selSym='';window._selMod='';window._selDeath=false;
+            window._selOrder='primary';window._selPen='none';window._selPlayer=null;
+            document.getElementById('btn-app').textContent='ADD';
+            document.getElementById('btn-app').style.background='#1565c0';
+          } else if(_editingMoveIdx!==null&&_editingMoveIdx>i){
+            _editingMoveIdx--;
+          }
           data[tabId][mk][tk][idx][bk].splice(i,1);
           saveTab(tabId);
           const panel=document.getElementById('panel-'+tabId);
@@ -620,6 +636,33 @@ function buildMoveContent(){
             const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
             const cell=panel.querySelector(`td[data-bkkey="${CSS.escape(key)}"]`);
             if(cell) renderBkCell(cell,data[tabId][mk][tk][idx][bk]);
+          }
+          buildMoveContent();
+        };
+        // Tap row to edit
+        row.onclick=()=>{
+          if(_editingMoveIdx===i){
+            // Deselect — cancel edit
+            _editingMoveIdx=null;
+            window._selSym='';window._selMod='';window._selDeath=false;
+            window._selOrder='primary';window._selPen='none';window._selPlayer=null;
+            document.getElementById('btn-app').textContent='ADD';
+            document.getElementById('btn-app').style.background='#1565c0';
+          } else {
+            // Load this move into the picker
+            _editingMoveIdx=i;
+            const m=data[tabId][mk][tk][idx][bk][i];
+            window._selDeath=m.isDead||false;
+            // Parse sym and mod — sym is base char, mod is ^ or v suffix
+            const rawSym=m.sym||'';
+            if(rawSym.endsWith('^')){window._selSym=rawSym.slice(0,-1);window._selMod='^';}
+            else if(rawSym.endsWith('v')){window._selSym=rawSym.slice(0,-1);window._selMod='v';}
+            else{window._selSym=rawSym;window._selMod='';}
+            window._selOrder=m.order||'primary';
+            window._selPen=m.pen||'none';
+            window._selPlayer=m.player||null;
+            document.getElementById('btn-app').textContent='UPDATE';
+            document.getElementById('btn-app').style.background='#e65100';
           }
           buildMoveContent();
         };
@@ -766,6 +809,9 @@ function buildMoveContent(){
 
 window.closeMove=()=>{
   document.getElementById('moveo').classList.remove('open');
+  document.getElementById('btn-app').textContent='ADD';
+  document.getElementById('btn-app').style.background='#1565c0';
+  _editingMoveIdx=null;
   popCell=null;
 };
 
@@ -779,14 +825,26 @@ window.applyMove=()=>{
   if(window._selPlayer){
     seqNum=window._selPlayer.num||window._selPlayer.initials||null;
   }
-  data[tabId][mk][tk][idx][bk].push({
+  const newMove={
     sym:finalSym,
     isDead:window._selDeath||false,
     player:window._selPlayer||null,
     seqNum,
     order:window._selOrder||'primary',
     pen:window._selPen||'none',
-  });
+  };
+
+  if(_editingMoveIdx!==null){
+    // UPDATE mode — overwrite the existing move at that index
+    data[tabId][mk][tk][idx][bk][_editingMoveIdx]=newMove;
+    _editingMoveIdx=null;
+    document.getElementById('btn-app').textContent='ADD';
+    document.getElementById('btn-app').style.background='#1565c0';
+  } else {
+    // ADD mode — push new move
+    data[tabId][mk][tk][idx][bk].push(newMove);
+  }
+
   saveTab(tabId);
   window._selSym='';
   window._selMod='';
