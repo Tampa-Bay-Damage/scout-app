@@ -628,10 +628,22 @@ function updateScoreCell(tabId,mk,tk){
 
 // Helper — append sym text + optional pen superscript + optional seqNum superscript to a container
 function appendMoveText(container, mv){
+  // Handle legacy format where mod was baked into sym (e.g. "S^" or "Sv")
+  let sym=mv.sym||'';
+  let mod=mv.mod||'';
+  if(!mod&&sym.endsWith('^')){sym=sym.slice(0,-1);mod='^';}
+  else if(!mod&&sym.endsWith('v')){sym=sym.slice(0,-1);mod='v';}
+
   const symSpan=document.createElement('span');
   symSpan.style.cssText='color:#000;font-weight:bold';
-  symSpan.textContent=mv.sym||'';
+  symSpan.textContent=sym;
   container.appendChild(symSpan);
+  if(mod){
+    const modSup=document.createElement('sup');
+    modSup.textContent=mod;
+    modSup.style.cssText='color:#000;font-size:8px';
+    container.appendChild(modSup);
+  }
   if(mv.pen&&mv.pen!=='none'){
     const penSup=document.createElement('sup');
     penSup.textContent=mv.pen;
@@ -763,9 +775,12 @@ function buildMoveContent(){
             _editingMoveIdx=i;
             const m=data[tabId][mk][tk][idx][bk][i];
             window._selDeath=m.isDead||false;
-            // Parse sym and mod — sym is base char, mod is ^ or v suffix
+            // Support new mod field and legacy sym-embedded mod
             const rawSym=m.sym||'';
-            if(rawSym.endsWith('^')){window._selSym=rawSym.slice(0,-1);window._selMod='^';}
+            if(m.mod!==undefined){
+              window._selSym=rawSym;
+              window._selMod=m.mod||'';
+            } else if(rawSym.endsWith('^')){window._selSym=rawSym.slice(0,-1);window._selMod='^';}
             else if(rawSym.endsWith('v')){window._selSym=rawSym.slice(0,-1);window._selMod='v';}
             else{window._selSym=rawSym;window._selMod='';}
             window._selOrder=m.order||'primary';
@@ -932,13 +947,15 @@ window.applyMove=()=>{
   const{tabId,mk,tk,idx,bk}=popCell;
   if(!window._selSym&&!window._selDeath){alert('Please pick a symbol or select Death.');return;}
   if(!data[tabId][mk][tk][idx][bk]) data[tabId][mk][tk][idx][bk]=[];
-  const finalSym=(window._selSym||'')+(window._selDeath?'':(window._selMod||''));
+  const finalSym=window._selSym||'';
+  const finalMod=window._selDeath?'':(window._selMod||'');
   let seqNum=null;
   if(window._selPlayer){
     seqNum=window._selPlayer.num||window._selPlayer.initials||null;
   }
   const newMove={
     sym:finalSym,
+    mod:finalMod,
     isDead:window._selDeath||false,
     player:window._selPlayer||null,
     seqNum,
