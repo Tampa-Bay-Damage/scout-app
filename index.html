@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: SOB column with custom Snake off Break popup, tap-to-edit moves, shooting direction updates, and roster jersey numbers
+COMMIT: feat: SOB column with sub-route stats, S1→SOB Firebase migration, Tequila removed from match sheet
 
-SUMMARY: S1 column header renamed to SOB (Snake off Break) in all match sheet
-tables. When the SOB cell is tapped the popup shows a custom "Snake off Break:"
-direction row with S1, S2, S3, and Tequila buttons replacing the standard
-S/M/Dorito/Dive buttons. All other popup sections (death, depth, penalty, order,
-player) remain unchanged. Added tap-to-edit for existing moves in the popup —
-tapping a move highlights it and pre-fills the picker, ADD button changes to
-UPDATE (orange), hitting UPDATE overwrites that move in place, tapping again
-cancels. Updated shooting direction buttons — added label, shortened names,
-replaced Dove with Dive, added Middle button, reordered to S/M/Dorito/Dive,
-expanded to 4-column grid. Player stats updated to track Middle %. Player labels
-updated to "## - Name" format. PRELOADED_ROSTERS updated with jersey numbers for
-all 20 teams from Pro_Jersey_numbers.xlsx.
+SUMMARY: Renamed S1 column to SOB (Snake off Break) across the entire app. Tequila
+removed from BKS — it now exists only as a sub-route of SOB. One-time Firebase
+migration runs on page load: reads all S1 data, writes to SOB key, deletes S1,
+sets a migration flag so it never runs again. SOB popup shows S1/S2/S3/Tequila
+buttons. Event, team, and player stats all show SOB as a combined bunker row with
+indented S1/S2/S3/Tequila sub-rows — sub-row percentages sum to 100% of SOB
+traffic. SOB bunker % compares total SOB runs against all other bunkers on the
+field. Added tap-to-edit for existing moves. Updated shooting direction buttons.
+Player stats track Middle %. Player labels show as "## - Name". All 20 team
+rosters updated with jersey numbers from Pro_Jersey_numbers.xlsx.
 -->
 
 <html lang="en">
@@ -159,8 +157,9 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["S1","Tequila","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Whiskey","Baby","Beast","100","200","300"];
-const SHAPES=["SB","","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
+const BKS=["SOB","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Whiskey","Baby","Beast","100","200","300"];
+const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
+const SOB_SUBS=['S1','S2','S3','Tequila'];
 const SYMS=[
   {s:"S",l:"Snake"},
   {s:"M",l:"Middle"},
@@ -185,11 +184,58 @@ const panelDirty={};
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
 
-buildTabs();
-createPanels();
-listenFirebase();
-loadRosters();
-showTab('stats');
+// ── MIGRATION: S1 → SOB ──────────────────────
+async function migrateS1toSOB(){
+  if(!db) return;
+  const flagSnap=await db.ref(`sessions/${SESSION}/_migrated_s1_to_sob`).once('value');
+  if(flagSnap.val()) return; // already done
+  const snap=await db.ref(`sessions/${SESSION}`).once('value');
+  const d=snap.val()||{};
+  const updates={};
+  TABS.forEach(t=>{
+    if(t.id==='stats'||t.id==='rosters') return;
+    const td=d[t.id];if(!td) return;
+    ['m1','m2'].forEach(mk=>{
+      const md=td[mk];if(!md) return;
+      ['t1pts','t2pts'].forEach(tk=>{
+        const pts=md[tk];if(!pts) return;
+        Object.keys(pts).forEach(i=>{
+          const pt=pts[i];if(!pt) return;
+          // Migrate S1 → SOB
+          if(pt.S1!==undefined){
+            updates[`sessions/${SESSION}/${t.id}/${mk}/${tk}/${i}/SOB`]=pt.S1;
+            updates[`sessions/${SESSION}/${t.id}/${mk}/${tk}/${i}/S1`]=null;
+          }
+          // Migrate Tequila moves into SOB array if they exist
+          if(pt.Tequila!==undefined&&pt.Tequila!==null){
+            const existing=pt.SOB||pt.S1||[];
+            const tequilaMoves=Array.isArray(pt.Tequila)?pt.Tequila:Object.values(pt.Tequila||{});
+            if(tequilaMoves.length>0){
+              const combined=[...(Array.isArray(existing)?existing:Object.values(existing||{})),...tequilaMoves];
+              updates[`sessions/${SESSION}/${t.id}/${mk}/${tk}/${i}/SOB`]=combined;
+            }
+            updates[`sessions/${SESSION}/${t.id}/${mk}/${tk}/${i}/Tequila`]=null;
+          }
+        });
+      });
+    });
+  });
+  updates[`sessions/${SESSION}/_migrated_s1_to_sob`]=true;
+  if(Object.keys(updates).length>1){
+    await db.ref().update(updates);
+    console.log('Migration S1→SOB complete');
+  } else {
+    await db.ref(`sessions/${SESSION}/_migrated_s1_to_sob`).set(true);
+  }
+}
+
+migrateS1toSOB().then(()=>{
+  buildTabs();
+  createPanels();
+  listenFirebase();
+  loadRosters();
+  showTab('stats');
+});
 
 // ── TABS ─────────────────────────────────────
 function buildTabs(){
@@ -281,7 +327,8 @@ function migrateMv(mv){
 function normalizePt(pt){
   const out={wl:pt.wl||'',rb:pt.rb||'',time:pt.time||'',notes:pt.notes||''};
   BKS.forEach(b=>{
-    const val=pt[b];
+    // Handle legacy S1 key mapping to SOB
+    const val=b==='SOB'?(pt.SOB||pt.S1):pt[b];
     if(!val||val==='') out[b]=[];
     else if(typeof val==='string') out[b]=[migrateMv({sym:val,order:'primary',pen:'none'})];
     else if(Array.isArray(val)) out[b]=val.map(mv=>migrateMv(mv));
@@ -357,7 +404,7 @@ function renderIntoPanel(tabId){
     });
     thead.appendChild(r2);
     const r3=document.createElement('tr');r3.className='hr3';
-    const BK_DARK=['S1','Alpha','HS','H\u2206','Baby','100'];
+    const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
     const BK_MED=['SC','Beast'];
     const BK_LITE=['Sniper','Dagger'];
     ['*','W/L','R/B','Score','Time',...BKS.map(b=>b==='S1'?'SOB':b),'Notes'].forEach((t,i)=>{
@@ -474,7 +521,7 @@ function makeRow(tabId,mk,tk,idx,pt){
     saveTab(tabId);
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
-  const _BK_DARK=['S1','Alpha','HS','H\u2206','Baby','100'];
+  const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const _BK_MED=['SC','Beast'];
   const _BK_LITE=['Sniper','Dagger'];
   BKS.forEach(b=>{
@@ -673,7 +720,7 @@ function buildMoveContent(){
       cont.appendChild(hr);
     }
   }
-  const isSOB=(popCell&&popCell.bk==='S1');
+  const isSOB=(popCell&&popCell.bk==='SOB');
   const symLbl=document.createElement('div');
   symLbl.style.cssText='font-size:10px;font-weight:bold;color:#555;margin:4px 0 3px;text-transform:uppercase;letter-spacing:1px';
   symLbl.textContent=isSOB?'Snake off Break:':'Shooting Direction:';
@@ -983,8 +1030,14 @@ function renderStats(panel){
   const div=document.createElement('div');div.className='stats-wrap';
   const bkAll={};
   BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0,oppRuns:0});
+  // SOB sub-route tracking
+  bkAll._sobSubs={S1:0,S2:0,S3:0,Tequila:0};
   const teamStats={};
-  TEAMS.forEach(t=>{teamStats[t]={};BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0,oppRuns:0});});
+  TEAMS.forEach(t=>{
+    teamStats[t]={};
+    BKS.forEach(b=>teamStats[t][b]={runs:0,deaths:0,kills:0,oppRuns:0});
+    teamStats[t]._sobSubs={S1:0,S2:0,S3:0,Tequila:0};
+  });
   const teamPts={};
   TEAMS.forEach(t=>{teamPts[t]=0;});
   let totalPtsAll=0;
@@ -1010,6 +1063,14 @@ function renderStats(panel){
               if(mv.isDead||(mv.sym&&mv.sym!=='_')){
                 bkAll[b].runs++;
                 if(name&&teamStats[name]) teamStats[name][b].runs++;
+                // Track SOB sub-routes
+                if(b==='SOB'&&mv.sym){
+                  const sub=SOB_SUBS.find(s=>mv.sym===s||mv.sym.startsWith(s));
+                  if(sub){
+                    bkAll._sobSubs[sub]=(bkAll._sobSubs[sub]||0)+1;
+                    if(name&&teamStats[name]) teamStats[name]._sobSubs[sub]=(teamStats[name]._sobSubs[sub]||0)+1;
+                  }
+                }
               }
               if(mv.isDead){
                 bkAll[b].deaths++;
@@ -1084,6 +1145,7 @@ function renderStats(panel){
   function calcTeamStats(team,matchIdx){
     const bk={};
     BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,oppRuns:0});
+    bk._sobSubs={S1:0,S2:0,S3:0,Tequila:0};
     let pts=0;
     const matches=matchIdx===-1?teamMatches[team]:[teamMatches[team][matchIdx]].filter(Boolean);
     matches.forEach(({tabId,mk,tk})=>{
@@ -1095,7 +1157,13 @@ function renderStats(panel){
         if(hasData) pts++;
         BKS.forEach(b=>{
           (pt[b]||[]).forEach(mv=>{
-            if(mv.isDead||(mv.sym&&mv.sym!=='_')){bk[b].runs++;}
+            if(mv.isDead||(mv.sym&&mv.sym!=='_')){
+              bk[b].runs++;
+              if(b==='SOB'&&mv.sym){
+                const sub=SOB_SUBS.find(s=>mv.sym===s||mv.sym.startsWith(s));
+                if(sub) bk._sobSubs[sub]=(bk._sobSubs[sub]||0)+1;
+              }
+            }
             if(mv.isDead){bk[b].deaths++;}
           });
           const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
@@ -1157,7 +1225,7 @@ function renderStats(panel){
   div.appendChild(playerSection);
 
   function calcPlayerStats(team,playerLabel){
-    const stats={pointsPlayed:0,pointsDied:0,penalties:{Mi:0,Mj:0},bunkers:{},deaths:{},shootingDir:{}};
+    const stats={pointsPlayed:0,pointsDied:0,penalties:{Mi:0,Mj:0},bunkers:{},deaths:{},shootingDir:{},sobSubs:{S1:0,S2:0,S3:0,Tequila:0}};
     BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,M:0,X:0};});
     TABS.forEach(t=>{
       if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
@@ -1177,6 +1245,11 @@ function renderStats(panel){
                 if(mv.isDead){died=true;stats.deaths[b]++;}
                 if(mv.pen==='Mi') stats.penalties.Mi++;
                 if(mv.pen==='Mj') stats.penalties.Mj++;
+                // Track SOB sub-routes for player
+                if(b==='SOB'&&mv.sym){
+                  const sub=SOB_SUBS.find(s=>mv.sym===s||mv.sym.startsWith(s));
+                  if(sub) stats.sobSubs[sub]=(stats.sobSubs[sub]||0)+1;
+                }
                 const sym=mv.sym||'';
                 if(sym.startsWith('S')) stats.shootingDir[b].S++;
                 else if(sym.startsWith('\u2206')) stats.shootingDir[b]['\u2206']++;
@@ -1252,6 +1325,26 @@ function renderStats(panel){
         const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
       });
       tbl.appendChild(tr);
+      // SOB sub-rows
+      if(b==='SOB'){
+        const sobTotal=SOB_SUBS.reduce((sum,sub)=>sum+(s.sobSubs[sub]||0),0);
+        SOB_SUBS.forEach(sub=>{
+          const subCount=s.sobSubs[sub]||0;
+          const subPct=sobTotal>0?(subCount/sobTotal*100).toFixed(0)+'%':'0%';
+          const subTr=document.createElement('tr');
+          subTr.style.background='#f0f8ff';
+          const vals=['\u2514 '+sub,subCount,subPct,'—','—','—','—','—'];
+          vals.forEach((v,vi)=>{
+            const td=document.createElement('td');
+            td.textContent=v;
+            td.style.fontSize='10px';
+            td.style.color='#555';
+            if(vi===0) td.style.paddingLeft='14px';
+            subTr.appendChild(td);
+          });
+          tbl.appendChild(subTr);
+        });
+      }
     });
     playerTblWrap.appendChild(tbl);
   }
@@ -1290,6 +1383,30 @@ function makeStatsTbl(bkData,killsOnly,totalPts){
       :[b,SHAPES[i]||'',s.runs,bunkPct,s.deaths,deathPct,s.kills,killPct];
     vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     tbl.appendChild(tr);
+    // SOB sub-rows
+    if(b==='SOB'){
+      const sobSubs=bkData._sobSubs||{S1:0,S2:0,S3:0,Tequila:0};
+      const sobTotal=SOB_SUBS.reduce((sum,sub)=>sum+(sobSubs[sub]||0),0);
+      SOB_SUBS.forEach(sub=>{
+        const subCount=sobSubs[sub]||0;
+        const subPct=sobTotal>0?(subCount/sobTotal*100).toFixed(0)+'%':'0%';
+        const subTr=document.createElement('tr');
+        subTr.style.background='#f0f8ff';
+        const colCount=killsOnly?6:8;
+        const subVals=killsOnly
+          ?['\u2514 '+sub,'',subCount,subPct,'','']
+          :['\u2514 '+sub,'',subCount,subPct,'','\u2014','','\u2014'];
+        subVals.forEach((v,vi)=>{
+          const td=document.createElement('td');
+          td.textContent=v;
+          td.style.fontSize='10px';
+          td.style.color='#555';
+          if(vi===0) td.style.paddingLeft='14px';
+          subTr.appendChild(td);
+        });
+        tbl.appendChild(subTr);
+      });
+    }
   });
   const totDeathPct=totRuns>0?(totDeaths/totRuns*100).toFixed(0)+'%':'\u2014';
   const totKillPct=totOppRuns>0?(totKills/totOppRuns*100).toFixed(0)+'%':'\u2014';
