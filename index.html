@@ -188,6 +188,11 @@ document.getElementById('sesslbl').textContent=SESSION;
 let db=null,activeTab='stats',data={};
 const panelBuilt={};
 const panelDirty={};
+// Persist stats dropdown selections across re-renders
+let _statsTeamSel=TEAMS[0];
+let _statsMatchSel='-1';
+let _statsPlayerTeamSel=TEAMS[0];
+let _statsPlayerSel=null;
 
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
@@ -1278,9 +1283,16 @@ function renderStats(panel){
     renderTeamStatsWithMatch(team,-1);
   }
 
-  teamSel.onchange=()=>renderTeamStats(teamSel.value);
-  matchSel.onchange=()=>renderTeamStatsWithMatch(teamSel.value,parseInt(matchSel.value));
-  renderTeamStats(TEAMS[0]);
+  teamSel.onchange=()=>{_statsTeamSel=teamSel.value;_statsMatchSel='-1';renderTeamStats(teamSel.value);};
+  matchSel.onchange=()=>{_statsMatchSel=matchSel.value;renderTeamStatsWithMatch(teamSel.value,parseInt(matchSel.value));};
+  // Restore previously selected team
+  if(TEAMS.includes(_statsTeamSel)) teamSel.value=_statsTeamSel;
+  renderTeamStats(teamSel.value);
+  // Restore match selection after populateMatchSel runs
+  if(_statsMatchSel!=='-1'){
+    const opt=[...matchSel.options].find(o=>o.value===_statsMatchSel);
+    if(opt){matchSel.value=_statsMatchSel;renderTeamStatsWithMatch(teamSel.value,parseInt(_statsMatchSel));}
+  }
 
   // ── PLAYER STATS SECTION ──
   const playerSection=document.createElement('div');
@@ -1430,13 +1442,22 @@ function renderStats(panel){
     playerTblWrap.appendChild(tbl);
   }
 
-  populatePlayerSel(TEAMS[0]);
-  renderPlayerStats(TEAMS[0],pPlayerSel.value);
+  // Restore previously selected player team
+  if(TEAMS.includes(_statsPlayerTeamSel)) pTeamSel.value=_statsPlayerTeamSel;
+  populatePlayerSel(pTeamSel.value);
+  // Restore previously selected player
+  if(_statsPlayerSel){
+    const opt=[...pPlayerSel.options].find(o=>o.value===_statsPlayerSel);
+    if(opt) pPlayerSel.value=_statsPlayerSel;
+  }
+  renderPlayerStats(pTeamSel.value,pPlayerSel.value);
   pTeamSel.onchange=()=>{
+    _statsPlayerTeamSel=pTeamSel.value;
+    _statsPlayerSel=null;
     populatePlayerSel(pTeamSel.value);
     renderPlayerStats(pTeamSel.value,pPlayerSel.value);
   };
-  pPlayerSel.onchange=()=>renderPlayerStats(pTeamSel.value,pPlayerSel.value);
+  pPlayerSel.onchange=()=>{_statsPlayerSel=pPlayerSel.value;renderPlayerStats(pTeamSel.value,pPlayerSel.value);};
 }
 
 function makeStatsTbl(bkData,killsOnly,totalPts){
