@@ -153,6 +153,7 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 
 const FB={
@@ -242,13 +243,20 @@ async function migrateS1toSOB(){
   }
 }
 
-migrateS1toSOB().then(()=>{
-  buildTabs();
-  createPanels();
-  listenFirebase();
-  loadRosters();
-  showTab('stats');
-});
+function startApp(){
+  migrateS1toSOB().then(()=>{
+    buildTabs();
+    createPanels();
+    listenFirebase();
+    loadRosters();
+    showTab('stats');
+  });
+}
+
+// Sign in anonymously then start
+firebase.auth().signInAnonymously()
+  .then(()=>startApp())
+  .catch(e=>{console.error('Auth error:',e);startApp();});
 
 // ── TABS ─────────────────────────────────────
 function buildTabs(){
