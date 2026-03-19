@@ -137,6 +137,7 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
   <div class="tab-bar" id="tabbar"></div>
 
 <!-- MOVE POPUP -->
+
 <div class="ov" id="moveo">
   <div class="pbox" id="movebox">
     <div class="ptitle">
@@ -152,8 +153,11 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
 <script>
 
 const FB={
@@ -418,7 +422,36 @@ function renderIntoPanel(tabId){
     const tbody=document.createElement('tbody');
     const r1=document.createElement('tr');r1.className='hr1';
     const thLabel=document.createElement('th');thLabel.textContent=matchLabel;thLabel.colSpan=5;r1.appendChild(thLabel);
-    BKS.forEach(()=>{const th=document.createElement('th');r1.appendChild(th);});
+    // Legend items — one per bunker column
+    const legendItems=[
+      {text:'Primary',   bg:'#c8e6c9',color:'#1b5e20'},
+      {text:'Secondary', bg:'#ffe0b2',color:'#e65100'},
+      {text:'Tertiary',  bg:'#bbdefb',color:'#1565c0'},
+      {text:'Death',     bg:'#ef9a9a',color:'#c62828'},
+      {text:'S = Snake', bg:'',color:'#333'},
+      {text:'M = Middle',bg:'',color:'#333'},
+      {text:'\u2206 = Dorito',bg:'',color:'#333'},
+      {text:'X = Dive',  bg:'',color:'#333'},
+      {text:'^ = Shallow',bg:'',color:'#333'},
+      {text:'v = Deep',  bg:'',color:'#333'},
+      {text:'Mj = Major',bg:'',color:'#333'},
+      {text:'Mi = Minor',bg:'',color:'#333'},
+      {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
+    ];
+    legendItems.forEach(item=>{
+      const th=document.createElement('th');
+      th.textContent=item.text;
+      if(item.bg) th.style.background=item.bg;
+      if(item.color) th.style.color=item.color;
+      th.style.fontSize='9px';
+      th.style.fontWeight='bold';
+      th.style.whiteSpace='nowrap';
+      r1.appendChild(th);
+    });
     const thNotes1=document.createElement('th');thNotes1.textContent='';r1.appendChild(thNotes1);
     thead.appendChild(r1);
     const r2=document.createElement('tr');r2.className='hr2';
@@ -448,16 +481,8 @@ function renderIntoPanel(tabId){
     return tbl;
   }
 
-  // Flex wrapper: tables on left, legend on right
-  const flexWrap=document.createElement('div');
-  flexWrap.style.cssText='display:flex;align-items:flex-start';
-  const tableWrap=document.createElement('div');
-  tableWrap.style.cssText='flex:1;min-width:0';
-  tableWrap.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 1'));
-  tableWrap.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 2'));
-  flexWrap.appendChild(tableWrap);
-  flexWrap.appendChild(buildLegend());
-  panel.appendChild(flexWrap);
+  panel.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 1'));
+  panel.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 2'));
 }
 
 function buildLegend(){
@@ -1532,5 +1557,6 @@ function makeStatsTbl(bkData,killsOnly,totalPts){
 }
 
 </script>
+
 </body>
 </html>
