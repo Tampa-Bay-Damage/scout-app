@@ -116,6 +116,14 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 .bcan{padding:14px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px;width:100%}
 .bapp{padding:14px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px;width:100%}
 .divider{border:none;border-top:1px solid #e0e0e0;margin:8px 0}
+.legend{position:sticky;top:44px;align-self:flex-start;background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:8px 10px;font-size:10px;min-width:110px;margin-left:8px;flex-shrink:0}
+.legend-title{font-size:10px;font-weight:bold;color:#333;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.legend-section{margin-bottom:8px}
+.legend-section-title{font-size:9px;font-weight:bold;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;border-bottom:1px solid #f0f0f0;padding-bottom:2px}
+.legend-row{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.legend-swatch{width:14px;height:14px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
+.legend-sym{width:20px;font-weight:bold;font-size:11px;text-align:center;flex-shrink:0}
+.legend-label{color:#333;font-size:10px}
 </style>
 </head>
 <body>
@@ -425,8 +433,68 @@ function renderIntoPanel(tabId){
     return tbl;
   }
 
-  panel.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 1'));
-  panel.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 2'));
+  // Flex wrapper: tables on left, legend on right
+  const flexWrap=document.createElement('div');
+  flexWrap.style.cssText='display:flex;align-items:flex-start';
+  const tableWrap=document.createElement('div');
+  tableWrap.style.cssText='flex:1;min-width:0';
+  tableWrap.appendChild(makeMatchTable('m1', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 1'));
+  tableWrap.appendChild(makeMatchTable('m2', tabId.replace(/-/g,' ').toUpperCase()+' \u2014 MATCH 2'));
+  flexWrap.appendChild(tableWrap);
+  flexWrap.appendChild(buildLegend());
+  panel.appendChild(flexWrap);
+}
+
+function buildLegend(){
+  const leg=document.createElement('div');leg.className='legend';
+  const title=document.createElement('div');title.className='legend-title';title.textContent='Legend';
+  leg.appendChild(title);
+
+  function section(label){
+    const sec=document.createElement('div');sec.className='legend-section';
+    const t=document.createElement('div');t.className='legend-section-title';t.textContent=label;
+    sec.appendChild(t);return sec;
+  }
+  function swatchRow(color,label){
+    const row=document.createElement('div');row.className='legend-row';
+    const sw=document.createElement('div');sw.className='legend-swatch';sw.style.background=color;
+    const lbl=document.createElement('span');lbl.className='legend-label';lbl.textContent=label;
+    row.appendChild(sw);row.appendChild(lbl);return row;
+  }
+  function symRow(sym,label,sup){
+    const row=document.createElement('div');row.className='legend-row';
+    const s=document.createElement('div');s.className='legend-sym';
+    s.textContent=sym;
+    if(sup){const sp=document.createElement('sup');sp.textContent=sup;sp.style.fontSize='7px';s.appendChild(sp);}
+    const lbl=document.createElement('span');lbl.className='legend-label';lbl.textContent=label;
+    row.appendChild(s);row.appendChild(lbl);return row;
+  }
+
+  // Move order
+  const moveOrder=section('Move Order');
+  moveOrder.appendChild(swatchRow('#c8e6c9','Primary'));
+  moveOrder.appendChild(swatchRow('#ffe0b2','Secondary'));
+  moveOrder.appendChild(swatchRow('#bbdefb','Tertiary'));
+  moveOrder.appendChild(swatchRow('#ef9a9a','Death'));
+  leg.appendChild(moveOrder);
+
+  // Direction
+  const dir=section('Direction');
+  dir.appendChild(symRow('S','Snake'));
+  dir.appendChild(symRow('M','Middle'));
+  dir.appendChild(symRow('\u2206','Dorito'));
+  dir.appendChild(symRow('X','Dive'));
+  leg.appendChild(dir);
+
+  // Options
+  const opts=section('Options');
+  opts.appendChild(symRow('^','Shallow'));
+  opts.appendChild(symRow('v','Deep'));
+  opts.appendChild(symRow('S','Major Pen','Mj'));
+  opts.appendChild(symRow('S','Minor Pen','Mi'));
+  leg.appendChild(opts);
+
+  return leg;
 }
 
 function renderMatch(tbody,tabId,mk,md){
@@ -558,6 +626,26 @@ function updateScoreCell(tabId,mk,tk){
   });
 }
 
+// Helper — append sym text + optional pen superscript + optional seqNum superscript to a container
+function appendMoveText(container, mv){
+  const symSpan=document.createElement('span');
+  symSpan.style.cssText='color:#000;font-weight:bold';
+  symSpan.textContent=mv.sym||'';
+  container.appendChild(symSpan);
+  if(mv.pen&&mv.pen!=='none'){
+    const penSup=document.createElement('sup');
+    penSup.textContent=mv.pen;
+    penSup.style.cssText='color:#000;font-size:8px';
+    container.appendChild(penSup);
+  }
+  if(mv.seqNum){
+    const seqSup=document.createElement('sup');
+    seqSup.textContent=mv.seqNum;
+    seqSup.style.cssText='color:#000;font-size:8px';
+    container.appendChild(seqSup);
+  }
+}
+
 function renderBkCell(td,moves){
   td.innerHTML='';
   td.className=td.className.replace(/\s*mv-\w+/g,'');
@@ -571,15 +659,7 @@ function renderBkCell(td,moves){
   if(realMoves.length===1&&realMoves[0].isDead){
     td.style.background='#ef9a9a';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.padding='0 2px';
     const mv=realMoves[0];
-    if(mv.sym){
-      const span=document.createElement('span');
-      let txt=mv.sym;
-      if(mv.pen&&mv.pen!=='none') txt+='\u00b0'+mv.pen;
-      span.style.cssText='color:#000;font-weight:bold';
-      span.textContent=txt;
-      td.appendChild(span);
-      if(mv.seqNum){const sup=document.createElement('sup');sup.textContent=mv.seqNum;sup.style.color='#000';td.appendChild(sup);}
-    }
+    if(mv.sym) appendMoveText(td,mv);
     return;
   }
   if(realMoves.length===1){
@@ -587,15 +667,7 @@ function renderBkCell(td,moves){
     td.style.textAlign='center';
     td.style.verticalAlign='middle';
     td.style.padding='0 2px';
-    const span=document.createElement('span');
-    let txt=realMoves[0].sym;
-    if(realMoves[0].pen&&realMoves[0].pen!=='none') txt+='\u00b0'+realMoves[0].pen;
-    span.style.cssText='color:#000;font-weight:bold';
-    span.textContent=txt;
-    td.appendChild(span);
-    if(realMoves[0].seqNum){
-      const sup=document.createElement('sup');sup.textContent=realMoves[0].seqNum;sup.style.color='#000';td.appendChild(sup);
-    }
+    appendMoveText(td,realMoves[0]);
   } else {
     td.style.display='flex';
     td.style.height='100%';
@@ -603,16 +675,8 @@ function renderBkCell(td,moves){
     realMoves.forEach(mv=>{
       const half=document.createElement('div');
       const bg=mv.isDead?'#ef9a9a':(orderColor[mv.order]||'#eee');
-      half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+bg+';padding:0 2px';
-      let txt=mv.sym||'';
-      if(mv.pen&&mv.pen!=='none') txt+='\u00b0'+mv.pen;
-      half.style.color='#000';
-      half.style.fontWeight='bold';
-      half.style.fontSize='11px';
-      half.textContent=txt;
-      if(mv.seqNum){
-        const sup=document.createElement('sup');sup.textContent=mv.seqNum;sup.style.color='#000';half.appendChild(sup);
-      }
+      half.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;background:'+bg+';padding:0 2px;font-size:11px';
+      appendMoveText(half,mv);
       td.appendChild(half);
     });
   }
