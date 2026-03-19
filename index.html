@@ -128,7 +128,7 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 </head>
 <body>
   <div class="gs-toolbar">
-    <div class="gs-title">NXL Scout 2026</div>
+    <div class="gs-title" id="apptitle">NXL Scout 2026</div>
     <div class="sess-lbl" id="sesslbl">Loading...</div>
     <div class="gs-sync"><span class="sdot"></span><span id="sst">Connecting...</span></div>
   </div>
@@ -185,6 +185,8 @@ DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s
 function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event1';}
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
+document.getElementById('apptitle').textContent=SESSION;
+document.title=SESSION;
 
 let db=null,activeTab='stats',data={};
 const panelBuilt={};
