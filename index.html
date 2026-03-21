@@ -1400,10 +1400,11 @@ function renderStats(panel){
 
   // Two team dropdowns side by side
   const teamStatsRow=document.createElement('div');
-  teamStatsRow.style.cssText='display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap';
+  teamStatsRow.style.cssText='display:flex;gap:20px;align-items:flex-start;overflow-x:auto';
 
   function makeTeamStatPanel(savedTeamKey){
     const wrap=document.createElement('div');
+    wrap.style.cssText='flex-shrink:0';
     // Header row with dropdown
     const hdr=document.createElement('div');
     hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
