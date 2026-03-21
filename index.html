@@ -620,7 +620,21 @@ function addBunkerHdr(tbody){
 function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   const tr=document.createElement('tr');tr.className='teamhdr';
   const td=document.createElement('td');td.colSpan=6+BKS.length;
-  td.textContent='';
+  if(nk==='t2name'){
+    td.style.padding='0';
+    const sel=document.createElement('select');
+    sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px;padding:1px 6px';
+    const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
+    TEAMS.forEach(t=>{
+      const opt=document.createElement('option');opt.value=t;opt.textContent=t;
+      if(t===(val||'')) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTeamName(tabId,mk,nk);panelBuilt[tabId]=false;showTab(tabId);};
+    td.appendChild(sel);
+  } else {
+    td.textContent='';
+  }
   tr.appendChild(td);tbody.appendChild(tr);
 }
 
