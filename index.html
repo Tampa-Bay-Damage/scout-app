@@ -478,38 +478,19 @@ function renderIntoPanel(tabId){
     const thNotes1=document.createElement('th');thNotes1.textContent='';r1.appendChild(thNotes1);
     thead.appendChild(r1);
 
-    // Row 2 — team dropdowns in first two data cells, shapes in bunker cells
+    // Row 2 — Team 1 dropdown spanning full width
     const r2=document.createElement('tr');r2.className='hr2';
-    // First cell: point number column — blank
-    const r2pt=document.createElement('th');r2.appendChild(r2pt);
-    // Build team 1 dropdown
-    function makeTeamSel(nk,ph){
-      const th=document.createElement('th');th.colSpan=2;th.style.padding='0';
-      const sel=document.createElement('select');
-      sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;color:#000;outline:none;cursor:pointer;width:100%';
-      const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
-      TEAMS.forEach(t=>{
-        const opt=document.createElement('option');opt.value=t;opt.textContent=t;
-        if(t===(td[mk][nk]||'')) opt.selected=true;
-        sel.appendChild(opt);
-      });
-      sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTeamName(tabId,mk,nk);
-        // re-render to update score bar and opp team rows
-        panelBuilt[tabId]=false;showTab(tabId);
-      };
-      th.appendChild(sel);return th;
-    }
-    r2.appendChild(makeTeamSel('t1name','Top Team'));
-    // R/B and Score columns — blank
-    const r2rb=document.createElement('th');r2.appendChild(r2rb);
-    const r2sc=document.createElement('th');r2.appendChild(r2sc);
-    // Team 2 dropdown
-    r2.appendChild(makeTeamSel('t2name','Bottom Team'));
-    // Bunker shape cells
-    SHAPES.forEach(s=>{
-      const th=document.createElement('th');th.textContent=s;r2.appendChild(th);
+    const r2th=document.createElement('th');r2th.colSpan=6+BKS.length;r2th.style.padding='0';
+    const t1sel=document.createElement('select');
+    t1sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;padding:1px 6px;width:100%';
+    const t1blank=document.createElement('option');t1blank.value='';t1blank.textContent='-- Top Team --';t1sel.appendChild(t1blank);
+    TEAMS.forEach(t=>{
+      const opt=document.createElement('option');opt.value=t;opt.textContent=t;
+      if(t===(td[mk]['t1name']||'')) opt.selected=true;
+      t1sel.appendChild(opt);
     });
-    const r2notes=document.createElement('th');r2.appendChild(r2notes);
+    t1sel.onchange=e=>{data[tabId][mk]['t1name']=e.target.value;saveTeamName(tabId,mk,'t1name');panelBuilt[tabId]=false;showTab(tabId);};
+    r2th.appendChild(t1sel);r2.appendChild(r2th);
     thead.appendChild(r2);
     const r3=document.createElement('tr');r3.className='hr3';
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
@@ -621,9 +602,9 @@ function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   const tr=document.createElement('tr');tr.className='teamhdr';
   const td=document.createElement('td');td.colSpan=6+BKS.length;
   if(nk==='t2name'){
-    td.style.padding='0';
+    td.style.cssText='background:#D5D5D5;padding:0;border-top:2px solid #999';
     const sel=document.createElement('select');
-    sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px;padding:1px 6px';
+    sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;padding:1px 6px;width:100%';
     const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
     TEAMS.forEach(t=>{
       const opt=document.createElement('option');opt.value=t;opt.textContent=t;
