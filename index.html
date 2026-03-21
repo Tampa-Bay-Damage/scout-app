@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: SOB column with sub-route stats, S1→SOB Firebase migration, Tequila removed from match sheet
+COMMIT: fix: granular Firebase writes to prevent real-time sync data loss
 
-SUMMARY: Renamed S1 column to SOB (Snake off Break) across the entire app. Tequila
-removed from BKS — it now exists only as a sub-route of SOB. One-time Firebase
-migration runs on page load: reads all S1 data, writes to SOB key, deletes S1,
-sets a migration flag so it never runs again. SOB popup shows S1/S2/S3/Tequila
-buttons. Event, team, and player stats all show SOB as a combined bunker row with
-indented S1/S2/S3/Tequila sub-rows — sub-row percentages sum to 100% of SOB
-traffic. SOB bunker % compares total SOB runs against all other bunkers on the
-field. Added tap-to-edit for existing moves. Updated shooting direction buttons.
-Player stats track Middle %. Player labels show as "## - Name". All 20 team
-rosters updated with jersey numbers from Pro_Jersey_numbers.xlsx.
+SUMMARY: Replaced all saveTab() calls with targeted granular writes so two
+scouts can enter data simultaneously without overwriting each other. Each action
+now only writes the specific path that changed: saveBunker() for cell moves,
+saveWL() for win/loss, saveRB() for red/blue, saveTime() for point duration,
+saveNotes() for notes, saveTeamName() for team selection. saveTab() is kept only
+for the initial blank tab creation. This eliminates the race condition where
+whichever scout saved last would overwrite the other's changes.
 -->
 
 <html lang="en">
@@ -387,6 +384,32 @@ function blankPts(){
 
 function saveTab(id){if(db) db.ref(`sessions/${SESSION}/${id}`).set(data[id]);}
 
+// Granular write — only saves the specific path that changed
+function savePath(path, value){
+  if(db) db.ref(`sessions/${SESSION}/${path}`).set(value);
+}
+function savePoint(tabId,mk,tk,idx){
+  savePath(`${tabId}/${mk}/${tk}/${idx}`, data[tabId][mk][tk][idx]);
+}
+function saveBunker(tabId,mk,tk,idx,bk){
+  savePath(`${tabId}/${mk}/${tk}/${idx}/${bk}`, data[tabId][mk][tk][idx][bk]);
+}
+function saveWL(tabId,mk,tk,idx){
+  savePath(`${tabId}/${mk}/${tk}/${idx}/wl`, data[tabId][mk][tk][idx].wl);
+}
+function saveRB(tabId,mk,tk,idx){
+  savePath(`${tabId}/${mk}/${tk}/${idx}/rb`, data[tabId][mk][tk][idx].rb);
+}
+function saveTime(tabId,mk,tk,idx){
+  savePath(`${tabId}/${mk}/${tk}/${idx}/time`, data[tabId][mk][tk][idx].time);
+}
+function saveNotes(tabId,mk,tk,idx){
+  savePath(`${tabId}/${mk}/${tk}/${idx}/notes`, data[tabId][mk][tk][idx].notes);
+}
+function saveTeamName(tabId,mk,nk){
+  savePath(`${tabId}/${mk}/${nk}`, data[tabId][mk][nk]);
+}
+
 // ── SCORE BAR ─────────────────────────────────
 function updateScoreBar(){
   const bar=document.getElementById('scorebar');
@@ -555,7 +578,7 @@ function addTeamHdr(tbody,tabId,mk,nk,val,ph){
     if(t===(val||'')) opt.selected=true;
     sel.appendChild(opt);
   });
-  sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTab(tabId);};
+  sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTeamName(tabId,mk,nk);};
   td.appendChild(sel);tr.appendChild(td);tbody.appendChild(tr);
 }
 
@@ -583,7 +606,8 @@ function makeRow(tabId,mk,tk,idx,pt){
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     const oppWL=v==='W'?'L':v==='L'?'W':v;
     data[tabId][mk][oppTk][idx].wl=oppWL;
-    saveTab(tabId);
+    saveWL(tabId,mk,tk,idx);
+    saveWL(tabId,mk,oppTk,idx);
     updateScoreCell(tabId,mk,tk);
     updateScoreCell(tabId,mk,oppTk);
     updateScoreBar();
@@ -599,7 +623,8 @@ function makeRow(tabId,mk,tk,idx,pt){
     data[tabId][mk][tk][idx].rb=newRB;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     data[tabId][mk][oppTk][idx].rb=newRB==='Red'?'Blue':newRB==='Blue'?'Red':'';
-    saveTab(tabId);
+    saveRB(tabId,mk,tk,idx);
+    saveRB(tabId,mk,oppTk,idx);
     panelBuilt[tabId]=false;
     showTab(tabId);
   };
@@ -626,7 +651,8 @@ function makeRow(tabId,mk,tk,idx,pt){
     data[tabId][mk][tk][idx].time=t;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     data[tabId][mk][oppTk][idx].time=t;
-    saveTab(tabId);
+    saveTime(tabId,mk,tk,idx);
+    saveTime(tabId,mk,oppTk,idx);
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
   const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
@@ -645,7 +671,7 @@ function makeRow(tabId,mk,tk,idx,pt){
   const tdNo=document.createElement('td');tdNo.className='cno';
   const noteInp=document.createElement('input');
   noteInp.type='text';noteInp.value=pt.notes||'';noteInp.placeholder='notes...';
-  noteInp.onchange=e=>{data[tabId][mk][tk][idx].notes=e.target.value;saveTab(tabId);};
+  noteInp.onchange=e=>{data[tabId][mk][tk][idx].notes=e.target.value;saveNotes(tabId,mk,tk,idx);};
   tdNo.appendChild(noteInp);row.appendChild(tdNo);
   const tdKey=document.createElement('td');tdKey.style.minWidth='20px';row.appendChild(tdKey);
   return row;
@@ -792,7 +818,7 @@ function buildMoveContent(){
             _editingMoveIdx--;
           }
           data[tabId][mk][tk][idx][bk].splice(i,1);
-          saveTab(tabId);
+          saveBunker(tabId,mk,tk,idx,bk);
           const panel=document.getElementById('panel-'+tabId);
           if(panel){
             const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
@@ -922,7 +948,8 @@ function buildMoveContent(){
     const{tabId,mk,tk}=popCell;
     const teamName=data[tabId][mk][tk==='t1pts'?'t1name':'t2name'];
     const teamKey=teamName?(teamName.replace(/\s+/g,'_').toLowerCase()):null;
-    const players=(teamKey&&window._rosterData&&window._rosterData[teamKey])||[];
+    const rosterSource=window._rosterData||PRELOADED_ROSTERS;
+    const players=(teamKey&&rosterSource&&rosterSource[teamKey])||[];
     const activePlayers=players.filter(p=>p.name||p.num);
     if(activePlayers.length>0){
       const rosterLbl=document.createElement('div');
@@ -962,7 +989,7 @@ function buildMoveContent(){
     if(!popCell) return;
     const{tabId,mk,tk,idx,bk}=popCell;
     data[tabId][mk][tk][idx][bk]=[];
-    saveTab(tabId);
+    saveBunker(tabId,mk,tk,idx,bk);
     const panel=document.getElementById('panel-'+tabId);
     if(panel){
       const key=`${tabId}|${mk}|${tk}|${idx}|${bk}`;
@@ -1004,17 +1031,14 @@ window.applyMove=()=>{
   };
 
   if(_editingMoveIdx!==null){
-    // UPDATE mode — overwrite the existing move at that index
     data[tabId][mk][tk][idx][bk][_editingMoveIdx]=newMove;
     _editingMoveIdx=null;
     document.getElementById('btn-app').textContent='ADD';
     document.getElementById('btn-app').style.background='#1565c0';
   } else {
-    // ADD mode — push new move
     data[tabId][mk][tk][idx][bk].push(newMove);
   }
-
-  saveTab(tabId);
+  saveBunker(tabId,mk,tk,idx,bk);
   window._selSym='';
   window._selMod='';
   window._selDeath=false;
