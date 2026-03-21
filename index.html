@@ -642,8 +642,11 @@ function makeRow(tabId,mk,tk,idx,pt){
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     const oppWL=v==='W'?'L':v==='L'?'W':v;
     data[tabId][mk][oppTk][idx].wl=oppWL;
-    saveWL(tabId,mk,tk,idx);
-    saveWL(tabId,mk,oppTk,idx);
+    // Write both wl values atomically in one Firebase update
+    const updates={};
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/wl`]=v;
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/wl`]=oppWL;
+    if(db) db.ref().update(updates);
     updateScoreCell(tabId,mk,tk);
     updateScoreCell(tabId,mk,oppTk);
     updateScoreBar();
@@ -658,9 +661,12 @@ function makeRow(tabId,mk,tk,idx,pt){
     const newRB=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
     data[tabId][mk][tk][idx].rb=newRB;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
-    data[tabId][mk][oppTk][idx].rb=newRB==='Red'?'Blue':newRB==='Blue'?'Red':'';
-    saveRB(tabId,mk,tk,idx);
-    saveRB(tabId,mk,oppTk,idx);
+    const oppRB=newRB==='Red'?'Blue':newRB==='Blue'?'Red':'';
+    data[tabId][mk][oppTk][idx].rb=oppRB;
+    const updates={};
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/rb`]=newRB;
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/rb`]=oppRB;
+    if(db) db.ref().update(updates);
     panelBuilt[tabId]=false;
     showTab(tabId);
   };
@@ -687,8 +693,10 @@ function makeRow(tabId,mk,tk,idx,pt){
     data[tabId][mk][tk][idx].time=t;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     data[tabId][mk][oppTk][idx].time=t;
-    saveTime(tabId,mk,tk,idx);
-    saveTime(tabId,mk,oppTk,idx);
+    const updates={};
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/time`]=t;
+    updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/time`]=t;
+    if(db) db.ref().update(updates);
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
   const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
