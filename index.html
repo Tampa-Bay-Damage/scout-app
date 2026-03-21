@@ -477,10 +477,39 @@ function renderIntoPanel(tabId){
     });
     const thNotes1=document.createElement('th');thNotes1.textContent='';r1.appendChild(thNotes1);
     thead.appendChild(r1);
+
+    // Row 2 — team dropdowns in first two data cells, shapes in bunker cells
     const r2=document.createElement('tr');r2.className='hr2';
-    ['','Shapes','','','',...SHAPES,''].forEach(t=>{
-      const th=document.createElement('th');th.textContent=t;r2.appendChild(th);
+    // First cell: point number column — blank
+    const r2pt=document.createElement('th');r2.appendChild(r2pt);
+    // Build team 1 dropdown
+    function makeTeamSel(nk,ph){
+      const th=document.createElement('th');th.colSpan=2;th.style.padding='0';
+      const sel=document.createElement('select');
+      sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;color:#000;outline:none;cursor:pointer;width:100%';
+      const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
+      TEAMS.forEach(t=>{
+        const opt=document.createElement('option');opt.value=t;opt.textContent=t;
+        if(t===(td[mk][nk]||'')) opt.selected=true;
+        sel.appendChild(opt);
+      });
+      sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTeamName(tabId,mk,nk);
+        // re-render to update score bar and opp team rows
+        panelBuilt[tabId]=false;showTab(tabId);
+      };
+      th.appendChild(sel);return th;
+    }
+    r2.appendChild(makeTeamSel('t1name','Top Team'));
+    // R/B and Score columns — blank
+    const r2rb=document.createElement('th');r2.appendChild(r2rb);
+    const r2sc=document.createElement('th');r2.appendChild(r2sc);
+    // Team 2 dropdown
+    r2.appendChild(makeTeamSel('t2name','Bottom Team'));
+    // Bunker shape cells
+    SHAPES.forEach(s=>{
+      const th=document.createElement('th');th.textContent=s;r2.appendChild(th);
     });
+    const r2notes=document.createElement('th');r2.appendChild(r2notes);
     thead.appendChild(r2);
     const r3=document.createElement('tr');r3.className='hr3';
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
@@ -570,16 +599,8 @@ function renderMatch(tbody,tabId,mk,md){
 function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   const tr=document.createElement('tr');tr.className='teamhdr';
   const td=document.createElement('td');td.colSpan=6+BKS.length;
-  const sel=document.createElement('select');
-  sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px';
-  const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
-  TEAMS.forEach(t=>{
-    const opt=document.createElement('option');opt.value=t;opt.textContent=t;
-    if(t===(val||'')) opt.selected=true;
-    sel.appendChild(opt);
-  });
-  sel.onchange=e=>{data[tabId][mk][nk]=e.target.value;saveTeamName(tabId,mk,nk);};
-  td.appendChild(sel);tr.appendChild(td);tbody.appendChild(tr);
+  td.textContent='';
+  tr.appendChild(td);tbody.appendChild(tr);
 }
 
 function makeRow(tabId,mk,tk,idx,pt){
