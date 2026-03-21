@@ -1220,7 +1220,9 @@ function renderStats(panel){
     teamStats[t]._sobSubs={S1:0,S2:0,S3:0,Tequila:0};
   });
   const teamPts={};
-  TEAMS.forEach(t=>{teamPts[t]=0;});
+  const teamWins={};
+  const teamLosses={};
+  TEAMS.forEach(t=>{teamPts[t]=0;teamWins[t]=0;teamLosses[t]=0;});
   let totalPtsAll=0;
 
   TABS.forEach(t=>{
@@ -1237,7 +1239,11 @@ function renderStats(panel){
           const hasData=pt.wl||BKS.some(b=>(pt[b]||[]).length>0);
           if(hasData){
             totalPtsAll++;
-            if(name&&teamPts[name]!==undefined) teamPts[name]++;
+            if(name&&teamPts[name]!==undefined){
+              teamPts[name]++;
+              if(pt.wl==='W') teamWins[name]++;
+              if(pt.wl==='L') teamLosses[name]++;
+            }
           }
           BKS.forEach(b=>{
             (pt[b]||[]).forEach(mv=>{
@@ -1282,6 +1288,37 @@ function renderStats(panel){
   eventH2.textContent='Event Stats \u2014 All Matches';
   eventWrap.appendChild(eventH2);
   eventWrap.appendChild(makeStatsTbl(bkAll,true,totalPtsAll));
+
+  // Team Records table
+  const recH2=document.createElement('div');
+  recH2.style.cssText='font-size:12px;font-weight:bold;color:#6a1b9a;margin:12px 0 6px';
+  recH2.textContent='Team Records';
+  eventWrap.appendChild(recH2);
+  const recTbl=document.createElement('table');recTbl.className='stats-tbl';
+  const recHdr=document.createElement('tr');
+  ['Team','Pts Played','W','L','Win %'].forEach(h=>{
+    const th=document.createElement('th');th.textContent=h;recHdr.appendChild(th);
+  });
+  recTbl.appendChild(recHdr);
+  // Only show teams with data, sorted by Win %
+  const teamsWithData=TEAMS.filter(t=>teamPts[t]>0);
+  teamsWithData.sort((a,b)=>{
+    const pctA=teamPts[a]>0?teamWins[a]/teamPts[a]:0;
+    const pctB=teamPts[b]>0?teamWins[b]/teamPts[b]:0;
+    return pctB-pctA;
+  });
+  teamsWithData.forEach(t=>{
+    const pts=teamPts[t];
+    const w=teamWins[t];
+    const l=teamLosses[t];
+    const pct=pts>0?(w/pts*100).toFixed(0)+'%':'\u2014';
+    const tr=document.createElement('tr');
+    [t,pts,w,l,pct].forEach(v=>{
+      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+    });
+    recTbl.appendChild(tr);
+  });
+  eventWrap.appendChild(recTbl);
   statsLayout.appendChild(eventWrap);
 
   const teamMatches={};
