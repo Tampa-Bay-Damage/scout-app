@@ -1381,8 +1381,11 @@ function renderStats(panel){
     matchSel.innerHTML='';
     const allOpt=document.createElement('option');allOpt.value='-1';allOpt.textContent='All Matches';
     matchSel.appendChild(allOpt);
-    (teamMatches[team]||[]).forEach((_,i)=>{
-      const opt=document.createElement('option');opt.value=i;opt.textContent='Match '+(i+1);
+    (teamMatches[team]||[]).forEach((m,i)=>{
+      const md=data[m.tabId][m.mk];
+      const oppTk=m.tk==='t1pts'?'t2pts':'t1pts';
+      const oppName=(oppTk==='t1pts'?md.t1name:md.t2name)||'Unknown';
+      const opt=document.createElement('option');opt.value=i;opt.textContent='vs '+oppName;
       matchSel.appendChild(opt);
     });
   }
