@@ -197,6 +197,8 @@ let _statsTeamSel=TEAMS[0];
 let _statsMatchSel='-1';
 let _statsPlayerTeamSel=TEAMS[0];
 let _statsPlayerSel=null;
+let _statsTeamCompA=TEAMS[0];
+let _statsTeamCompB=TEAMS[1];
 
 try{firebase.initializeApp(FB);db=firebase.database();}
 catch(e){console.error('Firebase init error:',e);alert('Firebase: '+e.message);}
@@ -1302,7 +1304,7 @@ function renderStats(panel){
   teamHdrRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap';
   const teamH2=document.createElement('span');
   teamH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a';
-  teamH2.textContent='Team Stats:';
+  teamH2.textContent='Match Stats:';
   const teamSel=document.createElement('select');
   teamSel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
   TEAMS.forEach(t=>{
@@ -1381,16 +1383,60 @@ function renderStats(panel){
 
   teamSel.onchange=()=>{_statsTeamSel=teamSel.value;_statsMatchSel='-1';renderTeamStats(teamSel.value);};
   matchSel.onchange=()=>{_statsMatchSel=matchSel.value;renderTeamStatsWithMatch(teamSel.value,parseInt(matchSel.value));};
-  // Restore previously selected team
   if(TEAMS.includes(_statsTeamSel)) teamSel.value=_statsTeamSel;
   renderTeamStats(teamSel.value);
-  // Restore match selection after populateMatchSel runs
   if(_statsMatchSel!=='-1'){
     const opt=[...matchSel.options].find(o=>o.value===_statsMatchSel);
     if(opt){matchSel.value=_statsMatchSel;renderTeamStatsWithMatch(teamSel.value,parseInt(_statsMatchSel));}
   }
 
-  // ── PLAYER STATS SECTION ──
+  // ── TEAM STATS SECTION (side by side) ──
+  const teamStatsSection=document.createElement('div');
+  teamStatsSection.style.cssText='margin-top:24px;border-top:2px solid #e0e0e0;padding-top:16px';
+  const teamStatsH2=document.createElement('div');
+  teamStatsH2.style.cssText='font-size:14px;font-weight:bold;color:#6a1b9a;margin-bottom:10px';
+  teamStatsH2.textContent='Team Stats';
+  teamStatsSection.appendChild(teamStatsH2);
+
+  // Two team dropdowns side by side
+  const teamStatsRow=document.createElement('div');
+  teamStatsRow.style.cssText='display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap';
+
+  function makeTeamStatPanel(savedTeamKey){
+    const wrap=document.createElement('div');
+    // Header row with dropdown
+    const hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    const sel=document.createElement('select');
+    sel.style.cssText='border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer';
+    TEAMS.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;sel.appendChild(opt);});
+    // Restore saved selection
+    if(savedTeamKey&&TEAMS.includes(savedTeamKey)) sel.value=savedTeamKey;
+    hdr.appendChild(sel);
+    wrap.appendChild(hdr);
+    const tblWrap=document.createElement('div');
+    wrap.appendChild(tblWrap);
+
+    function render(){
+      const {bk,pts}=calcTeamStats(sel.value,-1);
+      tblWrap.innerHTML='';
+      tblWrap.appendChild(makeStatsTbl(bk,false,pts));
+    }
+    sel.onchange=()=>{
+      if(wrap===leftPanel) _statsTeamCompA=sel.value;
+      else _statsTeamCompB=sel.value;
+      render();
+    };
+    render();
+    return wrap;
+  }
+
+  const leftPanel=makeTeamStatPanel(_statsTeamCompA);
+  const rightPanel=makeTeamStatPanel(_statsTeamCompB);
+  teamStatsRow.appendChild(leftPanel);
+  teamStatsRow.appendChild(rightPanel);
+  teamStatsSection.appendChild(teamStatsRow);
+  div.appendChild(teamStatsSection);
   const playerSection=document.createElement('div');
   playerSection.style.cssText='margin-top:24px;border-top:2px solid #e0e0e0;padding-top:16px';
   const playerH2=document.createElement('div');
