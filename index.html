@@ -478,12 +478,12 @@ function renderIntoPanel(tabId){
     const thNotes1=document.createElement('th');thNotes1.textContent='';r1.appendChild(thNotes1);
     thead.appendChild(r1);
 
-    // Row 2 — Team 1 dropdown spanning full width
+    // Row 2 — Team 1 dropdown natural width, rest blank
     const r2=document.createElement('tr');r2.className='hr2';
     const r2th=document.createElement('th');r2th.colSpan=6+BKS.length;
-    r2th.style.cssText='background:#BDC0BF;padding:0;border-top:3px solid #888;';
+    r2th.style.cssText='background:#BDC0BF;padding:1px 6px;border-top:3px solid #888;text-align:left;';
     const t1sel=document.createElement('select');
-    t1sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;padding:1px 6px;width:100%';
+    t1sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px';
     const t1blank=document.createElement('option');t1blank.value='';t1blank.textContent='-- Top Team --';t1sel.appendChild(t1blank);
     TEAMS.forEach(t=>{
       const opt=document.createElement('option');opt.value=t;opt.textContent=t;
@@ -603,9 +603,9 @@ function addTeamHdr(tbody,tabId,mk,nk,val,ph){
   if(nk==='t1name') return; // Team 1 dropdown is in sticky header row 2
   const tr=document.createElement('tr');tr.className='teamhdr';
   const td=document.createElement('td');td.colSpan=6+BKS.length;
-  td.style.cssText='background:#BDC0BF;padding:0;border-top:3px solid #888;';
+  td.style.cssText='background:#BDC0BF;padding:1px 6px;border-top:3px solid #888;text-align:left;';
   const sel=document.createElement('select');
-  sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;padding:1px 6px;width:100%';
+  sel.style.cssText='border:none;background:transparent;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;color:#000;outline:none;cursor:pointer;max-width:300px';
   const blank=document.createElement('option');blank.value='';blank.textContent='-- '+ph+' --';sel.appendChild(blank);
   TEAMS.forEach(t=>{
     const opt=document.createElement('option');opt.value=t;opt.textContent=t;
