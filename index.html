@@ -688,6 +688,7 @@ function makeRow(tabId,mk,tk,idx,pt){
   const tdTm=document.createElement('td');tdTm.className='ctm';
   const timInp=document.createElement('input');
   timInp.type='text';timInp.value=pt.time||'';timInp.placeholder='0:00';
+  timInp.dataset.timekey=`${tabId}|${mk}|${tk}|${idx}|time`;
   let _timeTimer=null;
   timInp.onfocus=()=>{_notesFocused=true;};
   timInp.onblur=e=>{
@@ -696,6 +697,13 @@ function makeRow(tabId,mk,tk,idx,pt){
     data[tabId][mk][tk][idx].time=t;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     data[tabId][mk][oppTk][idx].time=t;
+    // Update opponent's visible input directly
+    const panel=document.getElementById('panel-'+tabId);
+    if(panel){
+      const oppKey=`${tabId}|${mk}|${oppTk}|${idx}|time`;
+      const oppInp=panel.querySelector(`input[data-timekey="${CSS.escape(oppKey)}"]`);
+      if(oppInp&&oppInp!==e.target) oppInp.value=t;
+    }
     const updates={};
     updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/time`]=t;
     updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/time`]=t;
@@ -706,6 +714,13 @@ function makeRow(tabId,mk,tk,idx,pt){
     data[tabId][mk][tk][idx].time=t;
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     data[tabId][mk][oppTk][idx].time=t;
+    // Update opponent's visible input directly
+    const panel=document.getElementById('panel-'+tabId);
+    if(panel){
+      const oppKey=`${tabId}|${mk}|${oppTk}|${idx}|time`;
+      const oppInp=panel.querySelector(`input[data-timekey="${CSS.escape(oppKey)}"]`);
+      if(oppInp&&oppInp!==e.target) oppInp.value=t;
+    }
     clearTimeout(_timeTimer);
     _timeTimer=setTimeout(()=>{
       const updates={};
