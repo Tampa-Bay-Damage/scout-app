@@ -1302,11 +1302,7 @@ function renderStats(panel){
   recTbl.appendChild(recHdr);
   // Only show teams with data, sorted by Win %
   const teamsWithData=TEAMS.filter(t=>teamPts[t]>0);
-  teamsWithData.sort((a,b)=>{
-    const pctA=teamPts[a]>0?teamWins[a]/teamPts[a]:0;
-    const pctB=teamPts[b]>0?teamWins[b]/teamPts[b]:0;
-    return pctB-pctA;
-  });
+  teamsWithData.sort((a,b)=>teamWins[b]-teamWins[a]);
   teamsWithData.forEach(t=>{
     const pts=teamPts[t];
     const w=teamWins[t];
