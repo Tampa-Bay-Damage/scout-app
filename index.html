@@ -593,7 +593,28 @@ function renderMatch(tbody,tabId,mk,md){
   addTeamHdr(tbody,tabId,mk,'t1name',md.t1name,'Top Team');
   md.t1pts.forEach((pt,i)=>tbody.appendChild(makeRow(tabId,mk,'t1pts',i,pt)));
   addTeamHdr(tbody,tabId,mk,'t2name',md.t2name,'Bottom Team');
+  addBunkerHdr(tbody);
   md.t2pts.forEach((pt,i)=>tbody.appendChild(makeRow(tabId,mk,'t2pts',i,pt)));
+}
+
+function addBunkerHdr(tbody){
+  const tr=document.createElement('tr');
+  const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
+  const BK_MED=['SC','Beast'];
+  const BK_LITE=['Sniper','Dagger'];
+  ['*','W/L','R/B','Score','Time',...BKS,'Notes'].forEach((t,i)=>{
+    const td=document.createElement('td');
+    td.textContent=t;
+    td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #d0d0d0;padding:0 3px;height:20px;white-space:nowrap';
+    if(i>=5&&i<5+BKS.length){
+      const b=BKS[i-5];
+      if(BK_DARK.includes(b)) td.style.background='#b0b0b0';
+      else if(BK_MED.includes(b)) td.style.background='#cecece';
+      else if(BK_LITE.includes(b)) td.style.background='#e8e8e8';
+    }
+    tr.appendChild(td);
+  });
+  tbody.appendChild(tr);
 }
 
 function addTeamHdr(tbody,tabId,mk,nk,val,ph){
