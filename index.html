@@ -1697,8 +1697,7 @@ function buildTeamSummary(teamName){
 }
 
 function buildPlayerSummary(teamName, playerLabel){
-  // reuse calcPlayerStats from renderStats
-  const s=calcPlayerStats(teamName, playerLabel);
+  const s=_calcPlayerStats(teamName, playerLabel);
   const pp=s.pointsPlayed;
   const lines=[`PLAYER: ${playerLabel} | Team: ${teamName} | Points played: ${pp}`];
   lines.push(`Deaths off break: ${s.pointsDied} (${pp>0?(s.pointsDied/pp*100).toFixed(0):0}%)`);
@@ -1947,7 +1946,7 @@ async function generatePdf(){
       const sysP=`You are a paintball analyst. Write a player scouting report in plain paragraphs (no markdown). ${audience==='player'?'Write directly to the player. Be encouraging but honest. Highlight their tendencies, risks, and how to improve.':'Write for the coaching staff. Analyze this player\'s role, tendencies, death patterns, shooting direction habits, and tactical value.'}`;
       const analysis=await callClaude(sysP, playerSum);
       drawHeader('Player Stats Report', playerLabel+' — '+team);
-      const s=calcPlayerStats(team, playerLabel);
+      const s=_calcPlayerStats(team, playerLabel);
       const pp=s.pointsPlayed;
 
       // Summary cards in PDF
@@ -2025,8 +2024,8 @@ async function sendChat(){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-// expose calcPlayerStats globally for PDF use
-function calcPlayerStats(team, playerLabel){
+// global version for PDF use (avoids conflict with renderStats inner function)
+function _calcPlayerStats(team, playerLabel){
   const stats={pointsPlayed:0,pointsDied:0,penalties:{Mi:0,Mj:0},bunkers:{},deaths:{},shootingDir:{}};
   BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
   TABS.forEach(t=>{
