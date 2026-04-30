@@ -194,8 +194,6 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
 
 const FB={
@@ -1672,9 +1670,18 @@ function _sumMatch(tabId,mk){
 async function generatePdf(){
   const btn=document.getElementById('pdfGenBtn');
   const status=document.getElementById('pdfStatus');
-  btn.disabled=true;status.textContent='Generating AI analysis...';
+  btn.disabled=true;status.textContent='Loading PDF library...';
+  // Load jsPDF on demand so it never blocks Firebase
+  if(!window.jspdf){
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=resolve;s.onerror=()=>reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
+  }
+  status.textContent='Generating AI analysis...';
   try{
-    if(!window.jspdf)throw new Error('jsPDF not loaded — check internet connection.');
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
     const W=210,M=14,CW=W-M*2;
