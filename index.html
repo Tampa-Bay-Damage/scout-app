@@ -134,7 +134,6 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
   <div class="tab-bar" id="tabbar"></div>
 
 <!-- MOVE POPUP -->
-
 <div class="ov" id="moveo">
   <div class="pbox" id="movebox">
     <div class="ptitle">
@@ -150,11 +149,8 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
 <script>
 
 const FB={
@@ -167,7 +163,7 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["SOB","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Whiskey","Baby","Beast","100","200","300"];
+const BKS=["Seattle","SOB","SC","Alpha","Bravo","Sniper","HS","H∆","Dagger","Xbox","Godzilla","Baby","100","200","Beast","Dallas"];
 const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
 const SOB_SUBS=['S1','S2','S3','Tequila'];
 const SYMS=[
@@ -183,7 +179,7 @@ const PTS=15;
 const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
 
-function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event1';}
+function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event2';}
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 document.getElementById('apptitle').textContent=SESSION;
@@ -461,7 +457,6 @@ function renderIntoPanel(tabId){
       {text:'v = Deep',  bg:'',color:'#333'},
       {text:'Mj = Major',bg:'',color:'#333'},
       {text:'Mi = Minor',bg:'',color:'#333'},
-      {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
@@ -1763,6 +1758,5 @@ function makeStatsTbl(bkData,killsOnly,totalPts){
 }
 
 </script>
-
 </body>
 </html>
