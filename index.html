@@ -109,45 +109,15 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 .bcan{padding:14px;border:1px solid #aaa;background:#fff;font-family:Arial,sans-serif;font-size:12px;cursor:pointer;border-radius:3px;width:100%}
 .bapp{padding:14px;border:none;background:#1a6e1a;color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;border-radius:3px;width:100%}
 .divider{border:none;border-top:1px solid #e0e0e0;margin:8px 0}
-
-/* PDF Modal */
-.pdf-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
-.pdf-modal-bg.open{display:flex}
-.pdf-modal{background:#fff;border-radius:8px;padding:20px;width:92%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)}
-.pdf-modal h2{font-size:15px;font-weight:bold;color:#6a1b9a;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
-.pdf-section{margin-bottom:14px}
-.pdf-section label{font-size:11px;font-weight:bold;color:#555;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
-.pdf-opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pdf-opt{padding:8px 10px;border:2px solid #ddd;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:left}
-.pdf-opt.sel{border-color:#6a1b9a;background:#f3e5f5;color:#6a1b9a}
-.pdf-opt.sel-blue{border-color:#1565c0;background:#e3f2fd;color:#1565c0}
-.pdf-sel{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Arial,sans-serif}
-.pdf-gen-btn{width:100%;padding:12px;background:#6a1b9a;color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif;margin-top:6px}
-.pdf-gen-btn:disabled{background:#aaa;cursor:not-allowed}
-.pdf-status{font-size:11px;color:#555;text-align:center;margin-top:8px;min-height:16px}
-
-/* AI Chat Panel */
-.chat-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:340px;background:#fff;border-left:1px solid #e0e0e0;z-index:250;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.15)}
-.chat-panel.open{display:flex}
-.chat-hdr{background:#1565c0;color:#fff;padding:10px 14px;font-size:13px;font-weight:bold;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-.chat-msg{padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;max-width:95%;white-space:pre-wrap}
-.chat-msg.user{background:#e3f2fd;color:#0d47a1;align-self:flex-end}
-.chat-msg.ai{background:#f3f4f6;color:#111;align-self:flex-start}
-.chat-msg.thinking{background:#fff8e1;color:#888;font-style:italic}
-.chat-input-row{display:flex;gap:6px;padding:10px;border-top:1px solid #e0e0e0;flex-shrink:0}
-.chat-input{flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Arial,sans-serif;resize:none;height:60px}
-.chat-send{padding:8px 12px;background:#1565c0;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif;align-self:flex-end}
 </style>
-
 </head>
 <body>
 <div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
   <div class="gs-toolbar">
     <div class="gs-title">NXL Scout 2026</div>
     <div class="sess-lbl" id="sesslbl">Loading...</div>
-    <button onclick="openPdfModal()" style="padding:3px 10px;background:#6a1b9a;color:#fff;border:none;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">📄 Export PDF</button>
-    <button onclick="openChatPanel()" style="padding:3px 10px;background:#1565c0;color:#fff;border:none;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">🤖 AI Analysis</button>
+    <button onclick="openPdfModal()" style="padding:3px 10px;background:#6a1b9a;color:#fff;border:none;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">📄 PDF</button>
+    <button onclick="openChatPanel()" style="padding:3px 10px;background:#1565c0;color:#fff;border:none;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">🤖 AI</button>
     <div class="gs-sync"><span class="sdot"></span><span id="sst">Connecting...</span></div>
   </div>
   <div class="score-bar" id="scorebar"></div>
@@ -155,56 +125,52 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
   <div class="tab-bar" id="tabbar"></div>
 </div>
 
-<!-- PDF EXPORT MODAL -->
+<!-- PDF MODAL -->
 
-<div class="pdf-modal-bg" id="pdfModal">
-  <div class="pdf-modal">
-    <h2>Export PDF Report <button onclick="closePdfModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999">✕</button></h2>
-
-```
-<div class="pdf-section">
-  <label>Report Type</label>
-  <div class="pdf-opt-grid" id="pdfTypeGrid">
-    <button class="pdf-opt sel" data-val="event" onclick="selectPdfOpt(this,'pdfTypeGrid')">📊 Full Event Summary</button>
-    <button class="pdf-opt" data-val="match" onclick="selectPdfOpt(this,'pdfTypeGrid')">📋 Single Match Sheet</button>
-    <button class="pdf-opt" data-val="team" onclick="selectPdfOpt(this,'pdfTypeGrid')">🏆 Team Stats Report</button>
-    <button class="pdf-opt" data-val="player" onclick="selectPdfOpt(this,'pdfTypeGrid')">👤 Player Stats Report</button>
-  </div>
-</div>
-
-<div class="pdf-section">
-  <label>Audience</label>
-  <div class="pdf-opt-grid" id="pdfAudGrid">
-    <button class="pdf-opt sel-blue sel" data-val="coaching" onclick="selectPdfOpt(this,'pdfAudGrid','sel-blue')">🎯 Coaching (Detailed)</button>
-    <button class="pdf-opt" data-val="player" onclick="selectPdfOpt(this,'pdfAudGrid','sel-blue')">👕 Players (Simplified)</button>
-  </div>
-</div>
-
-<div class="pdf-section" id="pdfScopeSection">
-  <label>Scope</label>
-  <div id="pdfScopeControls"></div>
-</div>
-
-<button class="pdf-gen-btn" id="pdfGenBtn" onclick="generatePdf()">Generate PDF</button>
-<div class="pdf-status" id="pdfStatus"></div>
-```
-
+<div id="pdfModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:8px;padding:20px;width:92%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <div style="font-size:15px;font-weight:bold;color:#6a1b9a;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      Export PDF Report
+      <button onclick="closePdfModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999">✕</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:6px">REPORT TYPE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="pdfTypeGrid">
+        <button class="pdfopt" data-val="event" onclick="selPdfOpt(this,'pdfTypeGrid','#6a1b9a')">📊 Full Event Summary</button>
+        <button class="pdfopt" data-val="match" onclick="selPdfOpt(this,'pdfTypeGrid','#6a1b9a')">📋 Single Match Sheet</button>
+        <button class="pdfopt" data-val="team" onclick="selPdfOpt(this,'pdfTypeGrid','#6a1b9a')">🏆 Team Stats Report</button>
+        <button class="pdfopt" data-val="player" onclick="selPdfOpt(this,'pdfTypeGrid','#6a1b9a')">👤 Player Stats Report</button>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:6px">AUDIENCE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="pdfAudGrid">
+        <button class="pdfopt" data-val="coaching" onclick="selPdfOpt(this,'pdfAudGrid','#1565c0')">🎯 Coaching (Detailed)</button>
+        <button class="pdfopt" data-val="player" onclick="selPdfOpt(this,'pdfAudGrid','#1565c0')">👕 Players (Simplified)</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px" id="pdfScopeWrap">
+      <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:6px">SCOPE</div>
+      <div id="pdfScopeCtrl"></div>
+    </div>
+    <button id="pdfGenBtn" onclick="generatePdf()" style="width:100%;padding:12px;background:#6a1b9a;color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif">Generate PDF</button>
+    <div id="pdfStatus" style="font-size:11px;color:#555;text-align:center;margin-top:8px;min-height:16px"></div>
   </div>
 </div>
 
 <!-- AI CHAT PANEL -->
 
-<div class="chat-panel" id="chatPanel">
-  <div class="chat-hdr">
+<div id="chatPanel" style="display:none;position:fixed;right:0;top:0;bottom:0;width:320px;background:#fff;border-left:1px solid #e0e0e0;z-index:250;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.15)">
+  <div style="background:#1565c0;color:#fff;padding:10px 14px;font-size:13px;font-weight:bold;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
     🤖 AI Game Analysis
     <button onclick="closeChatPanel()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer">✕</button>
   </div>
-  <div class="chat-msgs" id="chatMsgs">
-    <div class="chat-msg ai">Hi! I'm your NXL scouting analyst. Ask me anything about the match data — bunker patterns, death rates, team tendencies, side advantages, and more.</div>
+  <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+    <div style="padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;background:#f3f4f6;color:#111">Hi! I'm your NXL scouting analyst. Ask me anything about the match data.</div>
   </div>
-  <div class="chat-input-row">
-    <textarea class="chat-input" id="chatInput" placeholder="Ask about the data..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-    <button class="chat-send" onclick="sendChat()">Send</button>
+  <div style="display:flex;gap:6px;padding:10px;border-top:1px solid #e0e0e0;flex-shrink:0">
+    <textarea id="chatInput" placeholder="Ask about the data..." style="flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Arial,sans-serif;resize:none;height:56px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+    <button onclick="sendChat()" style="padding:8px 12px;background:#1565c0;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif;align-self:flex-end">Send</button>
   </div>
 </div>
 
@@ -1489,573 +1455,450 @@ function makeStatsTbl(bkData, killsOnly, totalPts){
   totVals.forEach(v=>{const td=document.createElement('td');td.textContent=v;totTr.appendChild(td);});
   tbl.appendChild(totTr);
   return tbl;
-
-// ── PDF EXPORT & AI CHAT ──────────────────────────────────────────
-
-const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your Anthropic API key
-
-// ── PDF MODAL CONTROLS ─────────────────────────────────────────────
-function openPdfModal(){
-  document.getElementById('pdfModal').classList.add('open');
-  updatePdfScope();
 }
-function closePdfModal(){
-  document.getElementById('pdfModal').classList.remove('open');
-  document.getElementById('pdfStatus').textContent='';
-}
+
+// ── PDF + AI ADDITIONS ────────────────────────────────────────────
+
+const ANTHROPIC_KEY='YOUR_API_KEY_HERE';
+
+// inject pdfopt style
+(function(){
+  const s=document.createElement('style');
+  s.textContent='.pdfopt{padding:8px 6px;border:2px solid #ddd;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;background:#fff;font-family:Arial,sans-serif;text-align:left}.pdfopt.on{border-color:var(--pc,#6a1b9a);background:#f3e5f5;color:var(--pc,#6a1b9a)}';
+  document.head.appendChild(s);
+})();
 
 let _pdfType='event', _pdfAud='coaching';
 
-function selectPdfOpt(btn, gridId, selClass='sel'){
-  document.querySelectorAll('#'+gridId+' .pdf-opt').forEach(b=>{
-    b.classList.remove('sel','sel-blue');
-  });
-  btn.classList.add(selClass==='sel-blue'?'sel-blue':'sel');
-  if(gridId==='pdfTypeGrid') _pdfType=btn.dataset.val;
-  if(gridId==='pdfAudGrid') _pdfAud=btn.dataset.val;
+function openPdfModal(){
+  const m=document.getElementById('pdfModal');
+  m.style.display='flex';
+  // set initial selections
+  selPdfOpt(document.querySelector('#pdfTypeGrid [data-val="event"]'),'pdfTypeGrid','#6a1b9a');
+  selPdfOpt(document.querySelector('#pdfAudGrid [data-val="coaching"]'),'pdfAudGrid','#1565c0');
   updatePdfScope();
+}
+function closePdfModal(){
+  document.getElementById('pdfModal').style.display='none';
+  document.getElementById('pdfStatus').textContent='';
+}
+
+function selPdfOpt(btn,gridId,color){
+  document.querySelectorAll('#'+gridId+' .pdfopt').forEach(b=>{b.classList.remove('on');b.style.removeProperty('--pc');});
+  btn.classList.add('on');btn.style.setProperty('--pc',color);
+  if(gridId==='pdfTypeGrid'){_pdfType=btn.dataset.val;updatePdfScope();}
+  if(gridId==='pdfAudGrid') _pdfAud=btn.dataset.val;
 }
 
 function updatePdfScope(){
-  const ctrl=document.getElementById('pdfScopeControls');
+  const ctrl=document.getElementById('pdfScopeCtrl');
   ctrl.innerHTML='';
-
-  if(_pdfType==='event'){
-    ctrl.innerHTML='<div style="font-size:11px;color:#888;padding:4px 0">Includes all sets with scouted data.</div>';
-    return;
-  }
-
+  const sel=(id,opts)=>{
+    const s=document.createElement('select');
+    s.id=id;s.style.cssText='width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:Arial,sans-serif;margin-top:4px';
+    opts.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.appendChild(o);});
+    return s;
+  };
+  if(_pdfType==='event'){ctrl.innerHTML='<span style="font-size:11px;color:#888">All scouted sets will be included.</span>';return;}
   if(_pdfType==='match'){
-    const sel=document.createElement('select');sel.className='pdf-sel';sel.id='pdfMatchSel';
+    const opts=[];
     TABS.filter(t=>t.id!=='stats'&&t.id!=='rosters').forEach(t=>{
-      ['Match 1','Match 2'].forEach((ml,mi)=>{
-        const opt=document.createElement('option');
-        opt.value=t.id+'|m'+(mi+1);
-        opt.textContent=t.label+' — '+ml;
-        sel.appendChild(opt);
-      });
+      opts.push([t.id+'|m1',t.label+' — Match 1'],[t.id+'|m2',t.label+' — Match 2']);
     });
-    const lbl=document.createElement('div');lbl.style.cssText='font-size:11px;color:#555;margin-bottom:4px';lbl.textContent='Select match:';
-    ctrl.appendChild(lbl);ctrl.appendChild(sel);
-    return;
+    ctrl.appendChild(sel('pdfMatchSel',opts));return;
   }
-
   if(_pdfType==='team'){
-    const sel=document.createElement('select');sel.className='pdf-sel';sel.id='pdfTeamSel';
-    TEAMS.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;sel.appendChild(opt);});
-    const lbl=document.createElement('div');lbl.style.cssText='font-size:11px;color:#555;margin-bottom:4px';lbl.textContent='Select team:';
-    ctrl.appendChild(lbl);ctrl.appendChild(sel);
-    return;
+    ctrl.appendChild(sel('pdfTeamSel',TEAMS.map(t=>[t,t])));return;
   }
-
   if(_pdfType==='player'){
-    const teamSel=document.createElement('select');teamSel.className='pdf-sel';teamSel.id='pdfPTeamSel';
-    teamSel.style.marginBottom='6px';
-    TEAMS.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;teamSel.appendChild(opt);});
-
-    const playerSel=document.createElement('select');playerSel.className='pdf-sel';playerSel.id='pdfPPlayerSel';
-
-    const populatePlayers=()=>{
-      playerSel.innerHTML='';
-      const tk=teamSel.value.replace(/\s+/g,'_').toLowerCase();
+    const tSel=sel('pdfPTeamSel',TEAMS.map(t=>[t,t]));
+    const pSel=sel('pdfPPlayerSel',[]);
+    const fillPlayers=team=>{
+      pSel.innerHTML='';
+      const tk=team.replace(/\s+/g,'_').toLowerCase();
       const players=(window._rosterData&&window._rosterData[tk])||[];
       players.filter(p=>p.name||p.num).forEach(p=>{
         const last=p.name?p.name.split(' ').pop():'';
         const lbl=p.num?('#'+p.num+' '+last):last;
-        const full=p.num?('#'+p.num+' '+p.name):p.name;
-        const opt=document.createElement('option');opt.value=lbl;opt.textContent=full;playerSel.appendChild(opt);
+        const o=document.createElement('option');o.value=lbl;o.textContent=p.num?('#'+p.num+' '+p.name):p.name;pSel.appendChild(o);
       });
     };
-    teamSel.onchange=populatePlayers;
-    populatePlayers();
-
-    const l1=document.createElement('div');l1.style.cssText='font-size:11px;color:#555;margin-bottom:4px';l1.textContent='Select team:';
-    const l2=document.createElement('div');l2.style.cssText='font-size:11px;color:#555;margin:6px 0 4px';l2.textContent='Select player:';
-    ctrl.appendChild(l1);ctrl.appendChild(teamSel);ctrl.appendChild(l2);ctrl.appendChild(playerSel);
+    tSel.onchange=()=>fillPlayers(tSel.value);
+    ctrl.appendChild(tSel);
+    ctrl.appendChild(pSel);
+    fillPlayers(TEAMS[0]);
     return;
   }
 }
 
-// ── CLAUDE API CALL ────────────────────────────────────────────────
-async function callClaude(systemPrompt, userPrompt){
-  const resp = await fetch('https://api.anthropic.com/v1/messages',{
+// Claude API
+async function callClaude(sys,usr){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      system: systemPrompt,
-      messages:[{role:'user',content:userPrompt}]
-    })
+    headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:sys,messages:[{role:'user',content:usr}]})
   });
-  const d=await resp.json();
-  return d.content&&d.content[0]?d.content[0].text:'[No response]';
+  const d=await r.json();
+  return(d.content&&d.content[0]&&d.content[0].text)||'[No response]';
 }
 
-// ── BUILD DATA SUMMARIES FOR CLAUDE ──────────────────────────────
-function buildEventSummary(){
-  const lines=[];
-  const bkAll={};
-  BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0,oppRuns:0});
-  const teamBkStats={};
-  TEAMS.forEach(t=>{teamBkStats[t]={};BKS.forEach(b=>teamBkStats[t][b]={runs:0,deaths:0});});
-  let totalPts=0, teamPtsCount={};
-  TEAMS.forEach(t=>teamPtsCount[t]=0);
-
+// Data summarizers
+function _sumEvent(){
+  const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,opp:0});
+  let pts=0;
   TABS.forEach(t=>{
-    if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
+    if(t.id==='stats'||t.id==='rosters'||!data[t.id])return;
     ['m1','m2'].forEach(mk=>{
       const md=data[t.id][mk];
-      [{tk:'t1pts',name:md.t1name,oppTk:'t2pts'},{tk:'t2pts',name:md.t2name,oppTk:'t1pts'}].forEach(({tk,name,oppTk})=>{
+      [{tk:'t1pts',opp:'t2pts'},{tk:'t2pts',opp:'t1pts'}].forEach(({tk,opp})=>{
         (md[tk]||[]).forEach((pt,pi)=>{
-          const oppPt=(md[oppTk]||[])[pi]||{};
-          const hasData=pt.wl||BKS.some(b=>(pt[b]||[]).length>0);
-          if(hasData){totalPts++;if(name&&teamPtsCount[name]!==undefined)teamPtsCount[name]++;}
+          const op=(md[opp]||[])[pi]||{};
+          if(pt.wl||BKS.some(b=>(pt[b]||[]).length>0))pts++;
           BKS.forEach(b=>{
-            (pt[b]||[]).forEach(mv=>{
-              if(mv.isDead||(mv.sym&&mv.sym!=='_')){bkAll[b].runs++;if(name)teamBkStats[name][b].runs++;}
-              if(mv.isDead){bkAll[b].deaths++;if(name)teamBkStats[name][b].deaths++;}
-            });
-            const oppDeaths=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
-            bkAll[b].kills+=oppDeaths;
-            bkAll[b].oppRuns+=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
+            (pt[b]||[]).forEach(mv=>{if(mv.isDead||(mv.sym&&mv.sym!=='_')){bk[b].runs++;}if(mv.isDead)bk[b].deaths++;});
+            bk[b].kills+=(op[b]||[]).filter(mv=>mv.isDead).length;
+            bk[b].opp+=(op[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
           });
         });
       });
     });
   });
-
-  const allRuns=BKS.reduce((s,b)=>s+bkAll[b].runs,0);
-  lines.push(`EVENT: ${SESSION} | Total points scouted: ${totalPts}`);
-  lines.push('\nBUNKER BREAKDOWN (all teams):');
+  const allR=BKS.reduce((s,b)=>s+bk[b].runs,0);
+  const lines=[`Event: ${SESSION} | Points scouted: ${pts}`,'\nBunker stats:'];
   BKS.forEach(b=>{
-    const s=bkAll[b];
-    if(s.runs===0) return;
-    const pct=allRuns>0?(s.runs/allRuns*100).toFixed(1):'0';
-    const dPct=s.runs>0?(s.deaths/s.runs*100).toFixed(0):'0';
-    const kPct=s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0):'0';
-    lines.push(`  ${b}: ${s.runs} runs (${pct}%), death ${dPct}%, kill ${kPct}%`);
+    if(!bk[b].runs)return;
+    const p=allR>0?(bk[b].runs/allR*100).toFixed(1):'0';
+    const d=bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0):'0';
+    const k=bk[b].opp>0?(bk[b].kills/bk[b].opp*100).toFixed(0):'0';
+    lines.push(`  ${b}: ${bk[b].runs} runs (${p}%), death ${d}%, kill ${k}%`);
   });
-
-  lines.push('\nTEAM ACTIVITY (points scouted):');
-  TEAMS.forEach(t=>{
-    if(teamPtsCount[t]>0){
-      const topBks=BKS.filter(b=>teamBkStats[t][b].runs>0).sort((a,b2)=>teamBkStats[t][b2].runs-teamBkStats[t][a].runs).slice(0,5);
-      lines.push(`  ${t} (${teamPtsCount[t]} pts): top bunkers — ${topBks.map(b=>b+'×'+teamBkStats[t][b].runs).join(', ')}`);
-    }
-  });
-
   return lines.join('\n');
 }
 
-function buildTeamSummary(teamName){
-  const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,oppRuns:0});
-  let pts=0,wPts=0,lPts=0,redW=0,redL=0,blueW=0,blueL=0,majPen=0,minPen=0;
-
+function _sumTeam(team){
+  const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,opp:0});
+  let pts=0,w=0,l=0,rW=0,rL=0,bW=0,bL=0,mj=0,mi=0;
   TABS.forEach(t=>{
-    if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
+    if(t.id==='stats'||t.id==='rosters'||!data[t.id])return;
     ['m1','m2'].forEach(mk=>{
       const md=data[t.id][mk];
-      [{tk:'t1pts',name:md.t1name,oppTk:'t2pts'},{tk:'t2pts',name:md.t2name,oppTk:'t1pts'}].forEach(({tk,name,oppTk})=>{
-        if(name!==teamName) return;
+      [{tk:'t1pts',nm:md.t1name,opp:'t2pts'},{tk:'t2pts',nm:md.t2name,opp:'t1pts'}].forEach(({tk,nm,opp})=>{
+        if(nm!==team)return;
         (md[tk]||[]).forEach((pt,pi)=>{
-          const oppPt=(md[oppTk]||[])[pi]||{};
-          const hasData=pt.wl||BKS.some(b=>(pt[b]||[]).length>0);
-          if(hasData){
+          const op=(md[opp]||[])[pi]||{};
+          if(pt.wl||BKS.some(b=>(pt[b]||[]).length>0)){
             pts++;
-            if(pt.wl==='W'){wPts++;if(pt.rb==='Red')redW++;else blueW++;}
-            else if(pt.wl==='L'){lPts++;if(pt.rb==='Red')redL++;else blueL++;}
+            if(pt.wl==='W'){w++;if(pt.rb==='Red')rW++;else bW++;}
+            else if(pt.wl==='L'){l++;if(pt.rb==='Red')rL++;else bL++;}
           }
           BKS.forEach(b=>{
             (pt[b]||[]).forEach(mv=>{
-              if(mv.isDead||(mv.sym&&mv.sym!=='_')) bk[b].runs++;
-              if(mv.isDead) bk[b].deaths++;
-              if(mv.pen==='Mj') majPen++;
-              if(mv.pen==='Mi') minPen++;
+              if(mv.isDead||(mv.sym&&mv.sym!=='_'))bk[b].runs++;
+              if(mv.isDead)bk[b].deaths++;
+              if(mv.pen==='Mj')mj++;if(mv.pen==='Mi')mi++;
             });
-            bk[b].kills+=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
-            bk[b].oppRuns+=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
+            bk[b].kills+=(op[b]||[]).filter(mv=>mv.isDead).length;
+            bk[b].opp+=(op[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
           });
         });
       });
     });
   });
-
-  const allRuns=BKS.reduce((s,b)=>s+bk[b].runs,0);
-  const lines=[`TEAM: ${teamName} | Points: ${pts} (${wPts}W-${lPts}L)`];
-  lines.push(`Side stats: Red ${redW}W-${redL}L | Blue ${blueW}W-${blueL}L`);
-  lines.push(`Penalties: ${majPen} Major, ${minPen} Minor`);
-  lines.push('\nBunker breakdown:');
+  const allR=BKS.reduce((s,b)=>s+bk[b].runs,0);
+  const lines=[`Team: ${team} | Points: ${pts} (${w}W-${l}L)`,`Side: Red ${rW}W-${rL}L | Blue ${bW}W-${bL}L`,`Penalties: ${mj} Major, ${mi} Minor`,'\nBunkers:'];
   BKS.forEach(b=>{
-    if(bk[b].runs===0) return;
-    const pct=allRuns>0?(bk[b].runs/allRuns*100).toFixed(1):'0';
-    const dPct=bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0):'0';
-    const kPct=bk[b].oppRuns>0?(bk[b].kills/bk[b].oppRuns*100).toFixed(0):'0';
-    lines.push(`  ${b}: ${bk[b].runs} runs (${pct}%), death ${dPct}%, kill ${kPct}%`);
+    if(!bk[b].runs)return;
+    const p=allR>0?(bk[b].runs/allR*100).toFixed(1):'0';
+    const d=bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0):'0';
+    lines.push(`  ${b}: ${bk[b].runs} runs (${p}%), death ${d}%`);
   });
   return lines.join('\n');
 }
 
-function buildPlayerSummary(teamName, playerLabel){
-  const s=_calcPlayerStats(teamName, playerLabel);
-  const pp=s.pointsPlayed;
-  const lines=[`PLAYER: ${playerLabel} | Team: ${teamName} | Points played: ${pp}`];
-  lines.push(`Deaths off break: ${s.pointsDied} (${pp>0?(s.pointsDied/pp*100).toFixed(0):0}%)`);
-  lines.push(`Penalties: ${s.penalties.Mj} Major, ${s.penalties.Mi} Minor`);
-  const totalCount=BKS.reduce((sum,b)=>sum+(s.bunkers[b]||0),0);
-  lines.push('\nBunker breakdown:');
-  BKS.forEach(b=>{
-    if(!s.bunkers[b]) return;
-    const pct=totalCount>0?(s.bunkers[b]/totalCount*100).toFixed(1):'0';
-    const dPct=s.bunkers[b]>0?(s.deaths[b]/s.bunkers[b]*100).toFixed(0):'0';
-    const d=s.shootingDir[b]||{S:0,'Δ':0,X:0};
-    const dt=d.S+d['Δ']+d.X;
-    const dirs=dt>0?` [S:${(d.S/dt*100).toFixed(0)}% Δ:${(d['Δ']/dt*100).toFixed(0)}% X:${(d.X/dt*100).toFixed(0)}%]`:'';
-    lines.push(`  ${b}: ${s.bunkers[b]} runs (${pct}%), death ${dPct}%${dirs}`);
-  });
-  return lines.join('\n');
-}
-
-function buildMatchSummary(tabId, mk){
-  if(!data[tabId]) return 'No data for this match.';
-  const md=data[tabId][mk];
-  const lines=[`MATCH: ${tabId.replace(/-/g,' ')} ${mk.toUpperCase()} | ${md.t1name||'Top Team'} vs ${md.t2name||'Bottom Team'}`];
-  [{tk:'t1pts',name:md.t1name||'Top Team'},{tk:'t2pts',name:md.t2name||'Bottom Team'}].forEach(({tk,name})=>{
-    const pts=md[tk]||[];
-    let w=0,l=0;
-    const bkCounts={};BKS.forEach(b=>bkCounts[b]=0);
-    pts.forEach(pt=>{
-      if(pt.wl==='W')w++;else if(pt.wl==='L')l++;
-      BKS.forEach(b=>{bkCounts[b]+=(pt[b]||[]).length;});
+function _sumPlayer(team,playerLabel){
+  const s={pts:0,died:0,pen:{Mi:0,Mj:0},bk:{},deaths:{},dir:{}};
+  BKS.forEach(b=>{s.bk[b]=0;s.deaths[b]=0;s.dir[b]={S:0,'\u2206':0,X:0};});
+  TABS.forEach(t=>{
+    if(t.id==='stats'||t.id==='rosters'||!data[t.id])return;
+    ['m1','m2'].forEach(mk=>{
+      const md=data[t.id][mk];
+      ['t1pts','t2pts'].forEach((tk,ti)=>{
+        if((ti===0?md.t1name:md.t2name)!==team)return;
+        (md[tk]||[]).forEach(pt=>{
+          let ap=false,dd=false;
+          BKS.forEach(b=>{
+            (pt[b]||[]).forEach(mv=>{
+              const lbl=mv.player&&mv.player.label?mv.player.label:null;
+              if(lbl!==playerLabel)return;
+              ap=true;s.bk[b]++;
+              if(mv.isDead){dd=true;s.deaths[b]++;}
+              if(mv.pen==='Mi')s.pen.Mi++;if(mv.pen==='Mj')s.pen.Mj++;
+              const sym=mv.sym||'';
+              if(sym.startsWith('S'))s.dir[b].S++;
+              else if(sym.startsWith('\u2206'))s.dir[b]['\u2206']++;
+              else if(sym.startsWith('X'))s.dir[b].X++;
+            });
+          });
+          if(ap){s.pts++;if(dd)s.died++;}
+        });
+      });
     });
-    const top=BKS.filter(b=>bkCounts[b]>0).sort((a,b2)=>bkCounts[b2]-bkCounts[a]).slice(0,6);
-    lines.push(`  ${name}: ${w}W-${l}L | Top bunkers: ${top.map(b=>b+'×'+bkCounts[b]).join(', ')}`);
+  });
+  const tot=BKS.reduce((a,b)=>a+(s.bk[b]||0),0);
+  const lines=[`Player: ${playerLabel} | Team: ${team} | Points: ${s.pts}`,`Deaths off break: ${s.died} (${s.pts>0?(s.died/s.pts*100).toFixed(0):0}%)`,`Penalties: ${s.pen.Mj} Major, ${s.pen.Mi} Minor`,'\nBunkers:'];
+  BKS.forEach(b=>{
+    if(!s.bk[b])return;
+    const p=tot>0?(s.bk[b]/tot*100).toFixed(1):'0';
+    const d=s.bk[b]>0?(s.deaths[b]/s.bk[b]*100).toFixed(0):'0';
+    lines.push(`  ${b}: ${s.bk[b]} runs (${p}%), death ${d}%`);
+  });
+  return{summary:lines.join('\n'),stats:s};
+}
+
+function _sumMatch(tabId,mk){
+  if(!data[tabId])return'No data.';
+  const md=data[tabId][mk];
+  const lines=[`Match: ${tabId} ${mk} | ${md.t1name||'Top'} vs ${md.t2name||'Bottom'}`];
+  [{tk:'t1pts',nm:md.t1name||'Top'},{tk:'t2pts',nm:md.t2name||'Bottom'}].forEach(({tk,nm})=>{
+    const pts=md[tk]||[];let w=0,l=0;const bc={};BKS.forEach(b=>bc[b]=0);
+    pts.forEach(pt=>{if(pt.wl==='W')w++;else if(pt.wl==='L')l++;BKS.forEach(b=>bc[b]+=(pt[b]||[]).length);});
+    const top=BKS.filter(b=>bc[b]>0).sort((a,b2)=>bc[b2]-bc[a]).slice(0,6);
+    lines.push(`  ${nm}: ${w}W-${l}L | Top: ${top.map(b=>b+'×'+bc[b]).join(', ')}`);
   });
   return lines.join('\n');
 }
 
-// ── PDF GENERATION ─────────────────────────────────────────────────
+// PDF generation
 async function generatePdf(){
   const btn=document.getElementById('pdfGenBtn');
   const status=document.getElementById('pdfStatus');
-  btn.disabled=true;
-  status.textContent='Generating AI analysis...';
-
+  btn.disabled=true;status.textContent='Generating AI analysis...';
   try{
+    if(!window.jspdf)throw new Error('jsPDF not loaded — check internet connection.');
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const W=210, MARGIN=14, CW=W-MARGIN*2;
+    const W=210,M=14,CW=W-M*2;
     let y=18;
     const today=new Date().toLocaleDateString();
+    const newPage=()=>{doc.addPage();y=18;};
+    const chk=(n=10)=>{if(y+n>280)newPage();};
 
-    const addPage=()=>{doc.addPage();y=18;};
-    const checkY=(need=10)=>{if(y+need>280)addPage();};
-
-    const drawHeader=(title,sub)=>{
+    const hdr=(title,sub)=>{
       doc.setFillColor(106,27,154);doc.rect(0,0,210,12,'F');
       doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont('helvetica','bold');
-      doc.text('NXL Scout 2026  |  Tampa Bay Damage',MARGIN,8.5);
-      doc.setFontSize(9);doc.text(SESSION+' — '+today,210-MARGIN,8.5,{align:'right'});
+      doc.text('NXL Scout 2026  |  Tampa Bay Damage',M,8.5);
+      doc.setFontSize(9);doc.text(SESSION+' — '+today,210-M,8.5,{align:'right'});
       doc.setTextColor(0,0,0);y=18;
-      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text(title,MARGIN,y);y+=6;
-      if(sub){doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(90,90,90);doc.text(sub,MARGIN,y);doc.setTextColor(0,0,0);y+=5;}
+      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text(title,M,y);y+=6;
+      if(sub){doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(90,90,90);doc.text(sub,M,y);doc.setTextColor(0,0,0);y+=5;}
       y+=2;
     };
 
-    const drawSectionHdr=(txt)=>{
-      checkY(10);
-      doc.setFillColor(230,210,245);doc.rect(MARGIN,y,CW,6,'F');
+    const secHdr=(txt)=>{
+      chk(10);
+      doc.setFillColor(230,210,245);doc.rect(M,y,CW,6,'F');
       doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(106,27,154);
-      doc.text(txt,MARGIN+2,y+4.2);doc.setTextColor(0,0,0);
-      y+=8;
+      doc.text(txt,M+2,y+4.2);doc.setTextColor(0,0,0);y+=8;
     };
 
-    const drawTable=(headers,rows,colWidths)=>{
-      checkY(12);
-      const rowH=6, hdrH=7;
-      // Header
-      doc.setFillColor(213,213,213);doc.rect(MARGIN,y,CW,hdrH,'F');
+    const tbl=(headers,rows,cw)=>{
+      chk(14);
+      doc.setFillColor(213,213,213);doc.rect(M,y,CW,7,'F');
       doc.setFontSize(8);doc.setFont('helvetica','bold');
-      let x=MARGIN;
-      headers.forEach((h,i)=>{doc.text(h,x+1,y+4.8);x+=colWidths[i];});
-      y+=hdrH;
-      // Rows
+      let x=M;headers.forEach((h,i)=>{doc.text(String(h),x+1,y+4.8);x+=cw[i];});y+=7;
       rows.forEach((row,ri)=>{
-        checkY(rowH+2);
-        if(ri%2===1){doc.setFillColor(249,249,249);doc.rect(MARGIN,y,CW,rowH,'F');}
+        chk(7);
+        if(ri%2===1){doc.setFillColor(249,249,249);doc.rect(M,y,CW,6,'F');}
         doc.setFont('helvetica','normal');doc.setFontSize(8);
-        x=MARGIN;
-        row.forEach((cell,ci)=>{
-          const cellStr=String(cell??'');
-          doc.text(cellStr,x+1,y+4.2,{maxWidth:colWidths[ci]-2});
-          x+=colWidths[ci];
-        });
-        y+=rowH;
+        x=M;row.forEach((cell,ci)=>{doc.text(String(cell??''),x+1,y+4.2,{maxWidth:cw[ci]-2});x+=cw[ci];});
+        y+=6;
       });
       y+=3;
     };
 
-    const wrapText=(txt,maxW)=>{
-      const words=txt.split(' ');const lines=[];let cur='';
-      words.forEach(w=>{
-        const test=cur?cur+' '+w:w;
-        if(doc.getTextWidth(test)>maxW){lines.push(cur);cur=w;}else cur=test;
-      });
-      if(cur)lines.push(cur);return lines;
-    };
-
-    const drawAIBlock=(analysisText)=>{
-      drawSectionHdr('AI Analysis');
+    const aiBlock=(txt)=>{
+      secHdr('AI Analysis');
       doc.setFontSize(9);doc.setFont('helvetica','normal');
-      const paras=analysisText.split('\n').filter(p=>p.trim());
-      paras.forEach(para=>{
-        const wrapped=wrapText(para,CW-4);
-        wrapped.forEach(line=>{checkY(5);doc.text(line,MARGIN+2,y);y+=4.5;});
+      txt.split('\n').filter(p=>p.trim()).forEach(para=>{
+        const words=para.split(' ');let line='';
+        words.forEach(w=>{
+          const test=line?line+' '+w:w;
+          if(doc.getTextWidth(test)>CW-4){chk(5);doc.text(line,M+2,y);y+=4.5;line=w;}else line=test;
+        });
+        if(line){chk(5);doc.text(line,M+2,y);y+=4.5;}
         y+=2;
       });
-      y+=3;
+      y+=2;
     };
 
-    const audience=_pdfAud;
+    const aud=_pdfAud;
+    let aiText='';
 
-    // ── EVENT SUMMARY ──
     if(_pdfType==='event'){
-      const summary=buildEventSummary();
-      const sysP=`You are a professional paintball analyst for Tampa Bay Damage. Write a concise event scouting report in plain paragraphs (no markdown). ${audience==='player'?'Write in plain language suitable for players — focus on key takeaways and what to watch for. Keep it brief.':'Include tactical insights, patterns, and recommendations for the coaching staff. Be specific and analytical.'}`;
-      const analysis=await callClaude(sysP, summary);
-
-      drawHeader('Full Event Summary Report', SESSION+' — All Scouted Matches');
-      drawAIBlock(analysis);
-
-      // Bunker table
-      const bkAll={};BKS.forEach(b=>bkAll[b]={runs:0,deaths:0,kills:0,oppRuns:0});
-      let totalPts=0;
+      const sum=_sumEvent();
+      aiText=await callClaude(`You are a professional NXL paintball analyst for Tampa Bay Damage. Write a concise event scouting report in plain paragraphs, no markdown. ${aud==='player'?'Write for players — key takeaways only.':'Write for coaching staff — tactical insights, patterns, recommendations.'}`,sum);
+      hdr('Full Event Summary',SESSION);
+      aiBlock(aiText);
+      secHdr('Bunker Statistics — All Teams');
+      const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,opp:0});
       TABS.forEach(t=>{
-        if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
+        if(t.id==='stats'||t.id==='rosters'||!data[t.id])return;
         ['m1','m2'].forEach(mk=>{
           const md=data[t.id][mk];
-          [{tk:'t1pts',oppTk:'t2pts'},{tk:'t2pts',oppTk:'t1pts'}].forEach(({tk,oppTk})=>{
+          [{tk:'t1pts',op:'t2pts'},{tk:'t2pts',op:'t1pts'}].forEach(({tk,op})=>{
             (md[tk]||[]).forEach((pt,pi)=>{
-              const oppPt=(md[oppTk]||[])[pi]||{};
-              if(pt.wl||BKS.some(b=>(pt[b]||[]).length>0)) totalPts++;
-              BKS.forEach(b=>{
-                (pt[b]||[]).forEach(mv=>{if(mv.isDead||(mv.sym&&mv.sym!=='_')){bkAll[b].runs++;} if(mv.isDead)bkAll[b].deaths++;});
-                bkAll[b].kills+=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
-                bkAll[b].oppRuns+=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
-              });
-            });
-          });
-        });
-      });
-      const allRuns=BKS.reduce((s,b)=>s+bkAll[b].runs,0);
-      drawSectionHdr('Bunker Statistics — All Teams');
-      if(audience==='coaching'){
-        const hdrs=['Bunker','Shape','Runs','Run %','Deaths','Death %','Kills','Kill %'];
-        const cw=[20,14,14,14,14,14,14,14];
-        const rows=BKS.map((b,i)=>{
-          const s=bkAll[b];
-          return[b,SHAPES[i]||'',s.runs,allRuns>0?(s.runs/allRuns*100).toFixed(1)+'%':'—',
-            s.deaths,s.runs>0?(s.deaths/s.runs*100).toFixed(0)+'%':'—',
-            s.kills,s.oppRuns>0?(s.kills/s.oppRuns*100).toFixed(0)+'%':'—'];
-        });
-        drawTable(hdrs,rows,cw);
-      } else {
-        const top8=BKS.filter(b=>bkAll[b].runs>0).sort((a,b2)=>bkAll[b2].runs-bkAll[a].runs).slice(0,8);
-        const hdrs=['Bunker','Runs','Death %'];
-        const cw=[40,40,40];
-        drawTable(hdrs,top8.map(b=>[b,bkAll[b].runs,bkAll[b].runs>0?(bkAll[b].deaths/bkAll[b].runs*100).toFixed(0)+'%':'—']),cw);
-      }
-    }
-
-    // ── MATCH SHEET ──
-    else if(_pdfType==='match'){
-      const matchVal=(document.getElementById('pdfMatchSel')?.value||'').split('|');
-      const tabId=matchVal[0]||'fri-set1', mk=matchVal[1]||'m1';
-      const matchSummary=buildMatchSummary(tabId,mk);
-      const md=data[tabId]?data[tabId][mk]:null;
-      const label=tabId.replace(/-/g,' ').toUpperCase()+' '+mk.toUpperCase();
-      const sysP=`You are a paintball analyst for Tampa Bay Damage. Analyze this single match scouting data and write a concise tactical report in plain paragraphs (no markdown). ${audience==='player'?'Focus on key takeaways for players.':'Include coaching-level detail on patterns, vulnerabilities, and strategic recommendations.'}`;
-      const analysis=await callClaude(sysP, matchSummary);
-      drawHeader('Match Sheet Report', label+' — '+(md?.t1name||'Top')+ ' vs '+(md?.t2name||'Bottom'));
-      drawAIBlock(analysis);
-
-      if(md){
-        [{tk:'t1pts',name:md.t1name||'Top Team'},{tk:'t2pts',name:md.t2name||'Bottom Team'}].forEach(({tk,name})=>{
-          drawSectionHdr(name+' — Point-by-Point');
-          const hdrs=['Pt','W/L','R/B','Time',...(audience==='coaching'?BKS.slice(0,10):BKS.slice(0,6))];
-          const cwFull=audience==='coaching'?[6,7,7,10,...Array(10).fill(14)]:[6,7,7,10,...Array(6).fill(22)];
-          const rows=(md[tk]||[]).map((pt,i)=>{
-            const bkVals=(audience==='coaching'?BKS.slice(0,10):BKS.slice(0,6)).map(b=>{
-              const mvs=pt[b]||[];
-              return mvs.map(mv=>(mv.isDead?'✕':'')+(mv.sym||'')).join('/');
-            });
-            return[i+1,pt.wl||'',pt.rb||'',pt.time||'',...bkVals];
-          }).filter((_,i)=>(md[tk][i]?.wl||BKS.some(b=>(md[tk][i]?.[b]||[]).length>0)));
-          if(rows.length) drawTable(hdrs,rows,cwFull);
-          else{doc.setFontSize(9);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);doc.text('No data entered.',MARGIN+2,y);doc.setTextColor(0,0,0);y+=8;}
-        });
-      }
-    }
-
-    // ── TEAM STATS ──
-    else if(_pdfType==='team'){
-      const team=document.getElementById('pdfTeamSel')?.value||TEAMS[0];
-      const teamSum=buildTeamSummary(team);
-      const sysP=`You are a paintball analyst for Tampa Bay Damage. Write a team scouting report for ${team} in plain paragraphs (no markdown). ${audience==='player'?'Write for players. Focus on what to watch for and key dangers from this team.':'Write for the coaching staff. Include bunker tendencies, death hotspots, kill opportunities, side preferences, and penalty patterns. Be specific and tactical.'}`;
-      const analysis=await callClaude(sysP, teamSum);
-      drawHeader('Team Stats Report', team);
-      drawAIBlock(analysis);
-
-      drawSectionHdr('Bunker Breakdown');
-      const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,oppRuns:0});
-      TABS.forEach(t=>{
-        if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
-        ['m1','m2'].forEach(mk=>{
-          const md=data[t.id][mk];
-          [{tk:'t1pts',name:md.t1name,oppTk:'t2pts'},{tk:'t2pts',name:md.t2name,oppTk:'t1pts'}].forEach(({tk,name,oppTk})=>{
-            if(name!==team) return;
-            (md[tk]||[]).forEach((pt,pi)=>{
-              const oppPt=(md[oppTk]||[])[pi]||{};
+              const opp=(md[op]||[])[pi]||{};
               BKS.forEach(b=>{
                 (pt[b]||[]).forEach(mv=>{if(mv.isDead||(mv.sym&&mv.sym!=='_'))bk[b].runs++;if(mv.isDead)bk[b].deaths++;});
-                bk[b].kills+=(oppPt[b]||[]).filter(mv=>mv.isDead).length;
-                bk[b].oppRuns+=(oppPt[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
+                bk[b].kills+=(opp[b]||[]).filter(mv=>mv.isDead).length;
+                bk[b].opp+=(opp[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
               });
             });
           });
         });
       });
-      const allRuns=BKS.reduce((s,b)=>s+bk[b].runs,0);
-      if(audience==='coaching'){
-        drawTable(['Bunker','Shape','Runs','Run %','Deaths','Death %','Kills','Kill %'],
-          BKS.map((b,i)=>[b,SHAPES[i]||'',bk[b].runs,allRuns>0?(bk[b].runs/allRuns*100).toFixed(1)+'%':'—',
-            bk[b].deaths,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—',
-            bk[b].kills,bk[b].oppRuns>0?(bk[b].kills/bk[b].oppRuns*100).toFixed(0)+'%':'—']),
-          [20,14,14,14,14,14,14,14]);
+      const aR=BKS.reduce((s,b)=>s+bk[b].runs,0);
+      if(aud==='coaching'){
+        tbl(['Bunker','Shape','Runs','Run%','Deaths','Death%','Kills','Kill%'],
+          BKS.map((b,i)=>[b,SHAPES[i]||'',bk[b].runs,aR>0?(bk[b].runs/aR*100).toFixed(1)+'%':'—',bk[b].deaths,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—',bk[b].kills,bk[b].opp>0?(bk[b].kills/bk[b].opp*100).toFixed(0)+'%':'—']),
+          [22,14,14,14,14,14,14,14]);
       } else {
-        const active=BKS.filter(b=>bk[b].runs>0).sort((a,b2)=>bk[b2].runs-bk[a].runs).slice(0,8);
-        drawTable(['Bunker','Runs','Death %'],active.map(b=>[b,bk[b].runs,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—']),[40,40,40]);
+        const top=BKS.filter(b=>bk[b].runs>0).sort((a,b2)=>bk[b2].runs-bk[a].runs).slice(0,8);
+        tbl(['Bunker','Runs','Death%'],top.map(b=>[b,bk[b].runs,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—']),[60,50,46]);
       }
     }
 
-    // ── PLAYER STATS ──
+    else if(_pdfType==='match'){
+      const v=(document.getElementById('pdfMatchSel')?.value||'fri-set1|m1').split('|');
+      const tabId=v[0],mk=v[1];
+      const sum=_sumMatch(tabId,mk);
+      const md=data[tabId]?data[tabId][mk]:null;
+      aiText=await callClaude(`You are an NXL paintball analyst. Write a tactical match report in plain paragraphs, no markdown. ${aud==='player'?'Key takeaways for players.':'Coaching-level detail on patterns and strategy.'}`,sum);
+      hdr('Match Sheet Report',tabId.replace(/-/g,' ').toUpperCase()+' '+mk.toUpperCase()+(md?` | ${md.t1name||'Top'} vs ${md.t2name||'Bottom'}`:''));
+      aiBlock(aiText);
+      if(md){
+        [{tk:'t1pts',nm:md.t1name||'Top'},{tk:'t2pts',nm:md.t2name||'Bottom'}].forEach(({tk,nm})=>{
+          secHdr(nm);
+          const bks=aud==='coaching'?BKS.slice(0,12):BKS.slice(0,6);
+          const cw=aud==='coaching'?[6,7,7,10,...Array(12).fill(12)]:[6,7,7,10,...Array(6).fill(18)];
+          const rows=(md[tk]||[]).filter((_,i)=>md[tk][i]?.wl||BKS.some(b=>(md[tk][i]?.[b]||[]).length>0))
+            .map((pt,i)=>[i+1,pt.wl||'',pt.rb?.slice(0,1)||'',pt.time||'',...bks.map(b=>(pt[b]||[]).map(mv=>(mv.isDead?'✕':'')+(mv.sym||'')).join('/'))]);
+          if(rows.length)tbl(['Pt','WL','RB','Time',...bks],rows,cw);
+          else{doc.setFontSize(9);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);doc.text('No data entered.',M+2,y);doc.setTextColor(0,0,0);y+=8;}
+        });
+      }
+    }
+
+    else if(_pdfType==='team'){
+      const team=document.getElementById('pdfTeamSel')?.value||TEAMS[0];
+      const sum=_sumTeam(team);
+      aiText=await callClaude(`You are an NXL paintball analyst for Tampa Bay Damage. Write a team scouting report for ${team} in plain paragraphs, no markdown. ${aud==='player'?'What players should watch for from this team.':'Coaching detail: bunker tendencies, death hotspots, kill opportunities, side preference, penalty patterns.'}`,sum);
+      hdr('Team Stats Report',team);
+      aiBlock(aiText);
+      secHdr('Bunker Breakdown');
+      const bk={};BKS.forEach(b=>bk[b]={runs:0,deaths:0,kills:0,opp:0});
+      TABS.forEach(t=>{
+        if(t.id==='stats'||t.id==='rosters'||!data[t.id])return;
+        ['m1','m2'].forEach(mk=>{
+          const md=data[t.id][mk];
+          [{tk:'t1pts',nm:md.t1name,op:'t2pts'},{tk:'t2pts',nm:md.t2name,op:'t1pts'}].forEach(({tk,nm,op})=>{
+            if(nm!==team)return;
+            (md[tk]||[]).forEach((pt,pi)=>{
+              const opp=(md[op]||[])[pi]||{};
+              BKS.forEach(b=>{
+                (pt[b]||[]).forEach(mv=>{if(mv.isDead||(mv.sym&&mv.sym!=='_'))bk[b].runs++;if(mv.isDead)bk[b].deaths++;});
+                bk[b].kills+=(opp[b]||[]).filter(mv=>mv.isDead).length;
+                bk[b].opp+=(opp[b]||[]).filter(mv=>mv.isDead||(mv.sym&&mv.sym!=='_')).length;
+              });
+            });
+          });
+        });
+      });
+      const aR=BKS.reduce((s,b)=>s+bk[b].runs,0);
+      if(aud==='coaching'){
+        tbl(['Bunker','Shape','Runs','Run%','Deaths','Death%','Kills','Kill%'],
+          BKS.map((b,i)=>[b,SHAPES[i]||'',bk[b].runs,aR>0?(bk[b].runs/aR*100).toFixed(1)+'%':'—',bk[b].deaths,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—',bk[b].kills,bk[b].opp>0?(bk[b].kills/bk[b].opp*100).toFixed(0)+'%':'—']),
+          [22,14,14,14,14,14,14,14]);
+      } else {
+        const top=BKS.filter(b=>bk[b].runs>0).sort((a,b2)=>bk[b2].runs-bk[a].runs).slice(0,8);
+        tbl(['Bunker','Runs','Death%'],top.map(b=>[b,bk[b].runs,bk[b].runs>0?(bk[b].deaths/bk[b].runs*100).toFixed(0)+'%':'—']),[60,50,46]);
+      }
+    }
+
     else if(_pdfType==='player'){
       const team=document.getElementById('pdfPTeamSel')?.value||TEAMS[0];
       const playerLabel=document.getElementById('pdfPPlayerSel')?.value||'';
-      const playerSum=buildPlayerSummary(team, playerLabel);
-      const sysP=`You are a paintball analyst. Write a player scouting report in plain paragraphs (no markdown). ${audience==='player'?'Write directly to the player. Be encouraging but honest. Highlight their tendencies, risks, and how to improve.':'Write for the coaching staff. Analyze this player\'s role, tendencies, death patterns, shooting direction habits, and tactical value.'}`;
-      const analysis=await callClaude(sysP, playerSum);
-      drawHeader('Player Stats Report', playerLabel+' — '+team);
-      const s=_calcPlayerStats(team, playerLabel);
-      const pp=s.pointsPlayed;
-
-      // Summary cards in PDF
-      checkY(20);
-      doc.setFillColor(245,245,245);doc.rect(MARGIN,y,CW,14,'F');
+      const{summary,stats:ps}=_sumPlayer(team,playerLabel);
+      aiText=await callClaude(`You are an NXL paintball analyst. Write a player scouting report in plain paragraphs, no markdown. ${aud==='player'?'Write directly to the player — encouraging but honest. Highlight tendencies, risks, how to improve.':'Write for coaching staff. Analyze role, tendencies, death patterns, shooting direction habits.'}`,summary);
+      hdr('Player Stats Report',playerLabel+' — '+team);
+      const pp=ps.pts;
+      chk(18);
+      doc.setFillColor(245,245,245);doc.rect(M,y,CW,14,'F');
       doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
-      const cards=[['Points Played',pp],['Deaths Off Break',s.pointsDied+' ('+(pp>0?(s.pointsDied/pp*100).toFixed(0):0)+'%)'],['Major Pen',s.penalties.Mj],['Minor Pen',s.penalties.Mi]];
-      cards.forEach((c,i)=>{
-        const cx=MARGIN+(CW/4)*i;
-        doc.text(c[0],cx+2,y+5);
+      [['Points Played',pp],['Deaths Off Break',ps.died+' ('+(pp>0?(ps.died/pp*100).toFixed(0):0)+'%)'],['Major Pen',ps.pen.Mj],['Minor Pen',ps.pen.Mi]].forEach((c,i)=>{
+        const cx=M+(CW/4)*i;doc.text(c[0],cx+2,y+5);
         doc.setFontSize(12);doc.setTextColor(26,110,26);doc.text(String(c[1]),cx+2,y+11);
         doc.setFontSize(8);doc.setTextColor(80,80,80);
       });
       doc.setTextColor(0,0,0);y+=18;
-
-      drawAIBlock(analysis);
-      drawSectionHdr('Bunker Breakdown');
-      const totalCount=BKS.reduce((sum,b)=>sum+(s.bunkers[b]||0),0);
-      if(audience==='coaching'){
-        drawTable(['Bunker','Count','Count %','Death %','Snake %','Dorito %','Dove %'],
+      aiBlock(aiText);
+      secHdr('Bunker Breakdown');
+      const tot=BKS.reduce((a,b)=>a+(ps.bk[b]||0),0);
+      if(aud==='coaching'){
+        tbl(['Bunker','Count','Count%','Death%','Snake%','Dorito%','Dove%'],
           BKS.map(b=>{
-            const cnt=s.bunkers[b]||0;const d=s.shootingDir[b]||{S:0,'Δ':0,X:0};const dt=d.S+d['Δ']+d.X;
-            return[b,cnt,totalCount>0?(cnt/totalCount*100).toFixed(1)+'%':'—',
-              cnt>0?((s.deaths[b]||0)/cnt*100).toFixed(0)+'%':'—',
-              dt>0?(d.S/dt*100).toFixed(0)+'%':'—',dt>0?(d['Δ']/dt*100).toFixed(0)+'%':'—',dt>0?(d.X/dt*100).toFixed(0)+'%':'—'];
-          }),[20,14,16,16,18,18,18]);
+            const cnt=ps.bk[b]||0;const d=ps.dir[b]||{S:0,'\u2206':0,X:0};const dt=d.S+d['\u2206']+d.X;
+            return[b,cnt,tot>0?(cnt/tot*100).toFixed(1)+'%':'—',cnt>0?((ps.deaths[b]||0)/cnt*100).toFixed(0)+'%':'—',dt>0?(d.S/dt*100).toFixed(0)+'%':'—',dt>0?(d['\u2206']/dt*100).toFixed(0)+'%':'—',dt>0?(d.X/dt*100).toFixed(0)+'%':'—'];
+          }),[22,14,16,16,18,18,16]);
       } else {
-        const active=BKS.filter(b=>s.bunkers[b]>0).sort((a,b2)=>(s.bunkers[b2]||0)-(s.bunkers[a]||0)).slice(0,8);
-        drawTable(['Bunker','Count','Death %'],active.map(b=>{const cnt=s.bunkers[b]||0;return[b,cnt,cnt>0?((s.deaths[b]||0)/cnt*100).toFixed(0)+'%':'—'];}),[40,40,40]);
+        const top=BKS.filter(b=>ps.bk[b]>0).sort((a,b2)=>(ps.bk[b2]||0)-(ps.bk[a]||0)).slice(0,8);
+        tbl(['Bunker','Count','Death%'],top.map(b=>{const cnt=ps.bk[b]||0;return[b,cnt,cnt>0?((ps.deaths[b]||0)/cnt*100).toFixed(0)+'%':'—'];}),[60,50,46]);
       }
     }
 
-    // Footer on last page
-    const pageCount=doc.internal.getNumberOfPages();
-    for(let i=1;i<=pageCount;i++){
-      doc.setPage(i);
-      doc.setFontSize(8);doc.setTextColor(150,150,150);
-      doc.text('NXL Scout 2026 — Tampa Bay Damage | Page '+i+' of '+pageCount,W/2,290,{align:'center'});
+    // footer
+    for(let i=1;i<=doc.internal.getNumberOfPages();i++){
+      doc.setPage(i);doc.setFontSize(8);doc.setTextColor(150,150,150);
+      doc.text('NXL Scout 2026 — Tampa Bay Damage | Page '+i+' of '+doc.internal.getNumberOfPages(),W/2,290,{align:'center'});
     }
-
-    const filename=`NXLScout_${_pdfType}_${SESSION}_${today.replace(/\//g,'-')}.pdf`;
-    doc.save(filename);
-    status.textContent='✅ PDF saved: '+filename;
-  } catch(err){
+    const fname=`NXLScout_${_pdfType}_${SESSION}_${today.replace(/\//g,'-')}.pdf`;
+    doc.save(fname);
+    status.textContent='✅ Saved: '+fname;
+  }catch(err){
     console.error(err);
-    status.textContent='❌ Error: '+err.message;
+    status.textContent='❌ '+err.message;
   }
   btn.disabled=false;
 }
 
-// ── AI CHAT PANEL ─────────────────────────────────────────────────
-function openChatPanel(){document.getElementById('chatPanel').classList.add('open');}
-function closeChatPanel(){document.getElementById('chatPanel').classList.remove('open');}
+// AI Chat
+function openChatPanel(){const p=document.getElementById('chatPanel');p.style.display='flex';}
+function closeChatPanel(){document.getElementById('chatPanel').style.display='none';}
 
 async function sendChat(){
-  const input=document.getElementById('chatInput');
+  const inp=document.getElementById('chatInput');
   const msgs=document.getElementById('chatMsgs');
-  const q=input.value.trim();if(!q)return;
-  input.value='';
-
-  const uMsg=document.createElement('div');uMsg.className='chat-msg user';uMsg.textContent=q;msgs.appendChild(uMsg);
-
-  const thinking=document.createElement('div');thinking.className='chat-msg thinking';thinking.textContent='Analyzing scouting data...';msgs.appendChild(thinking);
+  const q=inp.value.trim();if(!q)return;
+  inp.value='';
+  const uDiv=document.createElement('div');
+  uDiv.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;background:#e3f2fd;color:#0d47a1;align-self:flex-end;max-width:95%';
+  uDiv.textContent=q;msgs.appendChild(uDiv);
+  const aDiv=document.createElement('div');
+  aDiv.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;background:#fff8e1;color:#888;font-style:italic;max-width:95%';
+  aDiv.textContent='Analyzing...';msgs.appendChild(aDiv);
   msgs.scrollTop=msgs.scrollHeight;
-
   try{
-    const context=buildEventSummary();
-    const sysP=`You are an NXL paintball scouting analyst for Tampa Bay Damage. You have access to live event scouting data. Answer questions concisely and tactically. Use the data provided. If the data doesn't contain enough information to answer, say so clearly. Never use markdown formatting — respond in plain text only.`;
-    const userPrompt=`Current scouting data:\n${context}\n\nQuestion: ${q}`;
-    const reply=await callClaude(sysP, userPrompt);
-    thinking.className='chat-msg ai';thinking.textContent=reply;
-  } catch(err){
-    thinking.className='chat-msg ai';thinking.textContent='Error: '+err.message;
+    const reply=await callClaude(
+      'You are an NXL paintball scouting analyst for Tampa Bay Damage. Answer questions about the match data concisely and tactically. Plain text only, no markdown.',
+      'Current scouting data:\n'+_sumEvent()+'\n\nQuestion: '+q
+    );
+    aDiv.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;background:#f3f4f6;color:#111;max-width:95%';
+    aDiv.textContent=reply;
+  }catch(err){
+    aDiv.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;background:#f3f4f6;color:#111;max-width:95%';
+    aDiv.textContent='Error: '+err.message;
   }
   msgs.scrollTop=msgs.scrollHeight;
-}
-
-// global version for PDF use (avoids conflict with renderStats inner function)
-function _calcPlayerStats(team, playerLabel){
-  const stats={pointsPlayed:0,pointsDied:0,penalties:{Mi:0,Mj:0},bunkers:{},deaths:{},shootingDir:{}};
-  BKS.forEach(b=>{stats.bunkers[b]=0;stats.deaths[b]=0;stats.shootingDir[b]={S:0,'\u2206':0,X:0};});
-  TABS.forEach(t=>{
-    if(t.id==='stats'||t.id==='rosters'||!data[t.id]) return;
-    ['m1','m2'].forEach(mk=>{
-      const md=data[t.id][mk];
-      ['t1pts','t2pts'].forEach((tk,ti)=>{
-        const tname=ti===0?md.t1name:md.t2name;
-        if(tname!==team) return;
-        (md[tk]||[]).forEach(pt=>{
-          let appeared=false,died=false;
-          BKS.forEach(b=>{
-            (pt[b]||[]).forEach(mv=>{
-              const mvLabel=mv.player&&mv.player.label?mv.player.label:(mv.player||null);
-              if(mvLabel!==playerLabel) return;
-              appeared=true;stats.bunkers[b]++;
-              if(mv.isDead){died=true;stats.deaths[b]++;}
-              if(mv.pen==='Mi')stats.penalties.Mi++;if(mv.pen==='Mj')stats.penalties.Mj++;
-              const sym=mv.sym||'';
-              if(sym.startsWith('S'))stats.shootingDir[b].S++;
-              else if(sym.startsWith('\u2206'))stats.shootingDir[b]['\u2206']++;
-              else if(sym.startsWith('X'))stats.shootingDir[b].X++;
-            });
-          });
-          if(appeared){stats.pointsPlayed++;if(died)stats.pointsDied++;}
-        });
-      });
-    });
-  });
-  return stats;
 }
 </script>
 
