@@ -43,7 +43,7 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .tab.stats-tab{color:#6a1b9a}.tab.stats-tab.active{color:#6a1b9a}
 .tab.rosters{color:#00695c}.tab.rosters.active{color:#00695c}
 table{border-collapse:collapse;width:max-content}
-th,td{border:1px solid #d0d0d0;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
+th,td{border:1px solid #999999;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
 .hr1 th{background:#BDC0BF;font-size:11px;font-weight:bold;position:sticky;top:0;z-index:10;height:20px}
 .hr2 th{background:#D5D5D5;font-size:10px;position:sticky;top:20px;z-index:10;height:20px}
 .hr3 th{background:#DBDBDB;font-size:11px;font-weight:bold;position:sticky;top:40px;z-index:10;height:20px}
@@ -491,9 +491,9 @@ function renderIntoPanel(tabId){
     r2th.appendChild(t1sel);r2.appendChild(r2th);
     thead.appendChild(r2);
     const r3=document.createElement('tr');r3.className='hr3';
-    const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
-    const BK_MED=['SC','Beast'];
-    const BK_LITE=['Sniper','Dagger'];
+    const BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
+    const BK_MED=['SOB','Godzilla','Beast'];
+    const BK_LITE=['SC','Sniper','Dagger'];
     ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
@@ -578,13 +578,13 @@ function renderMatch(tbody,tabId,mk,md){
 
 function addBunkerHdr(tbody){
   const tr=document.createElement('tr');
-  const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
-  const BK_MED=['SC','Beast'];
-  const BK_LITE=['Sniper','Dagger'];
+  const BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
+  const BK_MED=['SOB','Godzilla','Beast'];
+  const BK_LITE=['SC','Sniper','Dagger'];
   ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
-    td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #d0d0d0;padding:0 3px;height:20px;white-space:nowrap';
+    td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #999999;padding:0 3px;height:20px;white-space:nowrap';
     if(i>=5&&i<5+BKS.length){
       const b=BKS[i-5];
       if(BK_DARK.includes(b)) td.style.background='#b0b0b0';
@@ -725,9 +725,9 @@ function makeRow(tabId,mk,tk,idx,pt){
     },1000);
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
-  const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
-  const _BK_MED=['SC','Beast'];
-  const _BK_LITE=['Sniper','Dagger'];
+  const _BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
+  const _BK_MED=['SOB','Godzilla','Beast'];
+  const _BK_LITE=['SC','Sniper','Dagger'];
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');
