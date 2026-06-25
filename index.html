@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: fix: granular Firebase writes to prevent real-time sync data loss
+COMMIT: feat: event 3 Midwest Open (Cincinnati) bunker layout
 
-SUMMARY: Replaced all saveTab() calls with targeted granular writes so two
-scouts can enter data simultaneously without overwriting each other. Each action
-now only writes the specific path that changed: saveBunker() for cell moves,
-saveWL() for win/loss, saveRB() for red/blue, saveTime() for point duration,
-saveNotes() for notes, saveTeamName() for team selection. saveTab() is kept only
-for the initial blank tab creation. This eliminates the race condition where
-whichever scout saved last would overwrite the other's changes.
+SUMMARY: Updated BKS for Event 3 — Bravo, SC, SOB, Alpha, Godzilla, Xbox, Sniper,
+HS, H∆, Dagger, Florida, Baby, Beast, 100, 200, 300. Godzilla shows as "Godz" in
+column headers via BK_DISPLAY/bkLabel (data key stays "Godzilla"). Default session
+set to nxl-2026-event3. Shading: dark=SOB/Alpha/HS/H∆/Baby/100, med=SC/Beast,
+lite=Sniper/Dagger; Bravo/Godzilla/Xbox/Florida/200/300 unshaded.
 -->
 
 <html lang="en">
@@ -163,7 +161,9 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["Seattle","SOB","SC","Alpha","Bravo","Sniper","HS","H∆","Dagger","Xbox","Godzilla","Baby","100","200","Beast","Dallas"];
+const BKS=["Bravo","SC","SOB","Alpha","Godzilla","Xbox","Sniper","HS","H∆","Dagger","Florida","Baby","Beast","100","200","300"];
+const BK_DISPLAY={Godzilla:'Godz'}; // shorten for column headers; data key stays full name
+function bkLabel(b){return BK_DISPLAY[b]||b;}
 const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
 const SOB_SUBS=['S1','S2','S3','Tequila'];
 const SYMS=[
@@ -179,7 +179,7 @@ const PTS=15;
 const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
 
-function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event2';}
+function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event3';}
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 document.getElementById('apptitle').textContent=SESSION;
@@ -494,7 +494,7 @@ function renderIntoPanel(tabId){
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
     const BK_MED=['SC','Beast'];
     const BK_LITE=['Sniper','Dagger'];
-    ['*','W/L','R/B','Score','Time',...BKS.map(b=>b==='S1'?'SOB':b),'Notes'].forEach((t,i)=>{
+    ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
         const b=BKS[i-5];
@@ -581,7 +581,7 @@ function addBunkerHdr(tbody){
   const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const BK_MED=['SC','Beast'];
   const BK_LITE=['Sniper','Dagger'];
-  ['*','W/L','R/B','Score','Time',...BKS,'Notes'].forEach((t,i)=>{
+  ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
     td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #d0d0d0;padding:0 3px;height:20px;white-space:nowrap';
