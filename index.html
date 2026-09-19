@@ -497,9 +497,9 @@ function renderIntoPanel(tabId){
     r2th.appendChild(t1sel);r2.appendChild(r2th);
     thead.appendChild(r2);
     const r3=document.createElement('tr');r3.className='hr3';
-    const BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
-    const BK_MED=['SOB','Godzilla','Beast'];
-    const BK_LITE=['SC','Sniper','Dagger'];
+    const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
+    const BK_MED=['SC','Beast'];
+    const BK_LITE=['Sniper','Dagger'];
     ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
@@ -584,9 +584,9 @@ function renderMatch(tbody,tabId,mk,md){
 
 function addBunkerHdr(tbody){
   const tr=document.createElement('tr');
-  const BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
-  const BK_MED=['SOB','Godzilla','Beast'];
-  const BK_LITE=['SC','Sniper','Dagger'];
+  const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
+  const BK_MED=['SC','Beast'];
+  const BK_LITE=['Sniper','Dagger'];
   ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
@@ -746,9 +746,9 @@ function makeRow(tabId,mk,tk,idx,pt){
     },1000);
   };
   tdTm.appendChild(timInp);row.appendChild(tdTm);
-  const _BK_DARK=['Alpha','HS','H\u2206','Baby','100'];
-  const _BK_MED=['SOB','Godzilla','Beast'];
-  const _BK_LITE=['SC','Sniper','Dagger'];
+  const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
+  const _BK_MED=['SC','Beast'];
+  const _BK_LITE=['Sniper','Dagger'];
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');
