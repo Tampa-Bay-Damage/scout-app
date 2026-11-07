@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: fix: granular Firebase writes to prevent real-time sync data loss
+COMMIT: feat: Texas 2026 bunker layout
 
-SUMMARY: Replaced all saveTab() calls with targeted granular writes so two
-scouts can enter data simultaneously without overwriting each other. Each action
-now only writes the specific path that changed: saveBunker() for cell moves,
-saveWL() for win/loss, saveRB() for red/blue, saveTime() for point duration,
-saveNotes() for notes, saveTeamName() for team selection. saveTab() is kept only
-for the initial blank tab creation. This eliminates the race condition where
-whichever scout saved last would overwrite the other's changes.
+SUMMARY: Updated BKS for Texas event — SOB, SC, Seattle, Tequila, Godzilla, Xbox,
+Alpha, Sniper, HS, H∆, Dagger, Baby, Beast, Florida, Whiskey, Dallas, 100, 200.
+Tequila promoted to standalone column (removed from SOB sub-routes). Godzilla
+shows as "Godz" in headers. Default session nxl-2026-texas.
 -->
 
 <html lang="en">
@@ -45,7 +42,7 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .tab.stats-tab{color:#6a1b9a}.tab.stats-tab.active{color:#6a1b9a}
 .tab.rosters{color:#00695c}.tab.rosters.active{color:#00695c}
 table{border-collapse:collapse;width:max-content}
-th,td{border:1px solid #d0d0d0;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
+th,td{border:1px solid #999999;text-align:center;vertical-align:middle;white-space:nowrap;font-family:Arial,sans-serif;font-size:11px;height:20px;padding:0 3px}
 .hr1 th{background:#BDC0BF;font-size:11px;font-weight:bold;position:sticky;top:0;z-index:10;height:20px}
 .hr2 th{background:#D5D5D5;font-size:10px;position:sticky;top:20px;z-index:10;height:20px}
 .hr3 th{background:#DBDBDB;font-size:11px;font-weight:bold;position:sticky;top:40px;z-index:10;height:20px}
@@ -134,7 +131,6 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
   <div class="tab-bar" id="tabbar"></div>
 
 <!-- MOVE POPUP -->
-
 <div class="ov" id="moveo">
   <div class="pbox" id="movebox">
     <div class="ptitle">
@@ -150,11 +146,8 @@ tr.msep td{background:#d5d5d5;font-weight:bold;font-size:10px;text-align:center;
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
 <script>
 
 const FB={
@@ -167,9 +160,11 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["SOB","Seattle","SC","Alpha","Xbox","Sniper","HS","H\u2206","Dagger","Florida","Dallas","Whiskey","Baby","Beast","100","200","300"];
+const BKS=["SOB","SC","Seattle","Tequila","Godzilla","Xbox","Alpha","Sniper","HS","H∆","Dagger","Baby","Beast","Florida","Whiskey","Dallas","100","200"];
+const BK_DISPLAY={Godzilla:'Godz'}; // shorten for column headers; data key stays full name
+function bkLabel(b){return BK_DISPLAY[b]||b;}
 const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
-const SOB_SUBS=['S1','S2','S3','Tequila'];
+const SOB_SUBS=['S1','S2','S3']; // Tequila is now a standalone bunker column
 const SYMS=[
   {s:"S",l:"Snake"},
   {s:"M",l:"Middle"},
@@ -179,11 +174,11 @@ const SYMS=[
 const MODIFIERS=[{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
 const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
 const DAYS=["Fri","Sat","Sun"];
-const PTS=15;
+const PTS=20;
 const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
 
-function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event1';}
+function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-texas';}
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 document.getElementById('apptitle').textContent=SESSION;
@@ -314,16 +309,20 @@ function listenFirebase(){
     const d=snap.val()||{};
     TABS.forEach(t=>{
       if(t.id==='stats'||t.id==='rosters') return;
+      // Skip overwriting data for tabs we wrote to in the last 1.5s —
+      // prevents a partner's Firebase event from clobbering our in-flight write
+      const recentWrite=(Date.now()-(_lastWriteByTab[t.id]||0))<1500;
       if(d[t.id]){
-        data[t.id]=normalizeTab(JSON.parse(JSON.stringify(d[t.id])));
+        if(!recentWrite) data[t.id]=normalizeTab(JSON.parse(JSON.stringify(d[t.id])));
       } else {
         initTab(t.id);
         saveTab(t.id);
       }
-      panelDirty[t.id]=true;
+      if(!recentWrite) panelDirty[t.id]=true;
     });
     panelBuilt['stats']=false;
-    if(!popCell&&!_notesFocused){
+    const recentActiveWrite=(Date.now()-(_lastWriteByTab[activeTab]||0))<1500;
+    if(!popCell&&!_notesFocused&&!recentActiveWrite){
       panelBuilt[activeTab]=false;
       showTab(activeTab);
     } else if(activeTab==='stats'){
@@ -394,6 +393,7 @@ function savePoint(tabId,mk,tk,idx){
   savePath(`${tabId}/${mk}/${tk}/${idx}`, data[tabId][mk][tk][idx]);
 }
 function saveBunker(tabId,mk,tk,idx,bk){
+  markTabWrite(tabId);
   savePath(`${tabId}/${mk}/${tk}/${idx}/${bk}`, data[tabId][mk][tk][idx][bk]);
 }
 function saveWL(tabId,mk,tk,idx){
@@ -466,6 +466,7 @@ function renderIntoPanel(tabId){
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
     ];
     legendItems.forEach(item=>{
       const th=document.createElement('th');
@@ -499,7 +500,7 @@ function renderIntoPanel(tabId){
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
     const BK_MED=['SC','Beast'];
     const BK_LITE=['Sniper','Dagger'];
-    ['*','W/L','R/B','Score','Time',...BKS.map(b=>b==='S1'?'SOB':b),'Notes'].forEach((t,i)=>{
+    ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
         const b=BKS[i-5];
@@ -586,10 +587,10 @@ function addBunkerHdr(tbody){
   const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const BK_MED=['SC','Beast'];
   const BK_LITE=['Sniper','Dagger'];
-  ['*','W/L','R/B','Score','Time',...BKS,'Notes'].forEach((t,i)=>{
+  ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
-    td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #d0d0d0;padding:0 3px;height:20px;white-space:nowrap';
+    td.style.cssText='background:#DBDBDB;font-size:11px;font-weight:bold;text-align:center;border:1px solid #999999;padding:0 3px;height:20px;white-space:nowrap';
     if(i>=5&&i<5+BKS.length){
       const b=BKS[i-5];
       if(BK_DARK.includes(b)) td.style.background='#b0b0b0';
@@ -629,46 +630,61 @@ function makeRow(tabId,mk,tk,idx,pt){
     if(v===(pt.wl||'')) opt.selected=true;
     wlSel.appendChild(opt);
   });
-  function applyWLStyle(){
-    const v=wlSel.value;
-    wlSel.style.background=v==='W'?'#d4edda':v==='L'?'#f8d7da':v==='NP'?'#fff3cd':'transparent';
-    wlSel.style.color=v==='W'?'#155724':v==='L'?'#721c24':v==='NP'?'#856404':'#000';
+  function applyWLStyleToSel(sel,v){
+    sel.style.background=v==='W'?'#d4edda':v==='L'?'#f8d7da':v==='NP'?'#fff3cd':'transparent';
+    sel.style.color=v==='W'?'#155724':v==='L'?'#721c24':v==='NP'?'#856404':'#000';
   }
-  applyWLStyle();
+  wlSel.dataset.wlkey=`${tabId}|${mk}|${tk}|${idx}`;
+  applyWLStyleToSel(wlSel,pt.wl||'');
   wlSel.onchange=()=>{
     const v=wlSel.value;
     data[tabId][mk][tk][idx].wl=v;
-    applyWLStyle();
+    applyWLStyleToSel(wlSel,v);
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     const oppWL=v==='W'?'L':v==='L'?'W':v;
     data[tabId][mk][oppTk][idx].wl=oppWL;
+    // Update opponent select directly — no full re-render needed
+    const panel=document.getElementById('panel-'+tabId);
+    if(panel){
+      const oppKey=`${tabId}|${mk}|${oppTk}|${idx}`;
+      const oppSel=panel.querySelector(`select[data-wlkey="${CSS.escape(oppKey)}"]`);
+      if(oppSel){oppSel.value=oppWL;applyWLStyleToSel(oppSel,oppWL);}
+    }
     // Write both wl values atomically in one Firebase update
     const updates={};
     updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/wl`]=v;
     updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/wl`]=oppWL;
+    markTabWrite(tabId);
     if(db) db.ref().update(updates);
     updateScoreCell(tabId,mk,tk);
     updateScoreCell(tabId,mk,oppTk);
     updateScoreBar();
-    panelBuilt[tabId]=false;
-    showTab(tabId);
   };
   tdWL.appendChild(wlSel);
   row.appendChild(tdWL);
   const tdRB=document.createElement('td');tdRB.className='crb '+(pt.rb||'');tdRB.textContent=pt.rb||'';
+  tdRB.dataset.rbkey=`${tabId}|${mk}|${tk}|${idx}`;
   tdRB.onclick=()=>{
     const c=data[tabId][mk][tk][idx].rb;
     const newRB=c==='Red'?'Blue':c==='Blue'?'':c===''?'Red':'Red';
     data[tabId][mk][tk][idx].rb=newRB;
+    // Update this cell directly
+    tdRB.className='crb '+(newRB||'');tdRB.textContent=newRB||'';
     const oppTk=tk==='t1pts'?'t2pts':'t1pts';
     const oppRB=newRB==='Red'?'Blue':newRB==='Blue'?'Red':'';
     data[tabId][mk][oppTk][idx].rb=oppRB;
+    // Update opponent cell directly — no full re-render needed
+    const panel=document.getElementById('panel-'+tabId);
+    if(panel){
+      const oppKey=`${tabId}|${mk}|${oppTk}|${idx}`;
+      const oppCell=panel.querySelector(`td[data-rbkey="${CSS.escape(oppKey)}"]`);
+      if(oppCell){oppCell.className='crb '+(oppRB||'');oppCell.textContent=oppRB||'';}
+    }
     const updates={};
     updates[`sessions/${SESSION}/${tabId}/${mk}/${tk}/${idx}/rb`]=newRB;
     updates[`sessions/${SESSION}/${tabId}/${mk}/${oppTk}/${idx}/rb`]=oppRB;
+    markTabWrite(tabId);
     if(db) db.ref().update(updates);
-    panelBuilt[tabId]=false;
-    showTab(tabId);
   };
   row.appendChild(tdRB);
   const tdSc=document.createElement('td');tdSc.className='csc';
@@ -856,6 +872,8 @@ function renderBkCell(td,moves){
 let popCell=null;
 let _editingMoveIdx=null;
 let _notesFocused=false;
+let _lastWriteByTab={}; // tracks last local write time per tab to block Firebase overwrite race
+function markTabWrite(tabId){_lastWriteByTab[tabId]=Date.now();}
 
 function openMovePopup(tabId,mk,tk,idx,bk,existingMoves){
   popCell={tabId,mk,tk,idx,bk};
@@ -1083,7 +1101,7 @@ function buildMoveContent(){
     }
   }
   const clearBtn=document.createElement('button');
-  clearBtn.style.cssText='width:100%;padding:5px;margin-top:6px;border:1px solid #ccc;background:#fff;color:#999;font-size:11px;cursor:pointer;border-radius:3px;font-family:Arial,sans-serif';
+  clearBtn.style.cssText='width:100%;padding:5px;margin-top:6px;border:1px solid #c0392b;background:#e74c3c;color:#fff;font-size:11px;font-weight:bold;cursor:pointer;border-radius:3px;font-family:Arial,sans-serif';
   clearBtn.textContent='Clear This Cell';
   clearBtn.onclick=()=>{
     if(!popCell) return;
@@ -1763,6 +1781,5 @@ function makeStatsTbl(bkData,killsOnly,totalPts){
 }
 
 </script>
-
 </body>
 </html>
