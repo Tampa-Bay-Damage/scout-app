@@ -504,7 +504,7 @@ function renderIntoPanel(tabId){
     const r3=document.createElement('tr');r3.className='hr3';
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
     const BK_MED=['SC','Beast','Bravo'];
-    const BK_LITE=['Sniper','Dagger'];
+    const BK_LITE=['Sniper','Dagger','Monster'];
     ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
@@ -591,7 +591,7 @@ function addBunkerHdr(tbody){
   const tr=document.createElement('tr');
   const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const BK_MED=['SC','Beast','Bravo'];
-  const BK_LITE=['Sniper','Dagger'];
+  const BK_LITE=['Sniper','Dagger','Monster'];
   ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
@@ -753,7 +753,7 @@ function makeRow(tabId,mk,tk,idx,pt){
   tdTm.appendChild(timInp);row.appendChild(tdTm);
   const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const _BK_MED=['SC','Beast','Bravo'];
-  const _BK_LITE=['Sniper','Dagger'];
+  const _BK_LITE=['Sniper','Dagger','Monster'];
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');
