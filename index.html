@@ -159,7 +159,7 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["SOB","Seattle","Monster","Charlie","Bravo","Godzilla","Xbox","Alpha","Sniper","HS","H∆","Dagger","Baby","Beast","100","200","300","400"];
+const BKS=["SOB","Seattle","Monster","Charlie","Bravo","Godzilla","Xbox","Alpha","Sniper","HS","H∆","Dagger","Baby","Beast","Dallas","100","200","300","400"];
 const BK_DISPLAY={Godzilla:'Godz'}; // shorten for column headers; data key stays full name
 function bkLabel(b){return BK_DISPLAY[b]||b;}
 const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
@@ -472,6 +472,7 @@ function renderIntoPanel(tabId){
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
       {text:'',bg:'',color:''},
+      {text:'',bg:'',color:''},
     ];
     legendItems.forEach(item=>{
       const th=document.createElement('th');
@@ -504,7 +505,7 @@ function renderIntoPanel(tabId){
     const r3=document.createElement('tr');r3.className='hr3';
     const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
     const BK_MED=['SC','Beast','Bravo'];
-    const BK_LITE=['Sniper','Dagger','Monster'];
+    const BK_LITE=['Sniper','Dagger','Monster','Dallas'];
     ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
       const th=document.createElement('th');th.textContent=t;
       if(i>=5&&i<5+BKS.length){
@@ -591,7 +592,7 @@ function addBunkerHdr(tbody){
   const tr=document.createElement('tr');
   const BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const BK_MED=['SC','Beast','Bravo'];
-  const BK_LITE=['Sniper','Dagger','Monster'];
+  const BK_LITE=['Sniper','Dagger','Monster','Dallas'];
   ['*','W/L','R/B','Score','Time',...BKS.map(b=>bkLabel(b)),'Notes'].forEach((t,i)=>{
     const td=document.createElement('td');
     td.textContent=t;
@@ -753,7 +754,7 @@ function makeRow(tabId,mk,tk,idx,pt){
   tdTm.appendChild(timInp);row.appendChild(tdTm);
   const _BK_DARK=['SOB','Alpha','HS','H\u2206','Baby','100'];
   const _BK_MED=['SC','Beast','Bravo'];
-  const _BK_LITE=['Sniper','Dagger','Monster'];
+  const _BK_LITE=['Sniper','Dagger','Monster','Dallas'];
   BKS.forEach(b=>{
     const moves=pt[b]||[];
     const td=document.createElement('td');
