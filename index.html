@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 
 <!--
-COMMIT: feat: Texas 2026 bunker layout
+COMMIT: feat: event 5 bunker layout
 
-SUMMARY: Updated BKS for Texas event — SOB, SC, Seattle, Tequila, Godzilla, Xbox,
-Alpha, Sniper, HS, H∆, Dagger, Baby, Beast, Florida, Whiskey, Dallas, 100, 200.
-Tequila promoted to standalone column (removed from SOB sub-routes). Godzilla
-shows as "Godz" in headers. Default session nxl-2026-texas.
+SUMMARY: BKS now SOB, Monster, Charlie, Bravo, Seattle, Godzilla, Xbox, Alpha, Sniper,
+HS, H∆, Dagger, Baby, Beast, 100, 200, 300, 400. Tequila returns to an SOB sub-route
+(S1/S2/S3/Tequila). Default session nxl-2026-event5. 20 points per match.
 -->
 
 <html lang="en">
@@ -160,11 +159,11 @@ const FB={
   appId:"1:554139863559:web:d7de30408e90bf29ceb8a2"
 };
 
-const BKS=["SOB","SC","Seattle","Tequila","Godzilla","Xbox","Alpha","Sniper","HS","H∆","Dagger","Baby","Beast","Florida","Whiskey","Dallas","100","200"];
+const BKS=["SOB","Monster","Charlie","Bravo","Seattle","Godzilla","Xbox","Alpha","Sniper","HS","H∆","Dagger","Baby","Beast","100","200","300","400"];
 const BK_DISPLAY={Godzilla:'Godz'}; // shorten for column headers; data key stays full name
 function bkLabel(b){return BK_DISPLAY[b]||b;}
 const SHAPES=["SB","S","C","GB","GW","C","","MT","MT","","MT","GW","","GB","Br","T","SD"];
-const SOB_SUBS=['S1','S2','S3']; // Tequila is now a standalone bunker column
+const SOB_SUBS=['S1','S2','S3','Tequila'];
 const SYMS=[
   {s:"S",l:"Snake"},
   {s:"M",l:"Middle"},
@@ -178,7 +177,7 @@ const PTS=20;
 const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
 
-function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-texas';}
+function getSession(){return new URLSearchParams(window.location.search).get('session')||'nxl-2026-event5';}
 const SESSION=getSession();
 document.getElementById('sesslbl').textContent=SESSION;
 document.getElementById('apptitle').textContent=SESSION;
@@ -370,6 +369,12 @@ function normalizeTab(tabData){
     ['t1pts','t2pts'].forEach(tk=>{
       if(!tabData[mk][tk]) return;
       tabData[mk][tk]=tabData[mk][tk].map(pt=>normalizePt(pt));
+      // If Firebase has fewer rows than PTS (e.g. old 15-pt data), pad to current PTS
+      while(tabData[mk][tk].length<PTS){
+        const p={wl:'',rb:'',time:'',notes:''};
+        BKS.forEach(b=>p[b]=[]);
+        tabData[mk][tk].push(p);
+      }
     });
   });
   return tabData;
