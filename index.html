@@ -35,6 +35,7 @@ body{font-family:Arial,sans-serif;font-size:12px;background:#fff;color:#000;over
 .tab-bar::-webkit-scrollbar{height:3px}.tab-bar::-webkit-scrollbar-thumb{background:#ccc}
 .tab{padding:6px 12px;font-size:11px;font-weight:500;color:#3c4043;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;white-space:nowrap;height:30px;display:flex;align-items:center;background:#f8f9fa;margin-right:2px;user-select:none}
 .tab.active{background:#fff;border-color:#e0e0e0;border-bottom-color:#fff;font-weight:700;position:relative;top:1px}
+.tab.thu{color:#ef6c00}.tab.thu.active{color:#ef6c00}
 .tab.fri{color:#c0392b}.tab.fri.active{color:#c0392b}
 .tab.sat{color:#1565c0}.tab.sat.active{color:#1565c0}
 .tab.sun{color:#2e7d32}.tab.sun.active{color:#2e7d32}
@@ -172,7 +173,7 @@ const SYMS=[
 ];
 const MODIFIERS=[{s:"^",l:"Shallow"},{s:"v",l:"Deep"}];
 const TEAMS=["Atlanta Jungle Cats","Chicago Aftershock","Chicago Wyldside Distortion","CK Hurricanes","Detroit Infamous","Edmonton Impact","Houston Heat","Los Angeles Collision","Los Angeles Ironmen","New Jersey Leverage","New York Xtreme","PaintballFIT","Perris ASG Aftermath","Red Legion","Royal City Seadogs","San Antonio X-Factor","San Diego Dynasty","Seattle Uprising","Tampa Bay Damage","TonTon Arsenal"];
-const DAYS=["Fri","Sat","Sun"];
+const DAYS=["Thu","Fri","Sat","Sun"];
 const PTS=20;
 const TABS=[{id:"stats",label:"Stats",day:"stats"},{id:"rosters",label:"Rosters",day:"rosters"}];
 DAYS.forEach(d=>{for(let s=1;s<=10;s++) TABS.push({id:`${d.toLowerCase()}-set${s}`,label:`${d} Set ${s}`,day:d.toLowerCase()});});
